@@ -25,22 +25,22 @@ def array_to_string_array(array):
 # Test array to string array
 
 test_array = np.array([
+    [3, 3, 0, 0, 0],
+    [0, 0, 0, 1, 2],
     [0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 2],
     [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 1]])
+    [2, 4, 4, 0, 1]])
 
 print(array_to_string_array(test_array))
 
 assert array_to_string_array(test_array) == [
+    '33   ',
+    '   12',
     '     ',
-    '  1 2',
     '     ',
-    '     ',
-    ' 2  1']
+    '244 1']
 
-def solve(puzzle=None):
+def solve(puzzle=None, wires = None):
     """
     Solves the puzzle by filling the entire grid.
 
@@ -94,24 +94,26 @@ def solve(puzzle=None):
     for r in range(height):
         for c in range(width):
             t=puzzle[r][c]
+            # Want to stop the puzzle from adding more wires than the number of wires specified
+            # Note: this doesn't solve the problem entirely, as we can get small squares of wires 
+            # numbered 1 which are not connected to the pins. Doesn't affect solving the puzzle though.
+            s.add(And(cells[r][c]<= wires, cells[r][c] >= 0))
+
             if t==' ':
                 # puzzle has space , so degree=2, IOW, this cell must have 2 connections , no more , no less.
                 # enumerate all possible L/R/U/D booleans. two of them must be True , others are False.
-                # TODO:
-                # I think we can just add the condition that it could be empty if we don't want a fill solver?
-                
-                print("yawooo")
                 t=[]
-                t.append(And(L[r][c], R[r][c], Not(U[r][c]), Not(D[r][c])))
-                t.append(And(L[r][c], Not(R[r][c]), U[r][c], Not(D[r][c])))
-                t.append(And(L[r][c], Not(R[r][c]), Not(U[r][c]), D[r][c]))
-                t.append(And(Not(L[r][c]), R[r][c], U[r][c], Not(D[r][c])))
-                t.append(And(Not(L[r][c]), R[r][c], Not(U[r][c]), D[r][c]))
-                t.append(And(Not(L[r][c]), Not(R[r][c]), U[r][c], D[r][c]))
+                t.append(And(L[r][c], R[r][c], Not(U[r][c]), Not(D[r][c]), cells[r][c]!=0))
+                t.append(And(L[r][c], Not(R[r][c]), U[r][c], Not(D[r][c]), cells[r][c]!=0))
+                t.append(And(L[r][c], Not(R[r][c]), Not(U[r][c]), D[r][c], cells[r][c]!=0))
+                t.append(And(Not(L[r][c]), R[r][c], U[r][c], Not(D[r][c]), cells[r][c]!=0))
+                t.append(And(Not(L[r][c]), R[r][c], Not(U[r][c]), D[r][c], cells[r][c]!=0))
+                t.append(And(Not(L[r][c]), Not(R[r][c]), U[r][c], D[r][c], cells[r][c]!=0))
                 # I added this constraint to allow empty cells. Check this works!
-                t.append(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c])))
-                clause0 = If(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c])), cells[r][c]==0, True)
-                s.add(And(Or(*t), clause0))
+                t.append(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c]), cells[r][c]==0))
+                # Also ensure we have valid numbers:
+                #clause0 = If(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c])), cells[r][c]==0, True)
+                s.add(Or(*t))
                 
             else:
                 # puzzle has number, add it to cells[][] as a constraint:
@@ -125,6 +127,8 @@ def solve(puzzle=None):
                 t.append(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), D[r][c]))
                 s.add(Or(*t))
             # if L[][]==True , cell's number must be equal to the number of cell at left , etc:
+            # This gives us the constraint that cells must be equal to their neighbors. Definitely
+            # necesary for all solvers.
             if c!=0:
                 s.add(If(L[r][c], cells[r][c]==cells[r][c-1], True))
             if c!=width -1:
@@ -143,10 +147,10 @@ def solve(puzzle=None):
         s.add(U[0][c]==False)
         s.add(D[height -1][c]==False)
     # print solution:
-    print(s)
+    #print(s)
     check = s.check()
-    print(check)
-    if check == "sat":
+    print(str(check))
+    if str(check) == "sat":
         s.model()
 
         m=s.model()
@@ -162,11 +166,16 @@ def solve(puzzle=None):
     
 
 if __name__ == "__main__":
-    solve([
-    " 32   ",
-    " 4  1 ",
-    "2     ",
-    " 3    ",
-    "      ",
-    "  1  4"
-    ])
+    puzzle=[" 1 5  3  6",
+"         2",
+" 5        ",
+"          ",
+"7         ",
+"    3  2  ",
+" 4  6     ",
+"        8 ",
+"   19 7   ",
+"4      89 "]
+
+
+    solve(puzzle, 9)
