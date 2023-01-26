@@ -31,6 +31,8 @@ test_array = np.array([
     [0, 0, 0, 0, 0],
     [0, 2, 0, 0, 1]])
 
+print(array_to_string_array(test_array))
+
 assert array_to_string_array(test_array) == [
     '     ',
     '  1 2',
@@ -54,7 +56,7 @@ def solve(puzzle=None):
         "         ",
         "         ",
         "      7  ",
-        "012075  6"]
+        "812875  6"]
 
     puzzle2 = [
     " 32   ",
@@ -76,6 +78,7 @@ def solve(puzzle=None):
     200
     s=Solver()
     # U for a cell must be equal to D of the cell above , etc:
+    # I think this should hold for non-fill solver too?
     for r in range(height):
         for c in range(width):
             if r!=0:
@@ -94,7 +97,10 @@ def solve(puzzle=None):
             if t==' ':
                 # puzzle has space , so degree=2, IOW, this cell must have 2 connections , no more , no less.
                 # enumerate all possible L/R/U/D booleans. two of them must be True , others are False.
-                # TODO: 
+                # TODO:
+                # I think we can just add the condition that it could be empty if we don't want a fill solver?
+                
+                print("yawooo")
                 t=[]
                 t.append(And(L[r][c], R[r][c], Not(U[r][c]), Not(D[r][c])))
                 t.append(And(L[r][c], Not(R[r][c]), U[r][c], Not(D[r][c])))
@@ -102,9 +108,13 @@ def solve(puzzle=None):
                 t.append(And(Not(L[r][c]), R[r][c], U[r][c], Not(D[r][c])))
                 t.append(And(Not(L[r][c]), R[r][c], Not(U[r][c]), D[r][c]))
                 t.append(And(Not(L[r][c]), Not(R[r][c]), U[r][c], D[r][c]))
-                s.add(Or(*t))
+                # I added this constraint to allow empty cells. Check this works!
+                t.append(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c])))
+                clause0 = If(And(Not(L[r][c]), Not(R[r][c]), Not(U[r][c]), Not(D[r][c])), cells[r][c]==0, True)
+                s.add(And(Or(*t), clause0))
+                
             else:
-                # puzzle has number , add it to cells[][] as a constraint:
+                # puzzle has number, add it to cells[][] as a constraint:
                 s.add(cells[r][c]==int(t))
                 # cell has degree=1, IOW, this cell must have 1 connection , no more , no less
                 # enumerate all possible ways:
@@ -123,8 +133,9 @@ def solve(puzzle=None):
                 s.add(If(U[r][c], cells[r][c]==cells[r-1][c], True))
             if r!=height -1:
                 s.add(If(D[r][c], cells[r][c]==cells[r+1][c], True))
-            # L/R/U/D at borders sometimes must be always False:
-
+    
+    # L/R/U/D at borders sometimes must be always False:
+    # This should hold even for non-fill puzzles.
     for r in range(height):
         s.add(L[r][0]==False)
         s.add(R[r][width -1]==False)
@@ -132,19 +143,30 @@ def solve(puzzle=None):
         s.add(U[0][c]==False)
         s.add(D[height -1][c]==False)
     # print solution:
-    print(s.check())
-    s.model()
+    print(s)
+    check = s.check()
+    print(check)
+    if check == "sat":
+        s.model()
 
-    m=s.model()
+        m=s.model()
 
-    #print(m)
-    print("")
-    for r in range(height):
-        for c in range(width):
-            print(m[cells[r][c]], end=" ")
+        #print(m)
         print("")
+        for r in range(height):
+            for c in range(width):
+                print(m[cells[r][c]], end=" ")
+            print("")
 
-    print("")
+        print("")
+    
 
 if __name__ == "__main__":
-    solve(array_to_string_array(test_array))
+    solve([
+    " 32   ",
+    " 4  1 ",
+    "2     ",
+    " 3    ",
+    "      ",
+    "  1  4"
+    ])
