@@ -151,3 +151,7 @@ cython_debug/
 
 3.8/
 jumanji_env/
+
+
+# IMPERIAL CHANGE REMOVE BEFORE MERGE
+*.pkl
