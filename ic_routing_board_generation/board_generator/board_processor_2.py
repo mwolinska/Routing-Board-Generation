@@ -1,51 +1,18 @@
 import random
 import time
-from dataclasses import dataclass
 from typing import List, Union, Dict, Tuple, Optional
 import numpy as np
-from bfs_board import BFSBoard
-from board_generator_random_walk_rb import RandomWalkBoard
-from board_generator_wfc_oj import WFCBoard
+from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import RandomWalkBoard
+from ic_routing_board_generation.board_generator.board_generator_wfc_oj import WFCBoard
 from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from lsystem_board import LSystemBoardGen
+from ic_routing_board_generation.board_generator.exceptions import \
+    IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
+    DuplicateHeadsTailsError, MissingHeadTailError, InvalidWireStructureError, \
+    PathNotFoundError
+from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
 
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
-
-# Define exceptions for the board validity checks
-class IncorrectBoardSizeError(Exception):
-    """ Raised when a board size does not match the specified dimensions."""
-    pass
-
-
-class NumAgentsOutOfRangeError(Exception):
-    """ Raised when self._wires_on_board is negative."""
-    pass
-
-
-class EncodingOutOfRangeError(Exception):
-    """ Raised when one or more cells on the board have an invalid index."""
-    pass
-
-
-class DuplicateHeadsTailsError(Exception):
-    """ Raised when one of the heads or tails of a wire is duplicated."""
-    pass
-
-
-class MissingHeadTailError(Exception):
-    """ Raised when one of the heads or tails of a wire is missing."""
-    pass
-
-
-class InvalidWireStructureError(Exception):
-    """ Raised when one or more of the wires has an invalid structure, e.g. looping or branching."""
-    pass
-
-
-class PathNotFoundError(Exception):
-    """ Raised when a path cannot be found between a head and a target."""
-    pass
-
 
 class BoardProcessor:
     def __init__(self, board: Union[np.ndarray, AbstractBoard]) -> None:
@@ -766,7 +733,7 @@ if __name__ == '__main__':
     # Shuffle wire encodings
     boardprocessor_.shuffle_wire_encodings()
     print('Shuffled Wire Encodings')
-    print(f'{boardprocessor_.get_board_layout()}')
+    print(f'{boardprocessor_.get_board_layout()}') # TODO: Marta you need this line to process randys board before heatmap
 
     # Remove a wire
     boardprocessor_.remove_wire(0)

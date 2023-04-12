@@ -200,7 +200,6 @@ class ICGenerators(Generator):
 
             starts_flat, targets_flat = get_heads_and_targets(pins)
 
-
             starts = jnp.divmod(starts_flat, self.grid_size)
             targets = jnp.divmod(targets_flat, self.grid_size)
 

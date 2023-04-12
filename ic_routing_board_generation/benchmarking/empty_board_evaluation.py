@@ -1,25 +1,26 @@
 import collections
 import itertools
 from collections import Counter
-from typing import List
+from typing import List, Dict, Iterable, Optional
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
-    BoardGenerationParameters
+    BoardGenerationParameters, BarChartData
 from ic_routing_board_generation.benchmarking.benchmark_utils import \
     generate_n_boards
 from ic_routing_board_generation.benchmarking.plotting_utils import \
     plot_heatmap, plot_comparison_heatmap
-from ic_routing_board_generation.board_generator.board_processor import \
+from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import \
+    RandomWalkBoard
+from ic_routing_board_generation.board_generator.board_processor_2 import \
     BoardProcessor
-
-# TODO (Marta): 1 metric for all heatmaps
 
 class EvaluateEmptyBoard:
     def __init__(self, filled_training_board: np.ndarray):
-        self.filled_board = filled_training_board
         self.board_processor = BoardProcessor(filled_training_board)
+        self.filled_board = self.board_processor.get_board_layout()
         self.empty_slot_score = -2
         self.end_score = 3
         self.wire_score = 2
@@ -44,26 +45,25 @@ class EvaluateEmptyBoard:
         # total_num_wires = len(np.unique(training_board_filtered)[np.unique(training_board_filtered)!= 0])
         padded_array = np.pad(individual_score, 1, mode="constant")
 
-        filter = np.array(
-            [
-                [1, 2, 1],
-                [2, 4, 2],
-                [1, 2, 1],
-            ]
-        )
-
         # filter = np.array(
         #     [
-        #         [0, 1, 0],
         #         [1, 2, 1],
-        #         [0, 1, 0],
+        #         [2, 4, 2],
+        #         [1, 2, 1],
         #     ]
         # )
+
+        filter = np.array(
+            [
+                [0, 1, 0],
+                [1, 2, 1],
+                [0, 1, 0],
+            ]
+        )
 
         scores = []
         for row in range(1, len(padded_array) - 1):
             for column in range(1, len(padded_array[0]) - 1):
-                # print(training_board_filtered)
                 wires_in_window = np.unique(training_board_filtered[row - 1: row + 2, column - 1: column + 2])
                 wires_in_window = len(wires_in_window[wires_in_window != 0])
                 diversity = wires_in_window
@@ -72,7 +72,7 @@ class EvaluateEmptyBoard:
                 scores.append(score)
 
         scored_array = np.array(scores).reshape((len(self.filled_board), len(self.filled_board[0])))
-        # print(len(np.unique(scored_array)))
+
         return scored_array
 
     def _change_heads_to_wire_ids(self) -> np.ndarray:
@@ -146,7 +146,11 @@ class EvaluateEmptyBoard:
         board_stats = self.board_processor.get_board_statistics()
         board_stats["count_detours"] = self.count_detours()
         board_stats["heatmap_score_diversity"] = len(np.unique(self.scored_board))
+        board_stats.pop("wire_lengths")
+        board_stats.pop("wire_bends")
         return board_stats
+
+
 
 
 def evaluate_generator_outputs_averaged_on_n_boards(
@@ -162,44 +166,69 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     for board_parameters in board_parameters_list:
         print(board_parameters)
         board_list = generate_n_boards(board_parameters, number_of_boards)
-        board_statistics = None
+        board_statistics = {}
         sum_all_boards = np.zeros([board_parameters.rows, board_parameters.columns])
         for board in board_list:
             board_evaluator = EvaluateEmptyBoard(board)
-            # scored_board = board_evaluator.score_from_neighbours()
             scored_board = board_evaluator.scored_board
             sum_all_boards += scored_board
-            if board_statistics is None:
-                board_statistics = board_evaluator.board_statistics
-                board_statistics.pop("wire_lengths")
-                board_statistics.pop("wire_bends")
-            else:
-                new_board_statistics = board_evaluator.board_statistics
-                new_board_statistics.pop("wire_lengths")
-                new_board_statistics.pop("wire_bends")
-
-                # using defaultdict
-                temp_dict = collections.defaultdict(int)
-
-                for key, value in itertools.chain(board_statistics.items(), new_board_statistics.items()):
-                    temp_dict[key] += value
-
-                board_statistics = dict(temp_dict)
-                # board_statistics = Counter(board_statistics) + Counter(new_board_statistics)
+            new_board_statistics = board_evaluator.board_statistics
+            board_statistics = _update_dictionary(board_statistics, new_board_statistics)
 
         scores_list.append(sum_all_boards / number_of_boards)
         board_names.append(str(board_parameters.generator_type.value))
-        board_statistics = {k: (v / number_of_boards) for k, v in dict(board_statistics).items()}
+        board_statistics = {k: (np.mean(np.array(v)), np.std(np.array(v))) for k, v in dict(board_statistics).items()}
+        board_statistics["generator_type"] = str(board_parameters.generator_type.value)
         all_board_statistics.append(board_statistics)
     if plot_individually or len(board_parameters_list) == 1:
         for score in scores_list:
             plot_heatmap(scores=score)
     else:
-        plot_comparison_heatmap(scores_list, board_names, board_parameters_list[0].number_of_wires, number_of_boards_averaged=number_of_boards)
+        plot_comparison_heatmap(
+            scores_list, board_names, board_parameters_list[0].number_of_wires,
+            number_of_boards_averaged=number_of_boards,
+        )
+    convert_dict_lit_to_plotting_format(all_board_statistics)
 
-    for i in range(len(board_parameters_list)):
-        print(board_names[i])
-        print(all_board_statistics[i])
+def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
+    data_per_key = []
+    list_of_keys = [x for x in list_of_dict[0].keys()]
+    list_of_board_names = [x["generator_type"] for x in list_of_dict]
+    for key in list_of_keys: #and key != "generator_type"
+        if key == "generator_type":
+            continue
+        key_data = []
+        key_stds = []
+        for board_data in list_of_dict:
+            key_data.append(board_data[key][0])
+            key_stds.append(board_data[key][1])
+
+        bar_chart = BarChartData(
+            x_axis_label="generator type",
+            y_axis_label=key,
+            x_labels=list_of_board_names,
+            y_data=key_data,
+            title=key,
+            output_filename=None,
+            stds=key_stds,
+        )
+        bar_chart.plot()
+        data_per_key.append(key_data)
+    return list_of_keys, data_per_key
+
+
+def _update_dictionary(dictionary_to_update, new_dictionary):
+    temp_dict = collections.defaultdict(list)
+    if not dictionary_to_update:
+        # temp_dict = new_dictionary
+        for key, value in new_dictionary.items():
+            temp_dict[key] = [value]
+    else:
+        temp_dict = collections.defaultdict(list)
+        for key, value in dictionary_to_update.items():
+            temp_dict[key] = value + [new_dictionary[key]]
+
+    return temp_dict
 
 
 if __name__ == '__main__':
@@ -221,6 +250,10 @@ if __name__ == '__main__':
            [6, 12, 11, 13]
        ]
     )
+    board_ = RandomWalkBoard(10, 10, 5)
+    print(board_.return_solved_board())
+    boardprocessor_ = BoardProcessor(board_)
+    print(boardprocessor_.get_board_layout())
 
     # evaluator = EvaluateEmptyBoard(board)
     # scores = evaluator.score_from_neighbours()
