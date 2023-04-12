@@ -20,4 +20,4 @@ if __name__ == '__main__':
         # BoardGenerationParameters(rows=8, columns=8, number_of_wires=8,
         #                           generator_type=BoardName.BFS_MIN_BENDS),
     ]
-    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=3, plot_individually=False)
+    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=1000, plot_individually=False)

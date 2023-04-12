@@ -19,11 +19,13 @@ from ic_routing_board_generation.board_generator.board_processor import \
 class EvaluateEmptyBoard:
     def __init__(self, filled_training_board: np.ndarray):
         self.filled_board = filled_training_board
+        self.board_processor = BoardProcessor(filled_training_board)
         self.empty_slot_score = -2
         self.end_score = 3
         self.wire_score = 2
         self.scored_board = self.score_from_neighbours()
         self.board_statistics = self._get_board_statistics()
+
 
     def assess_board(self):
         is_zero_mask = self.filled_board == 0
@@ -141,7 +143,7 @@ class EvaluateEmptyBoard:
             return ((cell_label-2) // 3)
 
     def _get_board_statistics(self):
-        board_stats = BoardProcessor(self.filled_board).get_board_statistics()
+        board_stats = self.board_processor.get_board_statistics()
         board_stats["count_detours"] = self.count_detours()
         board_stats["heatmap_score_diversity"] = len(np.unique(self.scored_board))
         return board_stats
