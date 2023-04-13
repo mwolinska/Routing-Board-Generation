@@ -1,9 +1,11 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Iterable
 
+import numpy as np
 from chex import Array
 import jax.numpy as jnp
+from matplotlib import pyplot as plt
 
 from ic_routing_board_generation.interface.board_generator_interface import \
     BoardName
@@ -66,6 +68,40 @@ class BenchmarkData:
     def std_steps_till_board_terminates(self):
         return float(jnp.std(jnp.array(self.episode_length), axis=0))
 
+@dataclass
+class BarChartData:
+    x_axis_label: str
+    y_axis_label: str
+    y_data: Iterable
+    x_labels: str
+    title: str
+    output_filename: str
+    stds: Optional[List[float]]
+
+    def plot(self):
+        fig, ax = plt.subplots()
+        ax.bar(self.x_labels, self.y_data)
+        ax.set(
+            title=self.title,
+            xlabel=self.x_axis_label,
+            ylabel=self.y_axis_label,
+        )
+        data = np.array(self.y_data)
+
+        ax.set_xticks(self.x_labels)
+        ax.set_xticklabels(self.x_labels, rotation=30, ha='right')
+        inds = np.arange(0, len(data))
+        ax.scatter(inds, data, marker='o', color='k', s=30, zorder=3)
+        if self.stds is not None:
+            stds = np.array(self.stds)
+            ax.vlines(inds, data - (stds / 2), data + (stds / 2), color='blue',
+                      linestyle='-',
+            lw = 3)
+        plt.tight_layout()
+        if self.output_filename is not None:
+            fig.savefig(str(self.directory_string) + str(self.output_filename))
+        else:
+            plt.show()
 
 if __name__ == '__main__':
     test = BenchmarkData

@@ -217,7 +217,7 @@ class BasicBenchmark:
         x_label: str, y_label: str, title: str,
         data: Iterable, labels:  List[str],
         file_name: Optional[str] = None,
-        stds = None,
+        stds=None,
     ):
         fig, ax = plt.subplots()
         ax.bar(labels, data)
