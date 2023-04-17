@@ -170,37 +170,33 @@ class LSystemBoardGen:
 
 import time
 if __name__ == '__main__':
+    
     # Example usage
     key = random.PRNGKey(int(time.time()))
     board = LSystemBoardGen(rows=5, cols=5, num_agents=5)
     agents = board.initialise_starting_board(key)
+    new_agents = board.fill(key, agents, n_iters=5, pushpullnone_ratios=[2, 0.5, 1])
+    print('board after fill\n', board.fill_solved_board(new_agents))
+
+    # alternatively, select an individual agent to push or pull
     
-    # non-working code
-    # new_agents = board.fill(key, agents, n_iters=3, pushpullnone_ratios=[2, 0, 0])
-    # print('board after fill\n', board.fill_solved_board(new_agents))
+    # # ie) this below code works
+    # for _ in range(5):
+    #     for i in range(5):
+    #         which_agent = random.randint(key, (1,), 0, 5)[0]
+    #         print('pushing agent: ', which_agent)
+    #         agents[which_agent] = board.push(key, agents[which_agent], agents)
+    #         key, _ = random.split(key)
+    #         print('board after push\n', board.fill_solved_board(agents))
 
+    #     which_agent = random.randint(key, (1,), 0, 2)[0]
+    #     agents[which_agent] = board.pull(key, agents[which_agent], agents)
+    #     key, _ = random.split(key)
+    #     print('board after pull\n', board.fill_solved_board(agents))
 
-    # ie) this below code works
-    for _ in range(5):
-        for i in range(5):
-            which_agent = random.randint(key, (1,), 0, 5)[0]
-            print('pushing agent: ', which_agent)
-            agents[which_agent] = board.push(key, agents[which_agent], agents)
-            key, _ = random.split(key)
-            print('board after push\n', board.fill_solved_board(agents))
+    # is_board_good = np.asarray([np.count_nonzero(nagent.data[:,0]+1)>1 for nagent in agents])
+    # print('is board good? ', np.all(is_board_good))
 
-        which_agent = random.randint(key, (1,), 0, 2)[0]
-        agents[which_agent] = board.pull(key, agents[which_agent], agents)
-        key, _ = random.split(key)
-        print('board after pull\n', board.fill_solved_board(agents))
-
-    is_board_good = np.asarray([np.count_nonzero(nagent.data[:,0]+1)>1 for nagent in agents])
-    print('is board good? ', np.all(is_board_good))
-
-    # OLD - this below code worked in the original version of the code
-    # print(agents[0].agent_locs.data)
-    # training_board = board.return_training_board(key)
-    # solved_board = board.return_solved_board()
-    
-    # print(training_board, '\n')
-    # print(solved_board)
+    # alternatively, run a single command once
+    # board = LSystemBoardGen(rows=5, cols=5, num_agents=5)
+    # print('board after fill\n', board.return_training_board(key))
