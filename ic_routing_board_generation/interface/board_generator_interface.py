@@ -10,7 +10,7 @@ from ic_routing_board_generation.board_generator.board_generator_random_walk_rb 
 from ic_routing_board_generation.board_generator.board_generator_wfc_oj import \
     WFCBoard
 
-from ic_routing_board_generation.board_generator.lsystem_board import \
+from ic_routing_board_generation.board_generator.lsystems import \
     LSystemBoardGen
 
 

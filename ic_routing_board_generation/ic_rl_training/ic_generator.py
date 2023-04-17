@@ -195,7 +195,7 @@ class ICGenerators(Generator):
             board_class = BoardGenerator.get_board_generator(
                 board_enum=self.board_generator)
             board = board_class(self.grid_size, self.grid_size, self.num_agents)
-            pins = board.return_training_board()
+            pins = board.return_training_board(key)
             grid = jnp.array(pins, int)
 
             starts_flat, targets_flat = get_heads_and_targets(pins)
