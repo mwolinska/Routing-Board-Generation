@@ -135,6 +135,7 @@ class Mitm:
                 # We sample with weights proportional to what they are in _good_paths()
                 step, = random.choices(
                     [self.L, self.R, self.T], [1 / self.lr_price, 1 / self.lr_price, 2 / self.t_price])
+                #print("step is: ", step)
                 path.append(step)
                 x, y = x + dx, y + dy
                 if (x, y) in seen:
@@ -181,6 +182,7 @@ class Mitm:
         seen.add((x, y))  # Remember cleaning this up (A)
         x1, y1 = x + dx, y + dy
         if (x1, y1) not in seen:
+            #print("budget is: ", budget)
             for path, end in self._good_paths(
                     x1, y1, -dy, dx, budget - self.lr_price, seen):
                 yield (self.L,) + path, end

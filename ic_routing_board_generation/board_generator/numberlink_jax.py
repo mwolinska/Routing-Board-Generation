@@ -141,7 +141,7 @@ def unrotate(x, y, dx, dy):
 
 
 class Mitm:
-    def __init__(self, lr_price, t_price, key):
+    def __init__(self, lr_price, t_price, key, h=10, w=10):
         self.lr_price = lr_price
         self.t_price = t_price
         #TODO: see where these are used, might be some issues with these
@@ -150,10 +150,19 @@ class Mitm:
         #self.list = []
         self.T, self.L, self.R = 0, 1, 2
         self.key = key
+        self.h = h
+        self.w = w
 
     def prepare(self, budget):
+        # NOTE: self.grid_size is the size of the mitm grid, not the
+        # size of the final board. Can probably optimise the size of the grid,
+        # but for now going to use an upper bound.
+        self.grid_size = 4 * max(self.h, self.w) + budget + 1
+
         dx0, dy0 = 0, 1
-        good_paths = self._good_paths(0, 0, dx0, dy0, budget)
+        # Create zeros array of shape (grid_size, grid_size)
+        start_grid = jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.int32)
+        good_paths = self._good_paths(0, 0, dx0, dy0, budget, start_grid)
 
         # Initialize the list and inv arrays
         max_paths = good_paths.shape[0]
@@ -177,46 +186,6 @@ class Mitm:
         # but could be an issue with self. stuff
         self.list, self.inv = jax.lax.fori_loop(0, max_paths, loop_body, (self.list, self.inv))
         return self.list, self.inv
-
-    def rand_path(self, xn, yn, dxn, dyn, key):
-        """ Returns a path, starting at (0,0) with dx,dy = (0,1)
-            and ending at (xn,yn) with direction (dxn, dyn) """
-
-        def loop_condition(state):
-            _, _, _, _, joined_test = state
-            return jnp.logical_not(joined_test)
-
-        def loop_body(state):
-            key, list_idx, path2_idx, _, _ = state
-
-            key, subkey = jrandom.split(key)
-            list_idx = jrandom.randint(subkey, (1,), 0, len(self.list))
-            path, x, y, dx, dy = self.list[list_idx]
-
-            path2s = self._lookup(dx, dy, xn - x, yn - y, dxn, dyn)
-
-            def path2s_nonempty(_):
-                key, subkey = jrandom.split(key)
-                path2_idx = jrandom.randint(subkey, (1,), 0, path2s.size)
-                path2 = path2s[path2_idx]
-                joined = Path(path + path2)
-                joined_test = joined.test()
-                return path2_idx, path2, joined_test
-
-            def path2s_empty(_):
-                return 0, jnp.zeros((0,), dtype=jnp.int32), False
-
-            path2_idx, path2, joined_test = jax.lax.cond(path2s.size > 0, path2s_nonempty, path2s_empty, operand=None)
-            return key, list_idx, path2_idx, path2s, joined_test
-
-        init_state = (key, 0, 0, jnp.zeros((0,), dtype=jnp.int32), False)
-        _, list_idx, path2_idx, path2s, _ = jax.lax.while_loop(loop_condition, loop_body, init_state)
-
-        path, x, y, dx, dy = self.list[list_idx]
-        path2 = path2s[path2_idx]
-        joined = Path(path + path2)
-
-        return joined
 
     def rand_path2(self, xn, yn, dxn, dyn, key):
         """ Like rand_path, but uses a combination of a fresh random walk and
@@ -302,37 +271,32 @@ class Mitm:
         return jax.lax.cond(joined.test_loop(), lambda _: joined, lambda _: self.rand_loop(clock, key), operand=None)
 
 
-    def _good_paths(self, x, y, dx, dy, budget, seen=None):
-        def init_seen(_):
-            return jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.bool_)
-
-        def pass_seen(_):
-            return seen
-
-        seen = jax.lax.cond(seen == 0, init_seen, pass_seen, operand=None)
+    def _good_paths(self, x, y, dx, dy, budget, seen):
+        # Note: changed this so that we call this with seen being a jnp array of zeros
+        # to start. Shouldn't be a problem, but could be.
 
         def generate_paths(x, y, dx, dy, budget, seen):
             def budget_negative(_):
                 return jnp.zeros((0, 1, 4), dtype=jnp.int32)
 
             def budget_non_negative(_):
-                seen = jax.ops.index_update(seen, (x, y), True)
+                seen = seen.at[(x, y)].set(True)
                 x1, y1 = x + dx, y + dy
 
                 def not_seen_true(_):
-                    seen_L = jax.ops.index_update(seen, (x1, y1), True)
+                    seen_L = seen.at[(x1, y1)].set(True)
                     seen_R = seen_L
                     paths_L = generate_paths(x1, y1, -dy, dx, budget - self.lr_price, seen_L)
                     paths_R = generate_paths(x1, y1, dy, -dx, budget - self.lr_price, seen_R)
                     path_LR = jnp.concatenate([paths_L, paths_R], axis=0)
-                    path_LR = jax.ops.index_update(path_LR, jax.ops.index[:, 0, :], jnp.array([self.L, self.R]))
+                    path_LR = path_LR.at[:, 0, :].set(jnp.array([self.L, self.R]))
 
                     x2, y2 = x1 + dx, y1 + dy
 
                     def not_seen_true_inner(_):
-                        seen_T = jax.ops.index_update(seen, (x2, y2), True)
+                        seen_T = seen.at[(x2, y2)].set(True)
                         paths_T = generate_paths(x2, y2, dx, dy, budget - self.t_price, seen_T)
-                        path_T = jax.ops.index_update(paths_T, jax.ops.index[:, 0, :], jnp.array([self.T]))
+                        path_T = paths_T.at[:, 0, :].set(jnp.array([self.T]))
 
                         return jnp.concatenate([path_LR, path_T], axis=0)
 
@@ -347,7 +311,7 @@ class Mitm:
                     return jnp.zeros((0, 1, 4), dtype=jnp.int32)
 
                 paths = jax.lax.cond(not seen[x1, y1], not_seen_true, not_seen_false, operand=None)
-                paths = jax.ops.index_update(paths, jax.ops.index[:, :, 2:], jnp.array([dx, dy]))
+                paths = paths.at[:, :, 2:].set(jnp.array([dx, dy]))
 
                 return paths
 
@@ -384,14 +348,14 @@ class NumberLinkBoard(AbstractBoard):
         # TODO: include check that width and height are each greater than 3
     
 
-    def __call__(self, key: chex.PRNGKey) -> jnp.Array:
+    def __call__(self, key: chex.PRNGKey) -> jnp.array:
         """
         Generate a random, unsolved NumberLink board.
         """
         board = self.main(key)
         return board
     
-    def main(self, key: chex.PRNGKey) -> jnp.Array:
+    def main(self, key: chex.PRNGKey) -> jnp.array:
         mitm = Mitm(lr_price=2, t_price=1, key=key)
         # This might be ok: preparation should be constant 
         mitm.prepare(min(20, max(self.h, 6)))
