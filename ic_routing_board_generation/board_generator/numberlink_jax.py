@@ -43,7 +43,6 @@ import chex
 import jax.numpy as jnp
 import jax.random as jrandom
 
-
 #TODO: test whether this works!!
 #Think this might be done?
 class Path:
@@ -280,12 +279,13 @@ class Mitm:
                 return jnp.zeros((0, 1, 4), dtype=jnp.int32)
 
             def budget_non_negative(_):
-                seen = seen.at[(x, y)].set(True)
+                seen_updated = seen.at[(x, y)].set(True)
                 x1, y1 = x + dx, y + dy
 
                 def not_seen_true(_):
-                    seen_L = seen.at[(x1, y1)].set(True)
+                    seen_L = seen_updated.at[(x1, y1)].set(True)
                     seen_R = seen_L
+                    print("budget is: ", budget)
                     paths_L = generate_paths(x1, y1, -dy, dx, budget - self.lr_price, seen_L)
                     paths_R = generate_paths(x1, y1, dy, -dx, budget - self.lr_price, seen_R)
                     path_LR = jnp.concatenate([paths_L, paths_R], axis=0)
@@ -294,7 +294,7 @@ class Mitm:
                     x2, y2 = x1 + dx, y1 + dy
 
                     def not_seen_true_inner(_):
-                        seen_T = seen.at[(x2, y2)].set(True)
+                        seen_T = seen_updated.at[(x2, y2)].set(True)
                         paths_T = generate_paths(x2, y2, dx, dy, budget - self.t_price, seen_T)
                         path_T = paths_T.at[:, 0, :].set(jnp.array([self.T]))
 
@@ -303,14 +303,14 @@ class Mitm:
                     def not_seen_false_inner(_):
                         return path_LR
 
-                    path = jax.lax.cond(not seen[x2, y2], not_seen_true_inner, not_seen_false_inner, operand=None)
+                    path = jax.lax.cond(jax.lax.eq(seen_updated[x2, y2], 0), not_seen_true_inner, not_seen_false_inner, operand=None)
 
                     return path
 
                 def not_seen_false(_):
                     return jnp.zeros((0, 1, 4), dtype=jnp.int32)
 
-                paths = jax.lax.cond(not seen[x1, y1], not_seen_true, not_seen_false, operand=None)
+                paths = jax.lax.cond(jax.lax.eq(seen_updated[x1, y1], 0), not_seen_true, not_seen_false, operand=None)
                 paths = paths.at[:, :, 2:].set(jnp.array([dx, dy]))
 
                 return paths

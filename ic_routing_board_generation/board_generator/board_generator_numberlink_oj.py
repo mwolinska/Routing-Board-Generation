@@ -109,18 +109,6 @@ class Mitm:
             self.list.append((path, x, y, dx, dy))
             self.inv[x, y, dx, dy].append(path)
 
-    def rand_path(self, xn, yn, dxn, dyn):
-        """ Returns a path, starting at (0,0) with dx,dy = (0,1)
-            and ending at (xn,yn) with direction (dxn, dyn) """
-        while True:
-            path, x, y, dx, dy = random.choice(self.list)
-            path2s = self._lookup(dx, dy, xn - x, yn - y, dxn, dyn)
-            if path2s:
-                path2 = random.choice(path2s)
-                joined = Path(path + path2)
-                if joined.test():
-                    return joined
-
     def rand_path2(self, xn, yn, dxn, dyn):
         """ Like rand_path, but uses a combination of a fresh random walk and
             the lookup table. This allows for even longer paths. """
@@ -173,6 +161,9 @@ class Mitm:
                     return joined
 
     def _good_paths(self, x, y, dx, dy, budget, seen=None):
+        """
+        Returns a list of paths that end at (x,y) with direction (dx,dy)
+        """
         if seen is None:
             seen = set()
         if budget >= 0:
