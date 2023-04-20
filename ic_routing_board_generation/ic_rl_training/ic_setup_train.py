@@ -25,8 +25,10 @@ import optax
 from omegaconf import DictConfig
 
 from ic_routing_board_generation.ic_rl_training.ic_generator import \
-    ICGenerators, UniformRandomGenerator, JaxRandomWalkGenerator
-from ic_routing_board_generation.interface.board_generator_interface import \
+    ICGenerators, UniformRandomGenerator
+from ic_routing_board_generation.ic_rl_training.dataset_generator import \
+    BoardDatasetGenerator
+from ic_routing_board_generation.interface.board_generator_interface_jax import \
     BoardName
 from jumanji.env import Environment
 from jumanji.environments import (
@@ -146,19 +148,23 @@ def setup_logger(cfg: DictConfig) -> Logger:
 def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> Environment:
     # env: Environment = jumanji.make(cfg.env.registered_version)
     # TODO (RL): remove ic_generator parameter and return to jumanji.make, remove imports
-    # TODO (MW): add generator
-    # generator = ICGenerators(
-    #     grid_size=cfg.env.ic_board.grid_size,
-    #     num_agents=cfg.env.ic_board.num_agents,
-    #     board_generator=cfg.env.ic_board.board_name,
-    # )
-    # generator = UniformRandomGenerator(
-    #     grid_size=cfg.env.ic_board.grid_size,
-    #     num_agents=cfg.env.ic_board.num_agents,
-    #     # board_generator=cfg.env.ic_board.board_name,
-    # )
-    generator = JaxRandomWalkGenerator(grid_size=cfg.env.ic_board.grid_size,
-        num_agents=cfg.env.ic_board.num_agents)
+    if cfg.env.ic_board.generation_type == "offline":
+        print("offline")
+        generator = BoardDatasetGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+            board_generator=cfg.env.ic_board.board_name,
+        )
+    elif cfg.env.ic_board.generation_type == "online":
+        print("online")
+        generator = ICGenerators(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+            board_generator=cfg.env.ic_board.board_name,
+        )
+    else:
+        raise ValueError("please enter valid generation type online or offline")
+
     env = Connector(generator=generator)
     if isinstance(env, Connector):
         env = MultiToSingleWrapper(env)

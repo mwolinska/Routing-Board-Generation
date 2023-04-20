@@ -2,9 +2,10 @@ name: connector
 registered_version: Connector-v0
 
 ic_board:
-    board_name: lsystems_standard
+    board_name: bfs_base
     grid_size: 10
     num_agents: 5
+    generation_type: offline
 
 network:
     transformer_num_blocks: 4

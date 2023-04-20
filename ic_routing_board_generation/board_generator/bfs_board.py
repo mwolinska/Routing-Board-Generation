@@ -1,8 +1,12 @@
 import random
 from typing import List, Tuple, Union, Optional, Dict, Callable
 import numpy as np
+from numpy import ndarray
+
 from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.grid import Grid
+from ic_routing_board_generation.board_generator.utils import \
+    get_heads_and_targets
 
 
 class BFSBoard(AbstractBoard):
@@ -34,6 +38,30 @@ class BFSBoard(AbstractBoard):
         self._wires_on_board = 0
         self.clip_method_dict = self.get_clip_method_dict()
         # self.fill_board(verbose=False)
+
+    def generate_boards(self, number_of_boards: int) -> List[ndarray]:
+        board_list = []
+        heads_list = []
+        targets_list = []
+        for _ in range(number_of_boards):
+            training_board = None
+            none_counter = 0
+            while training_board is None:
+                self.reset_board()
+                _, training_board, num_agents = self.fill_board(verbose=False)
+
+                heads, targets = get_heads_and_targets(training_board)
+                # board = self.return_training_board()
+                if num_agents != self.num_agents:
+                    training_board = None
+                none_counter += 1
+                if none_counter == 100:
+                    raise ValueError("Failed to generate board 100 times")
+            board_list.append(training_board)
+            heads_list.append(heads)
+            targets_list.append(targets)
+
+        return board_list, heads_list, targets_list
 
     def pick_start_end(self, min_dist: Optional[int] = None) -> Tuple:
         """Picks a random start and end point for a wire.

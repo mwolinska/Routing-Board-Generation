@@ -21,7 +21,7 @@ import jax.numpy as jnp
 
 from ic_routing_board_generation.board_generator.utils import \
     get_heads_and_targets
-from ic_routing_board_generation.interface.board_generator_interface import \
+from ic_routing_board_generation.interface.board_generator_interface_jax import \
     BoardGenerator, BoardName
 from jumanji.environments.routing.connector.types import Agent, State
 from jumanji.environments.routing.connector.utils import get_position, get_target

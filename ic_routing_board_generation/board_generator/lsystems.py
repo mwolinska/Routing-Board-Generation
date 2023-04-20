@@ -9,7 +9,7 @@ from ic_routing_board_generation.board_generator.deque import (
     stack_pop_head, 
     stack_pop_tail)
 
-from typing import List, NamedTuple, SupportsFloat as Numeric
+from typing import List, NamedTuple, SupportsFloat as Numeric, Tuple
 
 
 class LSystemBoardGen:
@@ -45,7 +45,7 @@ class LSystemBoardGen:
         """Given `key`choose a random growth or shrink direction for an Agent."""
         return random.randint(key, (1,), -1, 1)[0]
     
-    def find_empty_neighbours(self, loc: tuple, agents: list[Agent]) -> np.ndarray:
+    def find_empty_neighbours(self, loc: Tuple[int, int], agents: List[Agent]) -> np.ndarray:
         """Given a location tuple, find the empty neighbours of a board location.
         
         loc: a tuple of shape 1x2.
@@ -75,7 +75,7 @@ class LSystemBoardGen:
         grown_agent = jax.lax.cond(side == 0, lambda _: stack_push_head(agent, loc), lambda _: stack_push_tail(agent, loc), None)
         return grown_agent
 
-    def push(self, key: random.PRNGKey, agent: Agent, agents: list[Agent]) -> Agent:
+    def push(self, key: random.PRNGKey, agent: Agent, agents: List[Agent]) -> Agent:
         """Pushes (grows) an Agent in a random direction."""
         side = self.heads_or_tails(key)                                                                                                 # stochastic
         pointer = jax.lax.select(side == 0, (agent.head_insertion_index-1)%self.max_size, (agent.tail_insertion_index+1)%self.max_size) # deterministic
@@ -93,7 +93,7 @@ class LSystemBoardGen:
     def do_nothing(self, side: int, agent: Agent) -> Agent:
         return agent
 
-    def pull(self, key:random.PRNGKey, agent: Agent, agents: list[Agent]) -> Agent:
+    def pull(self, key:random.PRNGKey, agent: Agent, agents: List[Agent]) -> Agent:
         """Pulls (shrinks) the agent in a random direction."""
         side = self.heads_or_tails(key)                                                                                                 # stochastic
         agent_length = np.count_nonzero(agent.data[:,0]+1)   
