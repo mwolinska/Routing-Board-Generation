@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import collections
-import json
-import logging
-from collections import defaultdict
-from itertools import chain
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional
 
 import chex
 import jax
@@ -24,9 +19,18 @@ import jax.numpy as jnp
 import optax
 from omegaconf import DictConfig
 
-from ic_routing_board_generation.ic_rl_training.ic_generator import \
-    ICGenerators, UniformRandomGenerator, JaxRandomWalkGenerator
-from ic_routing_board_generation.interface.board_generator_interface import \
+
+from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
+    PickleLogger
+from ic_routing_board_generation.ic_rl_training.offline_generation.dataset_generator import \
+    BoardDatasetGenerator
+from ic_routing_board_generation.ic_rl_training.online_generators.random_seed_generator import \
+    RandomSeedGenerator
+from ic_routing_board_generation.ic_rl_training.online_generators.sequential_random_walk_generator import \
+    JaxRandomWalkGenerator
+from ic_routing_board_generation.ic_rl_training.online_generators.uniform_generator import \
+    UniformRandomGenerator
+from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardName
 from jumanji.env import Environment
 from jumanji.environments import (
@@ -58,60 +62,6 @@ from jumanji.training.networks.actor_critic import ActorCriticNetworks
 from jumanji.training.networks.protocols import RandomPolicy
 from jumanji.training.types import ActingState, TrainingState
 from jumanji.wrappers import MultiToSingleWrapper, VmapAutoResetWrapper
-
-class PickleLogger(Logger):
-    """Logs to terminal."""
-
-    def __init__(
-        self, name: Optional[str] = None, save_checkpoint: bool = False
-    ) -> None:
-        super().__init__(save_checkpoint=save_checkpoint)
-        if name:
-            logging.info(f"Experiment: {name}.")
-        self.file_name = "martas_test_file.json"
-        self.training_log = {}
-        self.eval_log_greedy = {}
-        self.eval_log_stochastic = {}
-        self.episode_counter = 0
-
-    def _format_values(self, data: Dict[str, Any]) -> str:
-        return {key: float(value) for key,value in sorted(data.items())}
-
-    def return_eval_dict(self):
-        return {key: (value / self.episode_counter) for key, value in self.eval_log_greedy.items()}
-
-    def write(
-        self,
-        data: Dict[str, Any],
-        label: Optional[str] = None,
-        env_steps: Optional[int] = None,
-    ) -> None:
-
-        self.episode_counter += 1
-
-        data = self._format_values(data)
-        if label == "train":
-            self.training_log = self._update_dictionary(self.training_log, data)
-        elif label == "eval_stochastic":
-            self.eval_log_stochastic = self._update_dictionary(self.eval_log_stochastic, data)
-        elif label == "eval_greedy":
-            self.eval_log_greedy = self._update_dictionary(self.eval_log_greedy, data)
-
-    def _update_dictionary(self, dictionary_to_update, new_dictionary):
-        temp_dict = collections.defaultdict(list)
-        if not dictionary_to_update:
-            # temp_dict = new_dictionary
-            for key, value in new_dictionary.items():
-                temp_dict[key] = [value]
-        else:
-            temp_dict = collections.defaultdict(list)
-            for key, value in dictionary_to_update.items():
-                temp_dict[key] = value + [new_dictionary[key]]
-            # temp_dict = collections.defaultdict(int)
-            # for key, value in chain(dictionary_to_update.items(), new_dictionary.items()):
-            #     temp_dict[key] += value
-
-        return temp_dict
 
 
 def setup_logger(cfg: DictConfig) -> Logger:
@@ -145,20 +95,35 @@ def setup_logger(cfg: DictConfig) -> Logger:
 
 def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> Environment:
     # env: Environment = jumanji.make(cfg.env.registered_version)
-    # TODO (RL): remove ic_generator parameter and return to jumanji.make, remove imports
-    # TODO (MW): add generator
-    # generator = ICGenerators(
-    #     grid_size=cfg.env.ic_board.grid_size,
-    #     num_agents=cfg.env.ic_board.num_agents,
-    #     board_generator=cfg.env.ic_board.board_name,
-    # )
-    # generator = UniformRandomGenerator(
-    #     grid_size=cfg.env.ic_board.grid_size,
-    #     num_agents=cfg.env.ic_board.num_agents,
-    #     # board_generator=cfg.env.ic_board.board_name,
-    # )
-    generator = JaxRandomWalkGenerator(grid_size=cfg.env.ic_board.grid_size,
-        num_agents=cfg.env.ic_board.num_agents)
+    if cfg.env.ic_board.generation_type == "offline":
+        generator = BoardDatasetGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+            board_generator=cfg.env.ic_board.board_name,
+        )
+    elif cfg.env.ic_board.generation_type == "online_uniform":
+        generator = UniformRandomGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+        )
+    elif cfg.env.ic_board.generation_type == "online_seq_rw":
+        generator = JaxRandomWalkGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+        )
+
+    elif cfg.env.ic_board.generation_type == "online_random_seed":
+        generator = RandomSeedGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+        )
+    elif cfg.env.ic_board.generation_type == "online_parallel_rw":
+        raise NotImplementedError
+    elif cfg.env.ic_board.generation_type == "online_lsystems":
+        raise NotImplementedError
+    else:
+        raise ValueError("Your connector.yml parameters do not exist")
+
     env = Connector(generator=generator)
     if isinstance(env, Connector):
         env = MultiToSingleWrapper(env)

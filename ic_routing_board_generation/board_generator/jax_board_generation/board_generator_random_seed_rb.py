@@ -1,10 +1,6 @@
-from dataclasses import dataclass
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.post_processor_utils  import extend_wires_jax
 #import numpy as np
-from copy import deepcopy
-import random
-from typing import List, Tuple
 
 from jax import Array
 from jax.random import PRNGKey

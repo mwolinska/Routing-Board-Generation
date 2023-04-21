@@ -10,20 +10,14 @@ TODO: Properly reference!!
 Copying stuff from gen.py
 """
 
-import sys
-import random
-import collections
 from copy import deepcopy
-import itertools
-import argparse
 import numpy as np
 import sys
 import collections
-import string
 # from colorama import Fore, Style
 # from colorama import init as init_colorama
 
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 
 
 # Number of tries at adding loops to the grid before redrawing the side paths.
@@ -34,8 +28,8 @@ LOOP_TRIES = 1000
 Functions from mitm
 """
 import random
-from collections import Counter, defaultdict
-import itertools
+from collections import defaultdict
+
 
 # Un
 #T, L, R = range(3)

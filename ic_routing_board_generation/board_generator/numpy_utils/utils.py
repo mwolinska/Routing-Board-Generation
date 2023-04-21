@@ -30,8 +30,8 @@ def get_heads_and_targets(board_layout: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
     
     # convert heads and targets to horizontally stacked jax arrays and transpose
 
-    heads = jnp.array(heads).T
-    targets = jnp.array(targets).T
+    # heads = jnp.array(heads).T
+    # targets = jnp.array(targets).T
 
     return heads, targets
 

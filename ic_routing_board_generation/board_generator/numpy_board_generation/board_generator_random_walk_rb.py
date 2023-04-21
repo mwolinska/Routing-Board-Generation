@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 import numpy as np
 from copy import deepcopy
 import random

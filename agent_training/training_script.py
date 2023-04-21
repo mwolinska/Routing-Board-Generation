@@ -14,7 +14,6 @@
 
 import functools
 import logging
-import pathlib
 from typing import Dict, Tuple
 
 import hydra
@@ -31,8 +30,9 @@ from ic_routing_board_generation.ic_rl_training.ic_setup_train import (
     setup_env,
     setup_evaluators,
     setup_logger,
-    setup_training_state, PickleLogger,
-)
+    setup_training_state, )
+from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
+    PickleLogger
 from jumanji.training.timer import Timer
 from jumanji.training.types import TrainingState
 

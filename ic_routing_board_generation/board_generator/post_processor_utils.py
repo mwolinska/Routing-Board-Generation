@@ -1,15 +1,8 @@
 import random
-import time
-from dataclasses import dataclass
-from typing import List, Union, Dict, Tuple, Optional, Sequence
+from typing import List, Tuple
 import numpy as np
 from copy import deepcopy
-from .bfs_board import BFSBoard
-from .board_generator_random_walk_rb import RandomWalkBoard
-from .board_generator_wfc_oj import WFCBoard
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from .lsystem_board import LSystemBoardGen
-from .board_generator_data_model import Position
+from ic_routing_board_generation.board_generator.numpy_data_model.board_generator_data_model import Position
 
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
