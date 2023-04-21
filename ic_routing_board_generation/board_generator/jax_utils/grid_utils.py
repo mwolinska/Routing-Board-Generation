@@ -168,6 +168,7 @@ class Grid:
 
         return queue, visited, board
 
+
     def update_queue_visited_loop(self, j, curr_pos, curr_int, row, col, visited, queue, board, use_empty=False):
         # Calculate new position
         new_row = jnp.array(curr_pos, dtype=jnp.int32)[0] + jnp.array(row, dtype=jnp.int32)[j]
@@ -185,10 +186,10 @@ class Grid:
 
         # cond_3 = jax.lax.cond(use_empty, lambda _: (board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY), lambda _: (board[new_row, new_col] == 3 * self.fill_num + PATH), None)
 
-        cond_3 = jnp.logical_or(jnp.logical_and(use_empty,
-                                                jnp.logical_or((board[new_row, new_col] == 3 * self.fill_num + PATH),
-                                                               (board[new_row, new_col] == EMPTY))),
-                                jnp.logical_and(~use_empty, (board[new_row, new_col] == 3 * self.fill_num + PATH)))
+        cond_3 = jax.lax.cond(use_empty, lambda _: jnp.logical_or((board[new_row, new_col] == 3 * self.fill_num + PATH),
+                                                                  (board[new_row, new_col] == EMPTY)),
+                              lambda _: (board[new_row, new_col] == 3 * self.fill_num + PATH), None)
+
 
         # cond_4 = (j < 4)
 
@@ -348,10 +349,6 @@ def thin_wire(key: PRNGKey, board: Array, wire_start: Tuple[int, int], wire_end:
 
     count = 0
     for _ in range(max_size):
-        # count += 1
-        # print(f'count is {count}')
-        # print(f'queue is {queue}')
-        # print(f'visited is {visited}')
 
         bfs_stack = (key, wire, board, queue, visited)
         board = bfs_stack[2]
@@ -369,7 +366,6 @@ def thin_wire(key: PRNGKey, board: Array, wire_start: Tuple[int, int], wire_end:
     board = grid.jax_fill_grid(wire, board)
 
     return board
-
 
 def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     """Essentially the same as thin_wire but also uses empty spaces to optimise the wire
@@ -394,8 +390,10 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=wire_end)
 
     # Set start and end in board to the same value as wire
-    board = board.at[wire_start].set(grid.fill_num * 3 + 1)
-    board = board.at[wire_end].set(grid.fill_num * 3 + 1)
+    board = board.at[wire_start[0],wire_start[1]].set(grid.fill_num * 3 + 1)
+
+    board = board.at[wire_end[0],wire_end[1]].set(grid.fill_num * 3 + 1)
+
 
     queue = jnp.zeros(max_size, dtype=jnp.int32)
     visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
@@ -403,8 +401,6 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     # Update queue to reflect the start position
     queue = queue.at[grid.convert_tuple_to_int(wire.start)].set(1)
 
-    # Update visited to reflect the start position. This is done to avoid the start position being visited again.
-    # visited = visited.at[grid.convert_tuple_to_int(wire.start)].set(grid.convert_tuple_to_int(wire.start))
 
     count = 0
     for _ in range(max_size):
@@ -421,6 +417,7 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     curr_pos = grid.convert_tuple_to_int(wire.end)
     wire = grid.get_path((wire, visited, curr_pos))
     board = grid.remove_path(board, wire)
+
     board = grid.jax_fill_grid(wire, board)
 
     return board
@@ -428,41 +425,66 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
 
 if __name__ == '__main__':
     # Example Usage
-    boards = [jnp.array([[0, 0, 0, 0, 0], [0, 3, 1, 1, 1], [0, 1, 1, 0, 1], [0, 1, 1, 1, 1], [0, 0, 0, 1, 2]],
-                        dtype=jnp.int32),
-              jnp.array([[0., 0., 0., 0., 0.], [1., 1., 1., 1., 0.], [1., 1., 1., 1., 1.], [1., 1., 1., 2., 1.],
-                         [1., 1., 3., 1., 1.]],
-                        dtype=jnp.int32)]
+    # boards = [jnp.array([[0, 0, 0, 0, 0], [0, 3, 1, 1, 1], [0, 1, 1, 0, 1], [0, 1, 1, 1, 1], [0, 0, 0, 1, 2]],
+    #                     dtype=jnp.int32),
+    #           jnp.array([[0., 0., 0., 0., 0.], [1., 1., 1., 1., 0.], [1., 1., 1., 1., 1.], [1., 1., 1., 2., 1.],
+    #                      [1., 1., 3., 1., 1.]],
+    #                     dtype=jnp.int32)]
+    #
+    # for i, board in enumerate(boards):
+    #     print(f'Original board {i + 1}: \n {board} \n')
+    #
+    #     wire_num = 0  # Wire number x, is x s.t. wire x is encoded as 3 * x + 1.
+    #
+    #     wire_start, wire_end = get_start_end_positions(board, wire_num)
+    #
+    #     seed = random.randint(0, 10000)
+    #
+    #     key = jax.random.PRNGKey(seed)
+    #
+    #     board1 = thin_wire(key, board, wire_start, wire_end, wire_num)
+    #     board2 = optimise_wire(key, board, wire_num)
+    #
+    #     print(f'Board after thinning wire {1}: \n {board1} \n')
+    #     print(f'Board after optimising wire {1}: \n {board2} \n')
+    #
+    # board_2 = jnp.array([[4, 4, 4, 4, 4, 4],
+    #                      [4, 3, 6, 4, 4, 4],
+    #                      [5, 1, 1, 1, 1, 2]], dtype=jnp.int32)
+    #
+    # print(f'Original board 3: \n {board_2} \n')
+    #
+    # for i in list(range(2)):
+    #     wire_num = i
+    #     wire_start, wire_end = get_start_end_positions(board_2, wire_num)
+    #     seed = random.randint(0, 10000)
+    #     key = jax.random.PRNGKey(seed)
+    #     board_2 = thin_wire(key, board_2, wire_start, wire_end, wire_num)
+    #     print(f'Board after thinning wire {i + 1}: \n {board_2} \n')
 
-    # wire_start = (4, 4)
-    # wire_end = (1, 1)
-    for i, board in enumerate(boards):
-        print(f'Original board {i + 1}: \n {board} \n')
+    randy_board = jnp.array([[6, 7, 7, 7, 7, 7, 7, 7, 2, 1],
+                             [4, 7, 0, 0, 0, 0, 0, 7, 0, 1],
+                             [5, 7, 0, 0, 9, 0, 7, 7, 1, 1],
+                             [7, 7, 0, 7, 7, 0, 7, 1, 1, 0],
+                             [7, 0, 7, 7, 0, 0, 7, 1, 0, 0],
+                             [7, 0, 7, 0, 7, 7, 7, 1, 0, 0],
+                             [8, 0, 7, 7, 7, 0, 0, 1, 1, 1],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                             [0, 0, 10, 10, 10, 13, 14, 3, 0, 1],
+                             [0, 11, 10, 0, 12, 15, 0, 1, 1, 1]]
+                            , dtype=jnp.int32)
 
-        wire_num = 0  # Wire number x, is x s.t. wire x is encoded as 3 * x + 1.
+    num_wires = jnp.max(randy_board) // 3
 
-        wire_start, wire_end = get_start_end_positions(board, wire_num)
+    print(f'Original board 4: \n {randy_board} \n')
 
-        seed = random.randint(0, 10000)
-
-        key = jax.random.PRNGKey(seed)
-
-        board1 = thin_wire(key, board, wire_start, wire_end, wire_num)
-        board2 = optimise_wire(key, board, wire_num)
-
-        print(f'Board after thinning wire {1}: \n {board1} \n')
-        print(f'Board after optimising wire {1}: \n {board2} \n')
-
-    board_2 = jnp.array([[4, 4, 4, 4, 4, 4],
-                         [4, 3, 6, 4, 4, 4],
-                         [5, 1, 1, 1, 1, 2]], dtype=jnp.int32)
-
-    print(f'Original board 3: \n {board_2} \n')
-
-    for i in list(range(2)):
+    for i in range(num_wires):
         wire_num = i
-        wire_start, wire_end = get_start_end_positions(board_2, wire_num)
+        # wire_start, wire_end = get_start_end_positions(randy_board, wire_num)
         seed = random.randint(0, 10000)
         key = jax.random.PRNGKey(seed)
-        board_2 = thin_wire(key, board_2, wire_start, wire_end, wire_num)
-        print(f'Board after thinning wire {i + 1}: \n {board_2} \n')
+        # randy_board = thin_wire(key, randy_board, wire_start, wire_end, wire_num)
+        randy_board = optimise_wire(key, randy_board, wire_num)
+        print(f'Board after optimising wire {i + 1}: \n {randy_board} \n')
+
+        # print(f'Board after thinning wire {i + 1}: \n {randy_board} \n')
