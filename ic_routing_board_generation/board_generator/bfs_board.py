@@ -30,10 +30,10 @@ class BFSBoard(AbstractBoard):
         self.empty_board = None
         self.partial_board = None  # board with  (<num_agents) wires filled (only populated if fill is unsuccessful)
         self.unsolved_board = None  # partial board with wires removed (only populated if fill is unsuccessful)
-        self.max_attempts = max_attempts
+        self.max_attempts = max(max_attempts, rows * cols * num_agents)
         self._wires_on_board = 0
         self.clip_method_dict = self.get_clip_method_dict()
-        self.fill_board(verbose=False)
+        # self.fill_board(verbose=False)
 
     def pick_start_end(self, min_dist: Optional[int] = None) -> Tuple:
         """Picks a random start and end point for a wire.
@@ -85,12 +85,15 @@ class BFSBoard(AbstractBoard):
         if not hard_fill:
             assert self.filled, "Cannot populate the grid if the board is not filled!"
             assert len(self.paths) == self.num_agents, "Something's wrong. Number of paths don't match the wires"
-
+        else:
+            assert len(
+                self.paths) == self._wires_on_board, "Something's wrong. Number of paths don't match the wires on board"
         self.shuffle_all()
+
         for k, path in enumerate(self.paths):
-            head = 3*(k+1)-1
-            target = 3*(k+1)
-            route = 3*(k+1)-2
+            head = 3 * (k + 1) - 1
+            target = 3 * (k + 1)
+            route = 3 * (k + 1) - 2
             self.grid.fill_grid(path, str_num=head, fill_num=route, end_num=target)
 
     def remove_routes(self, input_board: Optional[np.ndarray] = None) -> np.ndarray:
@@ -486,7 +489,7 @@ class BFSBoard(AbstractBoard):
                     break
             self.clip(methods[i], num_clips[i])
             self.grid.reset_maze()
-            # Perform the final fill
+        # Perform the final fill
         self.place_wires(verbose=verbose)
         # Perform final check
         threshold_met = self.check_threshold(threshold_dict)

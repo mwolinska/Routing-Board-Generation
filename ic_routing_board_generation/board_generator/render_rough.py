@@ -1,11 +1,16 @@
 # Render boards from env_viewer.py
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from ic_routing_board_generation.visualisation.env_viewer import RoutingViewer
-import numpy as np
-from jax.numpy import asarray
-from bfs_board import BFSBoard
-from typing import Optional, Union
 import os
+import time
+from typing import Optional, Union
+import numpy as np
+from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.board_generator_numberlink_oj import NumberLinkBoard
+from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import RandomWalkBoard
+from ic_routing_board_generation.board_generator.board_generator_wfc_oj import WFCBoard
+from ic_routing_board_generation.board_generator.board_processor_2 import BoardProcessor, BFS_fill, LSystem_fill
+from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
+from ic_routing_board_generation.visualisation.env_viewer import RoutingViewer
 
 
 def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, rows: int, columns: int,
@@ -68,34 +73,58 @@ def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, ro
         viewer.render(asarray(render), save_img=save_img_)
 
 
+def render_tests() -> None:
+    """ Runs a series of tests on the board processors."""
+    generator_list = [RandomWalkBoard, BFSBoard, LSystemBoardGen, NumberLinkBoard, WFCBoard]
+    fill_methods = [None, BFS_fill, LSystem_fill, None, None]
+    for index, generator in enumerate(generator_list):
+        board = generator(10, 10, 10)
+        if fill_methods[index]:
+            fill_methods[index](board)
+        print(board.return_solved_board())
+
+        # Render a solved board
+        render_my_array(board.return_solved_board(), 10, 10, 10, save_img=f'{generator.__name__}_solved_board.png')
+
+        boardprocessor = BoardProcessor(board)
+        print(boardprocessor.get_board_layout())
+        # render the processed board
+        render_my_array(boardprocessor.get_board_layout(), 10, 10, 10,
+                        save_img=f'{generator.__name__}_processed_board.png')
+
+
 if __name__ == '__main__':
     ### Example Usage
 
     ## 1. Render a numpy array
+    render_tests()
 
     # Create the numpy array
-    board_1 = np.array([[0, 2, 2, 2, 2, 2, 2, 2],
-                        [4, 2, 0, 2, 2, 0, 0, 2],
-                        [0, 0, 0, 16, 3, 2, 2, 2],
-                        [0, 12, 11, 14, 14, 0, 8, 10],
-                        [0, 0, 11, 11, 14, 14, 8, 8],
-                        [0, 0, 11, 11, 15, 14, 0, 8],
-                        [0, 0, 11, 13, 5, 5, 5, 8],
-                        [0, 0, 6, 5, 5, 7, 5, 9]])
-
-    # Save it as board_1.png
-    render_my_array(board_1, 10, 8, 8, 500, 500, 'board_1.png')
-
-    # Save it as board_8x8x10.png
-    render_my_array(board_1, 10, 8, 8, 500, 500)
+    # board_1 = np.array([[0, 2, 2, 2, 2, 2, 2, 2],
+    #                     [4, 2, 0, 2, 2, 0, 0, 2],
+    #                     [0, 0, 0, 16, 3, 2, 2, 2],
+    #                     [0, 12, 11, 14, 14, 0, 8, 10],
+    #                     [0, 0, 11, 11, 14, 14, 8, 8],
+    #                     [0, 0, 11, 11, 15, 14, 0, 8],
+    #                     [0, 0, 11, 13, 5, 5, 5, 8],
+    #                     [0, 0, 6, 5, 5, 7, 5, 9]])
+    #
+    # # Save it as board_1.png
+    # render_my_array(board_1, 10, 8, 8, 500, 500, 'board_1.png')
+    #
+    # # Save it as board_8x8x10.png
+    # render_my_array(board_1, 10, 8, 8, 500, 500)
 
     # 2. Render a board object
     # Create a board object
-    board_2 = BFSBoard(num_agents=10, rows=8, columns=8, max_attempts=20)
-    board_2.fill_board_with_clipping(2, 'min_bends', verbose=False)
+    # board_2 = BFSBoard(num_agents=10, rows=8, columns=8, max_attempts=20)
+    # board_2.fill_board_with_clipping(2, 'min_bends', verbose=False)
+
+    board2 = NumberLinkBoard(10, 10, 5)
+    print(board2.return_solved_board())
 
     # Render the solved board and save it as board_2.png
-    render_my_array(board_2, 10, 8, 8, 500, 500, 'board_2.png')
+    render_my_array(board2, 10, 8, 5, 500, 500, 'test_board.png')
 
     # board_2 = np.array([[24, 23, 23, 23, 23, 23, 23, 23],
     #                     [15, 14, 14, 14, 14, 14, 0, 23],
