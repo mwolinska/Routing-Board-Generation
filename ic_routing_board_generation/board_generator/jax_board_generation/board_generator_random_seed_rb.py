@@ -1,5 +1,11 @@
+<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_board_generation/board_generator_random_seed_rb.py
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.post_processor_utils  import extend_wires_jax
+=======
+from dataclasses import dataclass
+from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.post_processor_utils  import extend_wires_jax, training_board_from_solved_board_jax
+>>>>>>> Added features to randomseed generator; single-sided extending, flip-flops:ic_routing_board_generation/board_generator/board_generator_random_seed_rb.py
 #import numpy as np
 
 from jax import Array
@@ -10,8 +16,7 @@ import jax
 from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
 STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
 
-
-#@jax.disable_jit()
+@jax.disable_jit()
 #@jax.jit
 class RandomSeedBoard(AbstractBoard):
     """ The boards are 2D np.ndarrays of wiring routes on a printed circuit board.
@@ -32,11 +37,12 @@ class RandomSeedBoard(AbstractBoard):
         super().__init__(rows, cols, num_agents)
 
         self._rows = rows
-        self.grid_size = rows
         self._cols = cols
-        max_num = jax.lax.select(num_agents> rows*cols/4, jnp.array(rows*cols/4, int), num_agents)
-        self._num_agents = max_num
-        self._wires_on_board = 0
+        self.grid_size = jax.lax.select(rows > cols, rows, cols)
+        self._num_agents = num_agents
+        # Limit the number of wires to number_cells/3 to ensure we can fit them all
+        max_num = jax.lax.select(num_agents > rows*cols/3, jnp.array(rows*cols/3, int), num_agents)
+        self._wires_on_board = max_num
 
 
     #@jax.disable_jit()
@@ -101,67 +107,74 @@ class RandomSeedBoard(AbstractBoard):
             board_layout = board_layout.at[neighbor_pos[0], neighbor_pos[1]].set(output_encoding)
         return board_layout
 
-    def return_extended_board(self, key: PRNGKey, randomness: float = 0.0) -> Array:
+#    def return_extended_board(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True) -> Array:
+#        """ Generate and return an array of the board with the connecting wires zeroed out.
+#
+#        Args:
+#            key (PRNGKey) : Random number generator key
+#            randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
+#            two_sided (bool): True => Wire extension extends both heads and targets.  False => Only targets.
+#
+#        Returns:
+#            (Array) : 2D layout of the board with all wirings encoded
+#        """
+#        board_layout = self.return_seeded_board(key)
+#        board_layout = extend_wires_jax(board_layout, key, randomness, two_sided)
+#        return board_layout
+
+    def return_solved_board(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True) -> Array:
         """ Generate and return an array of the board with the connecting wires zeroed out.
 
         Args:
             key (PRNGKey) : Random number generator key
             randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
+            two_sided (bool): True => Wire extension extends both heads and targets.  False => Only targets.
 
         Returns:
             (Array) : 2D layout of the board with all wirings encoded
         """
         board_layout = self.return_seeded_board(key)
-        board_layout = extend_wires_jax(board_layout, key, randomness)
-        return board_layout
-
-    def return_solved_board(self, key: PRNGKey, randomness: float = 0.0) -> Array:
-        """ Generate and return an array of the board with the connecting wires zeroed out.
-
-        Args:
-            key (PRNGKey) : Random number generator key
-            randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
-
-        Returns:
-            (Array) : 2D layout of the board with all wirings encoded
-        """
-        board_layout = self.return_extended_board(key, randomness)
+        board_layout = extend_wires_jax(board_layout, key, randomness, two_sided)
         return board_layout
 
     #@jax.jit
-    def return_training_board(self, key: PRNGKey, randomness: float = 0.0) -> Array:
+    def return_training_board(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True) -> Array:
         """ Generate and return an array of the board with the connecting wires zeroed out.
 
         Args:
             key (PRNGKey) : Random number generator key
             randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
+            two_sided (bool): True => Wire extension extends both heads and targets.  False => Only targets.
 
         Returns:
             (Array) : 2D layout of the board with all wirings encoded
         """
-        board_layout = self.return_solved_board(key, randomness)
+        board_layout = self.return_solved_board(key, randomness, two_sided)
+        training_board = training_board_from_solved_board_jax(board_layout)
+        """
         rows, cols = board_layout.shape
         for row in range(rows):
             for col in range(cols):
                 cell_encoding = board_layout[row, col]
                 cell_encoding = jax.lax.select((cell_encoding % 3) == PATH, 0, cell_encoding)
                 board_layout.at[row,col].set(cell_encoding)
-        return board_layout
+        """
+        return training_board
 
     #@jax.jit
-    def generate_starts_ends(self, key: PRNGKey, randomness: float = 0.0):
-        """
-        Call generate, take the first and last cells of each wire
+    def generate_starts_ends(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True):
+        """  Call generate, take the first and last cells of each wire
 
         Args:
             key (PRNGKey) : Random number generator key
             randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
+            two_sided (bool): True => Wire extension extends both heads and targets.  False => Only targets.
 
         Returns:
             (Array) : List of starting points, dimension 2 x num_agents
             (Array) : List of target points, dimension 2 x num_agents
         """
-        board = self.return_solved_board(key, randomness)
+        board = self.return_solved_board(key, randomness, two_sided)
 
         def find_positions(wire_id):
             wire_positions = board == 3 * wire_id + POSITION

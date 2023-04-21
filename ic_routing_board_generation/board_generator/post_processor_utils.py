@@ -2,7 +2,12 @@ import random
 from typing import List, Tuple
 import numpy as np
 from copy import deepcopy
-from ic_routing_board_generation.board_generator.numpy_data_model.board_generator_data_model import Position
+from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import RandomWalkBoard
+from ic_routing_board_generation.board_generator.board_generator_wfc_oj import WFCBoard
+from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.lsystems import LSystemBoardGen
+from ic_routing_board_generation.board_generator.board_generator_data_model import Position
 
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
@@ -343,7 +348,7 @@ def verify_wire_validity(board_layout: np.ndarray) -> bool:
             # Don't check empty cells
             if cell_label > 0:
                 # Check whether the cell is a wiring path or a starting/target cell
-                if position_to_cell_type(row, col, board_layout) == PATH:
+                if position_to_cell_type(Position(row, col), board_layout) == PATH:
                     # Wiring path cells should have two neighbors of the same wire
                     if num_wire_neighbors(cell_label, row, col, board_layout) != 2:
                         print(
@@ -766,15 +771,18 @@ INVALID = jnp.array((-999, -999))  # Encoding for an invalid 2D position for lis
 INVALID4 = jnp.array([(-999, -999), (-999, -999), (-999, -999), (-999, -999)]) # Encoding for list of four invalid positions
 
 
-#@jax.disable_jit()
+@jax.disable_jit()
 #@jax.jit
-def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0, max_iterations: int = 1e23) -> Array:
+def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
+                     two_sided: bool = True, max_iterations: int = 1e23) -> Array:
     """ Extend the heads and targets of each wire as far as they can go, preference given to current direction.
         The implementation is done in-place on self.board_layout
 
         Args:
             board_layout (Array): 2D layout of the encoded board (before wire extension)
             key( PRNGKey): a random key to use for randomly selecting directions (as needed)
+            randomness (float): How randomly to extend the wires, 0=>Keep same direction if possible, 1=>Random
+            two_sided (bool): True => Wire extension extends both heads and targets.  False => Only targets.
 
         Returns:
             (Array): 2D layout of the encoded board (after wire extension)
@@ -792,8 +800,16 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
     def while_body(carry):
         prev_layout, board_layout, key = carry
         #print(board_layout)
-        # Make a copy of the board_layout to check if it has changed
-        prev_layout = board_layout.at[0, 0].add(0) # Like a deepcopy
+
+        # Randomly flip/flop the board between iterations to remove any directional bias.
+        key, flipkey, flopkey = jax.random.split(key, 3)
+        do_flip = jax.random.choice(flipkey, jnp.array([True, False]))
+        do_flop = jax.random.choice(flopkey, jnp.array([True, False]))
+        board_layout = jax.lax.select(do_flip, board_layout[::-1, :], board_layout)
+        board_layout = jax.lax.select(do_flop, board_layout[:, ::-1], board_layout)
+
+        # Make a copy of the board_layout to check if it changes
+        prev_layout = board_layout.at[0, 0].add(0)  # Like a deepcopy
         for row in range(rows):
             for col in range(cols):
                 # Get the list of neighbors available to extend to.
@@ -815,8 +831,9 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
                 # If the current cell is not a head or target, it's not extendable,
                 # so change everything in the list to INVALID
                 cell_type = position_to_cell_type_jax(current_pos, board_layout)
-                poss_extension_list = jax.lax.select((cell_type == STARTING_POSITION) | (cell_type == TARGET),
-                                                     poss_extension_list, INVALID4)
+                is_extendable = (two_sided & ((cell_type == STARTING_POSITION) | (cell_type == TARGET))) | \
+                                (~two_sided & (cell_type == TARGET))
+                poss_extension_list = jax.lax.select(is_extendable, poss_extension_list, INVALID4)
 
                 # If there are no valid options to extend to, stop extending
                 stop_extension = jnp.array_equal(poss_extension_list, INVALID4)
@@ -866,6 +883,9 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
                 board_layout = board_layout.at[current_pos[0], current_pos[1]].add(cell_type_offset)
                 # print(board_layout)
 
+        # Undo random flip/flopping to compare to prev_layout
+        board_layout = jax.lax.select(do_flip, board_layout[::-1, :], board_layout)
+        board_layout = jax.lax.select(do_flop, board_layout[:, ::-1], board_layout)
         # For jax.lax.while_loop
         carry = (prev_layout, board_layout, key)
         return carry
@@ -945,7 +965,7 @@ def get_neighbors_same_wire_jax(input_pos: jnp.array, board_layout: Array) -> jn
 
 #@jax.jit
 # This method is used by the extend_wires_jax method
-def num_wire_adjacencies_jax(input_pos: jnp.array, wire_num: int, board_layout: Array) -> Array:
+def num_wire_adjacencies_jax(input_pos: jnp.array, wire_num: Array, board_layout: Array) -> Array:
     """ Returns the number of cells adjacent to cell which belong to the wire specified by wire_num.
 
         Args:
@@ -978,7 +998,7 @@ def get_open_adjacent_cells_jax(input_pos: jnp.array, board_layout: Array) -> jn
     """ Returns a list of open cells adjacent to the input cell.
 
         Args:
-            input_pos (Tuple[int, int]): The 2D position of the input cell to search adjacent to.
+            input_pos (Array, Tuple[int, int]): The 2D position of the input cell to search adjacent to.
             board_layout (Array): 2D layout of the board with wires encoded
 
         Returns:
@@ -1017,11 +1037,11 @@ def position_to_wire_num_jax(position: jnp.array, board_layout: Array) -> Array:
     """ Returns the wire number of the given cell position
 
         Args:
-            position (jnp.array): 2D tuple of the [row, col] position
+            position (jnp.array[int, int]): 2D tuple of the [row, col] position
             board_layout (Array): 2D layout of the board with wires encoded
 
         Returns:
-            (Array) : The wire number that the cell belongs to.
+            (int) : The wire number that the cell belongs to.
                     Returns -1 if not part of a wire or out-of-bounds.
     """
     row, col = position[0], position[1]
@@ -1033,17 +1053,19 @@ def position_to_wire_num_jax(position: jnp.array, board_layout: Array) -> Array:
 
 
 #@jax.jit
-def cell_encoding_to_wire_num_jax(cell_encoding: jnp.int32) -> jnp.int32:
+def cell_encoding_to_wire_num_jax(cell_encoding: Array) -> Array:
     """ Returns the wire number of the given cell value
 
         Args:
-            cell_encoding (jnp.int32) : the value of the cell in self.layout
+            cell_encoding (int) : the value of the cell in self.layout
 
         Returns:
-            (jnp.int32) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
     """
-    output = jax.lax.select(cell_encoding == 0, -1, (cell_encoding - 1) // 3)
+    output = jax.lax.select(cell_encoding == 0, -1, int((cell_encoding - 1) // 3))
     return output
+
+
 
 
 #@jax.jit
@@ -1059,7 +1081,7 @@ def position_to_cell_type_jax(position: jnp.array, board_layout: Array) -> Array
             board_layout (Array): 2D layout of the encoded board
 
         Returns:
-            (Array) : The type of cell (0-3) as detailed above.
+            (int) : The type of cell (0-3) as detailed above.
     """
     cell_encoding = board_layout[position[0], position[1]]
     cell_type = jax.lax.select(cell_encoding == 0, cell_encoding, ((cell_encoding - 1) % 3) + 1)
@@ -1083,3 +1105,49 @@ def training_board_from_solved_board_jax(board_layout: Array) -> Array:
             new_encoding = jax.lax.select((old_encoding % 3) == PATH, 0, old_encoding)
             board_layout = board_layout.at[row, col].set(new_encoding)
     return board_layout
+
+
+#TODO JAXIFY
+def count_detours_jax(board_layout: Array, count_current_wire: bool = False) -> jnp.array:
+    """ Returns the number of wires that have to detour around a head or target cell.
+
+        Args:
+            board_layout (Array): 2D layout of the board with wires encoded
+            count_current_wire (bool): Should we count wires that wrap around their own heads/targets?
+                                            (default = False)
+
+        Returns:
+            (jnp.array(int)) : The number of wires that have to detour around a head or target cell.
+    """
+    rows, cols = board_layout.shape
+    num_detours = 0
+    for x in range(rows):
+        for y in range(cols):
+            cell_type = position_to_cell_type(Position(x, y), board_layout)
+            if (cell_type != STARTING_POSITION) and (cell_type != TARGET):
+                continue
+            current_wire = position_to_wire_num(Position(x, y), board_layout)
+            #
+            above = board_layout[:x, y]
+            above = [cell_label_to_wire_num(cell_label) for cell_label in above if cell_label != 0]
+            if not count_current_wire:
+                above = [wire_num for wire_num in above if wire_num != current_wire]
+            below = board_layout[x + 1:, y]
+            below = [cell_label_to_wire_num(cell_label) for cell_label in below if cell_label != 0]
+            if not count_current_wire:
+                below = [wire_num for wire_num in below if wire_num != current_wire]
+            common = (set(above) & set(below))
+            num_detours += len(common)
+            #
+            left = board_layout[x, :y].tolist()
+            left = [cell_label_to_wire_num(cell_label) for cell_label in left if cell_label != 0]
+            if not count_current_wire:
+                left = [wire_num for wire_num in left if wire_num != current_wire]
+            right = board_layout[x, y+1:].tolist()
+            right = [cell_label_to_wire_num(cell) for cell in right if cell != 0]
+            if not count_current_wire:
+                right = [wire_num for wire_num in right if wire_num != current_wire]
+            common = (set(right) & set(left))
+            num_detours += len(common)
+    return num_detours
+
