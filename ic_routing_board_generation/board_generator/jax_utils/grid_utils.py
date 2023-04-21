@@ -3,13 +3,8 @@ from typing import Tuple, Optional
 import jax.numpy as jnp
 import jax.random
 from chex import Array, PRNGKey
-
-<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_utils/grid_utils.py
 from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_reverse, stack_push
-=======
-from ic_routing_board_generation.board_generator.wire import Wire, create_wire, stack_reverse, stack_push
 
->>>>>>> Including optimise_wire function:ic_routing_board_generation/board_generator/grid_utils.py
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 
 
@@ -470,8 +465,4 @@ if __name__ == '__main__':
         seed = random.randint(0, 10000)
         key = jax.random.PRNGKey(seed)
         board_2 = thin_wire(key, board_2, wire_start, wire_end, wire_num)
-<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_utils/grid_utils.py
-        print(f'Board after thinning wire {i+1}: \n {board_2} \n')
-=======
         print(f'Board after thinning wire {i + 1}: \n {board_2} \n')
->>>>>>> Including optimise_wire function:ic_routing_board_generation/board_generator/grid_utils.py
