@@ -1,73 +1,55 @@
 from dataclasses import dataclass
 from functools import partial
+from typing import Tuple
 
-from chex import PRNGKey, Array
-
-#from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-import numpy as np
-from copy import deepcopy
-# import random
-from typing import List, Tuple
-import jax.numpy as jnp
 import jax
+import jax.numpy as jnp
+from chex import PRNGKey, Array
+from jumanji.environments.routing.connector.constants import POSITION, TARGET
 
-from ic_routing_board_generation.board_generator.jax_board_generation.grid_jax import Grid
-from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, \
+from ic_routing_board_generation.board_generator.jax_data_model.wire import \
+    Wire, create_wire, \
     stack_push
 
-"""
-#from jax.numpy import asarray # Currently jaxlib is not supported on windows.  This will have to be sorted.
-#from env_viewer import RoutingViewer # Currently jaxlib is not supported on windows.  This will have to be sorted.
-# import jumanji.environments.combinatorial.routing.constants
-#from jumanji.environments.combinatorial.routing.constants import TARGET, HEAD, EMPTY
-#from jumanji.environments.combinatorial.routing.constants import SOURCE as WIRE
-"""
-EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3
 #  HEAD, TARGET, WIRE, EMPTY = 4,3,2,0
 STARTING_POSITION = POSITION  # My internal variable to disambiguate the word "position"
 # Also available to import from constants NOOP, LEFT, LEFT, UP, RIGHT, DOWN
 
-
-@dataclass
-class Position:
-    """  Class of 2D tuple of ints, indicating the size of an array or a 2D position or vector."""
-    x: int
-    y: int
-
-class JaxRandomWalk:
+class SequentialRandomWalk:
     def __init__(self, rows: int, cols: int, num_agents: int = 3):
         self._rows = rows
         self._cols = cols
         self._num_agents = num_agents
 
-    def return_blank_board(self) -> Array:
-        return jnp.zeros((self._rows, self._cols), dtype=int)
-
-    def pick_start(self, key: PRNGKey, layout: Array, wire_id: int, max_length: int) -> Wire:
-        """Create a wire and populate start and end points randomly.
+    def pick_start(self,
+        key: PRNGKey, layout: Array, wire_id: int, max_length: int) -> Wire:
+        """Randomly picks starting position and creates Wire.
         
         Args:
-            key: jax random key
-            layout: the current layout of the board
-            wire_id: the id of the wire to be created
-            max_length: the maximum length of the wire to be created
+            key: jax random key.
+            layout: the current layout of the board.
+            wire_id: the id of the wire to be created.
+            max_length: the maximum length of the wire to be created.
+
         Returns:
             A tuple of the new key, the new layout, the new wire, the wire id, and the max length
-            can_start: a boolean indicating whether we can place a wire on the board or not
-
+            can_start: a boolean indicating whether we can place a wire on the board or not.
+        Todo:
+            Refactor 'layout' to 'grid' to match uniform generator naming
         """
         key, subkey = jax.random.split(key)
         grid_size = len(layout) * len(layout[0])
         # See if there is any empty space in the grid
         can_start = jnp.any(layout == 0)
-        def inner_create_wire(key, layout=layout, wire_id=wire_id):
+
+        def inner_create_wire(key: PRNGKey, layout: Array = layout, wire_id: int = wire_id):
             # Pick a random coordinate which is empty (i.e. 0)
             coordinate_flat = jax.random.choice(
                 key=key,
                 a=jnp.arange(grid_size),
                 shape=(),
                 replace=False,
-                p=jnp.where(layout.flatten() == 0, 1, 0),
+                p=jnp.where(layout.flatten() == 0, 1, 0), #? what are 1 and 0 at end?
             )
 
             # Create a 2D coordinate from the flat array.
@@ -83,12 +65,14 @@ class JaxRandomWalk:
         return (key, layout, new_wire, wire_id, max_length), can_start
 
     def adjacent_cells(self, cell: int) -> Array:
-        """
+        """Returns positions of adjacent cells to input.
+
         Given a cell, return a jnp.Array of size 4 with the flat indices of
         adjacent cells. Padded with -1's if less than 4 adjacent cells (if on the edge of the grid)
 
         Args:
             cell: the flat index of the cell to find adjacent cells for
+
         Returns:
             A jnp.Array of size 4 with the flat indices of adjacent cells
             (padded with -1's if less than 4 adjacent cells)
@@ -111,18 +95,19 @@ class JaxRandomWalk:
         mask = mask & row_col_mask
         return jnp.where(mask == 0, -1, cells_to_check)
 
-    def available_cells(self, layout: Array, cell: int):
-        """
+    def available_cells(self, layout: Array, cell: int) -> Array:
+        """Checks what cells are available given input.
+
         Given a cell and the layout of the board, see which adjacent cells are available to move to
         (i.e. are currently unoccupied).
         TODO: expand this to also check that cells do not touch the current wire more than once,
         to improve quality of generated boards.
 
         Args:
-            layout: the current layout of the board
-            cell: the flat index of the cell to find adjacent cells for
+            layout: the current layout of the board.
+            cell: the flat index of the cell to find adjacent cells for.
         Returns:
-            A jnp.Array of size 4 with the flat indices of adjacent cells
+            A jnp.Array of size 4 with the flat indices of adjacent cells.
         """
         adjacent_cells = self.adjacent_cells(cell)
         _, available_cells_mask = jax.lax.scan(self.is_cell_free, layout, adjacent_cells)
@@ -132,21 +117,20 @@ class JaxRandomWalk:
                                     -1)))
 
     def is_cell_free(self, layout: Array, cell: int):
-        """
-        Check if a given cell is free, i.e. has a value of 0.
+        """Checks if a given cell is free, i.e. has a value of 0.
 
         Args:
-            layout: the current layout of the board
-            cell: the flat index of the cell to check
-        Returns:
-            A tuple of the new layout and a boolean indicating whether the cell is free or not
+            layout: the current layout of the board.
+            cell: the flat index of the cell to check.
+
+       Returns:
+            A tuple of the new layout and a boolean indicating whether the cell is free or not.
         """
         coordinate = jnp.divmod(cell, self._rows)
         return layout, jax.lax.select(cell == -1, False, layout[coordinate[0], coordinate[1]] == 0)
 
     def one_step(self, random_walk_tuple: Tuple[PRNGKey, Array, Wire]):
-        """
-        Have a single agent take a single random step on the board.
+        """Have a single agent take a single random step on the board.
 
         Args:
             random_walk_tuple: a tuple of the key, the layout, the current wire, and the wire id
@@ -173,8 +157,7 @@ class JaxRandomWalk:
         return key, layout, new_wire, wire_id
     
     def can_step(self, random_walk_tuple: Tuple[PRNGKey, Array, Wire]):
-        """
-        Check that a given wire can take a step on the board (i.e. it has an available cell to step to)
+        """Check that a given wire can take a step on the board (i.e. it has an available cell to step to)
 
         Args:
             random_walk_tuple: a tuple of the key, the layout, the current wire, and the wire id
@@ -187,8 +170,7 @@ class JaxRandomWalk:
         return jnp.any(available_cells != -1)
 
     def walk_randomly(self, random_walk_tuple: Tuple[PRNGKey, Array, Wire, int, int]):
-        """
-        Perform the entire random walk for a single agent on the board.
+        """Performs the entire random walk for a single agent on the board.
 
         Args:
             random_walk_tuple: a tuple of the key, the layout, the current wire, the wire id, and the max length
@@ -243,7 +225,7 @@ class JaxRandomWalk:
         random_walk_tuple = (key, board, 0, 0, max_length)
         success = True
         for wire_id in range(self._num_agents):
-            key, board, _, _, _  = random_walk_tuple
+            key, board, _, _, _ = random_walk_tuple
             key, subkey = jax.random.split(key)
             # Start the wire at a random location (if possible)
             random_walk_tuple, can_start = self.pick_start(subkey, board, wire_id, max_length)
@@ -253,7 +235,7 @@ class JaxRandomWalk:
             success = can_start & moved & success
         return random_walk_tuple[1], success
 
-    def generate(self, key):
+    def generate(self, key: PRNGKey):
         """
         Generates a board using sequential random walk, with all wires still present.
         Works by first trying to generate a board with the longest wires possible, repeating with a smaller
@@ -265,36 +247,35 @@ class JaxRandomWalk:
         Returns:
             board: jnp.Array with wires added (or a blank board if generation failed)
         """
-        def body_fun(self, max_length_int, i, state):
+        def body_fun(self, max_length_int: int, i, state: Tuple[Array, bool]) -> Tuple[Array, bool]:
             """
             Main loop. Checks whether a board has been successfully generated, generates a new board if it hasn't.
-            """
+            """ # is like a max length decrease factor
             board, success = state
 
-            def update_board_and_success(_):
+            def update_board_and_success()-> Tuple[Array, bool]:
                 empty_board = jnp.zeros((self._rows, self._cols))
-                new_board, new_success = self.add_agents(key, empty_board, max_length_int - i)
+                new_board, new_success = self.add_agents(key, empty_board,
+                                                         max_length_int - i)
                 return (new_board, new_success)
 
-            def keep_current_state(_):
+            def keep_current_state() -> Tuple[Array, bool]:
                 return (board, success)
 
             # Call self.add_agents only if success is False
             updated_board, updated_success = jax.lax.cond(
                 jnp.logical_not(success),
-                None,
                 update_board_and_success,
-                None,
                 keep_current_state
             )
 
-            def true_fun(_):
-                return (updated_board, updated_success)
+            def true_fun() -> Tuple[Array, bool]:
+                return updated_board, updated_success
 
-            def false_fun(_):
-                return (updated_board, False)
+            def false_fun() -> Tuple[Array, bool]:
+                return updated_board, False
 
-            return jax.lax.cond(updated_success, None, true_fun, None, false_fun)
+            return jax.lax.cond(updated_success, true_fun, false_fun)
         
         # Set the initial maximum length of path to try. 
         start_max_length = self._rows * self._cols // self._num_agents
@@ -311,15 +292,15 @@ class JaxRandomWalk:
         # Use jax.lax.cond to return the successfully generated board if possible,
         # or an empty board if the generation was unsuccessful.
         # TODO: handle what happens if generation is unsuccesful.
-        def true_fun(_):
+        def true_fun() -> Array:
             return final_board
 
-        def false_fun(_):
+        def false_fun() -> Array:
             return jnp.zeros((self._rows, self._cols))
 
-        return jax.lax.cond(success, None, true_fun, None, false_fun)
+        return jax.lax.cond(success, true_fun, false_fun)
     
-    def generate_starts_ends(self, key):
+    def generate_starts_ends(self, key: PRNGKey):
         """
         Call generate, take the first and last cells of each wire.
 
@@ -335,7 +316,7 @@ class JaxRandomWalk:
         """
         board = self.generate(key)
 
-        def find_positions(wire_id):
+        def find_positions(wire_id: int):
             wire_positions = board == 3 * wire_id + POSITION
             wire_targets = board == 3 * wire_id + TARGET
 
@@ -359,7 +340,7 @@ class JaxRandomWalk:
 
 
 if __name__ == "__main__":
-    board_generator = JaxRandomWalk(10, 10, 3)
+    board_generator = SequentialRandomWalk(10, 10, 3)
     key = jax.random.PRNGKey(101)
     # jit generate
     board_generator_jit = jax.jit(board_generator.generate)
@@ -369,4 +350,3 @@ if __name__ == "__main__":
     # jit generate_starts_ends
     board_generator_starts_ends_jit = jax.jit(board_generator.generate_starts_ends)
     print(board_generator_starts_ends_jit(key))
-

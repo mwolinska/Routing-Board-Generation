@@ -6,7 +6,7 @@ from jumanji.environments.routing.connector.utils import get_target, \
     get_position
 
 from ic_routing_board_generation.board_generator.jax_board_generation.most_basic_rw import \
-    JaxRandomWalk
+    SequentialRandomWalk
 
 from ic_routing_board_generation.ic_rl_training.online_generators.uniform_generator import \
     Generator
@@ -28,8 +28,8 @@ class JaxRandomWalkGenerator(Generator):
             num_agents: number of agents/paths on the grid.
         """
         super().__init__(grid_size, num_agents)
-        self.board_generator = JaxRandomWalk(self.grid_size, self.grid_size,
-                                        self.num_agents)
+        self.board_generator = SequentialRandomWalk(self.grid_size, self.grid_size,
+                                                    self.num_agents)
 
 
     def __call__(self, key: PRNGKey) -> State:
