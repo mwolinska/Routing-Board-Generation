@@ -6,9 +6,11 @@ from jax import numpy as jnp
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters
-from ic_routing_board_generation.ic_rl_training.generation_utils import \
+from ic_routing_board_generation.ic_rl_training.offline_generation.generation_utils import \
     generate_n_boards
-from ic_routing_board_generation.ic_rl_training.ic_generator import Generator
+from ic_routing_board_generation.ic_rl_training.online_generators.uniform_generator import \
+    Generator
+
 from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardName, BoardGenerator
 from jumanji.environments.routing.connector import State
@@ -19,20 +21,13 @@ class BoardDatasetGenerator(Generator):
     def __init__(self, grid_size: int, num_agents: int,
                  board_generator: Optional[BoardName] = None) -> None:
         super().__init__(grid_size, num_agents)
-        self.board_generator = board_generator
-
-        board_class = BoardGenerator.get_board_generator(
-            board_enum=self.board_generator)
-        board = board_class(self.grid_size, self.grid_size,
-                            num_agents=self.num_agents)
+        print(board_generator)
         generation_params = BoardGenerationParameters(
             columns=grid_size,
             rows=grid_size,
             number_of_wires=num_agents,
-            generator_type=board_generator
-
+            generator_type=board_generator,
         )
-        # boards, heads, targets = board.generate_boards(number_of_boards=10000)
         boards, heads, targets = generate_n_boards(generation_params, number_of_boards=10)
 
         self.board_dataset = jnp.array(boards)

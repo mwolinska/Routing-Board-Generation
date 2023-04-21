@@ -7,28 +7,14 @@ from chex import PRNGKey, Array
 from typing import Tuple
 import jax.numpy as jnp
 import jax
+from jumanji.environments.routing.connector.constants import POSITION, TARGET, \
+    PATH
 
 from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, \
     stack_push
 
-"""
-#from jax.numpy import asarray # Currently jaxlib is not supported on windows.  This will have to be sorted.
-#from env_viewer import RoutingViewer # Currently jaxlib is not supported on windows.  This will have to be sorted.
-# import jumanji.environments.combinatorial.routing.constants
-#from jumanji.environments.combinatorial.routing.constants import TARGET, HEAD, EMPTY
-#from jumanji.environments.combinatorial.routing.constants import SOURCE as WIRE
-"""
-EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3
-#  HEAD, TARGET, WIRE, EMPTY = 4,3,2,0
 STARTING_POSITION = POSITION  # My internal variable to disambiguate the word "position"
 # Also available to import from constants NOOP, LEFT, LEFT, UP, RIGHT, DOWN
-
-
-@dataclass
-class Position:
-    """  Class of 2D tuple of ints, indicating the size of an array or a 2D position or vector."""
-    x: int
-    y: int
 
 class JaxRandomWalk:
     def __init__(self, rows: int, cols: int, num_agents: int = 3):

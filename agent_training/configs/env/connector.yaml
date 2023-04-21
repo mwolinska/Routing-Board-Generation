@@ -2,10 +2,10 @@ name: connector
 registered_version: Connector-v0
 
 ic_board:
-    board_name: bfs_base
+    generation_type: offline # online_seq_rw, online_parallel_rw, online_random_seed, online_lsystems, offline
+    board_name: bfs_base # replace with string from interface if using offline or none if using online
     grid_size: 10
     num_agents: 5
-    generation_type: offline
 
 network:
     transformer_num_blocks: 4
