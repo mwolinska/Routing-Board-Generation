@@ -147,16 +147,18 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
     # env: Environment = jumanji.make(cfg.env.registered_version)
     # TODO (RL): remove ic_generator parameter and return to jumanji.make, remove imports
     # TODO (MW): add generator
-    generator = ICGenerators(
-        grid_size=cfg.env.ic_board.grid_size,
-        num_agents=cfg.env.ic_board.num_agents,
-        board_generator=cfg.env.ic_board.board_name,
-    )
+    # generator = ICGenerators(
+    #     grid_size=cfg.env.ic_board.grid_size,
+    #     num_agents=cfg.env.ic_board.num_agents,
+    #     board_generator=cfg.env.ic_board.board_name,
+    # )
     # generator = UniformRandomGenerator(
     #     grid_size=cfg.env.ic_board.grid_size,
     #     num_agents=cfg.env.ic_board.num_agents,
     #     # board_generator=cfg.env.ic_board.board_name,
     # )
+    generator = JaxRandomWalkGenerator(grid_size=cfg.env.ic_board.grid_size,
+        num_agents=cfg.env.ic_board.num_agents)
     env = Connector(generator=generator)
     if isinstance(env, Connector):
         env = MultiToSingleWrapper(env)
