@@ -25,7 +25,7 @@ import optax
 from omegaconf import DictConfig
 
 from ic_routing_board_generation.ic_rl_training.ic_generator import \
-    ICGenerators, UniformRandomGenerator
+    ICGenerators, UniformRandomGenerator, JaxRandomWalkGenerator
 from ic_routing_board_generation.interface.board_generator_interface import \
     BoardName
 from jumanji.env import Environment

@@ -65,7 +65,7 @@ class JaxRandomWalk:
             new_wire = create_wire(grid_size, coordinate, (-1, -1), wire_id)
             new_wire = stack_push(new_wire, coordinate)
             layout = layout.at[coordinate[0], coordinate[1]].set(3 * wire_id + POSITION)
-        
+
             return new_wire, layout
         # Use jax.lax.cond to only run the inner function if there is empty space
         dummy_wire = create_wire(grid_size, (-1, -1), (-1, -1), wire_id)
@@ -93,13 +93,13 @@ class JaxRandomWalk:
         is_same_col = unflatten_available[1] == unflatten_current[1]
         row_col_mask = is_same_row | is_same_col
         mask = mask & row_col_mask
-        jax.debug.print("what I want: {x}", x=jnp.where(mask == 0, -1, cells_to_check))
+        # jax.debug.print("what I want: {x}", x=jnp.where(mask == 0, -1, cells_to_check))
         return jnp.where(mask == 0, -1, cells_to_check)
 
     def available_cells(self, layout: Array, cell: int):
         # TODO: make sure this outputting -1 for the end of the array
         adjacent_cells = self.adjacent_cells(cell)
-        jax.debug.print("adjacent cells are: {adj}", adj=adjacent_cells)
+        # jax.debug.print("adjacent cells are: {adj}", adj=adjacent_cells)
         #print("internal adjacent cells are: ", adjacent_cells)
         _, available_cells_mask = jax.lax.scan(self.is_cell_free, layout, adjacent_cells)
         # Want the boolean masking to leave available cells as they are and
@@ -115,13 +115,13 @@ class JaxRandomWalk:
         return layout, jax.lax.select(cell == -1, False, layout[coordinate[0], coordinate[1]] == 0)
 
     def one_step(self, random_walk_tuple: Tuple[PRNGKey, Array, Wire]):
-        jax.debug.print("we do be stepping")
+        # jax.debug.print("we do be stepping")
         key, layout, wire, wire_id = random_walk_tuple
         key, subkey = jax.random.split(key)
         cell = wire.path[wire.insertion_index - 1][0] * self._cols + wire.path[wire.insertion_index - 1][1]
-        jax.debug.print("cell is: {cell}", cell=cell)
+        # jax.debug.print("cell is: {cell}", cell=cell)
         available_cells = self.available_cells(layout=layout, cell=cell)
-        jax.debug.print("available cells are: {available_cells}", available_cells=available_cells)
+        # jax.debug.print("available cells are: {available_cells}", available_cells=available_cells)
         step_coordinate_flat = jax.random.choice(
             key=subkey,
             a=available_cells,
@@ -136,7 +136,7 @@ class JaxRandomWalk:
         # Change old coordinate to be part of wire, TODO: if not a head
         layout = layout.at[wire.path[wire.insertion_index - 1][0], wire.path[wire.insertion_index - 1][1]].set(3 * wire_id + PATH)
         return key, layout, new_wire, wire_id
-    
+
     def can_step(self, random_walk_tuple: Tuple[PRNGKey, Array, Wire]):
         key, layout, wire, _ = random_walk_tuple
         cell = wire.path[wire.insertion_index - 1][0] * self._cols + wire.path[wire.insertion_index - 1][1]
@@ -175,7 +175,7 @@ class JaxRandomWalk:
             # Try to start the wire at a random location
             random_walk_tuple, can_start = self.pick_start(subkey, board, wire_id, max_length)
 
-            # If successful, try to walk randomly 
+            # If successful, try to walk randomly
             # Do this using jax.lax.cond
             random_walk_tuple, moved = jax.lax.cond(can_start, self.walk_randomly, lambda x: (x, False), random_walk_tuple)
             #jax.debug.print("moved is: {moved}", moved=moved)
@@ -231,7 +231,7 @@ class JaxRandomWalk:
             return jnp.zeros((self._rows, self._cols))
 
         return jax.lax.cond(success, None, true_fun, None, false_fun)
-    
+
     def generate_starts_ends(self, key):
         """
         Call generate, take the first and last cells of each wire
@@ -268,7 +268,7 @@ class JaxRandomWalk:
 
 
 
-# TODO: Some of the wires appear to be improperly formed, could just be an 
+# TODO: Some of the wires appear to be improperly formed, could just be an
 # issue on boundaries
 
 
@@ -283,5 +283,3 @@ if __name__ == "__main__":
     # jit generate_starts_ends
     board_generator_starts_ends_jit = jax.jit(board_generator.generate_starts_ends)
     print(board_generator_starts_ends_jit(key))
-
-

@@ -250,16 +250,15 @@ class JaxRandomWalkGenerator(Generator):
             A `Connector` state.
         """
         key, pos_key = jax.random.split(key)
-
         board_generator = JaxRandomWalk(self.grid_size, self.grid_size, self.num_agents)
         
         grid = jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.int32)
         starts, targets = board_generator.generate_starts_ends(key)
-        jax.debug.print("our starts: {x}", x=starts)
-        jax.debug.print("our targets: {x}", x=targets)
+        # jax.debug.print("our starts: {x}", x=starts)
+        # jax.debug.print("our targets: {x}", x=targets)
         agent_position_values = jax.vmap(get_position)(jnp.arange(self.num_agents))
         agent_target_values = jax.vmap(get_target)(jnp.arange(self.num_agents))
-        jax.debug.print("agent_position_values: {x}", x=agent_position_values)
+        # jax.debug.print("agent_position_values: {x}", x=agent_position_values)
         # Transpose the agent_position_values to match the shape of the grid.
         # Place the agent values at starts and targets.
         grid = grid.at[starts].set(agent_position_values)
