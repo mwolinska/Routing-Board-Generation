@@ -484,5 +484,3 @@ if __name__ == '__main__':
         wire, board = grid.main_bfs_loop(new_key, board)
 
         print(f'Board: \n {board}')
-
-    grid.bfs_maze(key, wire_1, board)

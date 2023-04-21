@@ -58,6 +58,63 @@ class Grid:
         return jnp.array([position // self.cols, position % self.cols], dtype=jnp.int32)
         # return position // self.cols, position % self.cols
 
+    # def update_queue_and_visited(self, queue: Array, visited: Array, board: Array, key: Optional[PRNGKey] = 100,
+    #                              use_empty: Optional[bool] = False) -> Tuple[Array, Array, Array]:
+    #     """Updates the queue and visited arrays
+    #
+    #     Args:
+    #         queue (Array): Array indicating the next positions to visit
+    #         visited (Array): Array indicating the previous state visited from each position
+    #         board (Array): Array indicating the current state of the board
+    #         key (Optional[PRNGKey], optional): Key for random number generation. Defaults to 100.
+    #         use_empty (Optional[bool], optional): Whether to use empty positions or not. Defaults to False.
+    #
+    #     Returns:
+    #         Tuple[Array, Array, Array]: Updated queue, visited and board arrays
+    #
+    #         """
+    #     # Current position is the lowest value in the queue that is greater than 0
+    #     curr_int = jnp.argmin(jnp.where((queue > 0), queue, jnp.inf))
+    #
+    #     # Convert current position to tuple
+    #     curr_pos = self.convert_int_to_tuple(curr_int)
+    #
+    #     # Define possible movements
+    #     row = [-1, 0, 1, 0]
+    #     col = [0, 1, 0, -1]
+    #
+    #     # Loop through possible movements but shuffle the order
+    #
+    #     range_list = jnp.arange(4)
+    #     range_list = jax.random.permutation(key, range_list, independent=True)
+    #
+    #     for i in range_list:
+    #         # Calculate new position
+    #
+    #         new_row = curr_pos[0] + row[i]
+    #         new_col = curr_pos[1] + col[i]
+    #         pos_int = self.convert_tuple_to_int((new_row, new_col))
+    #
+    #         # Check value of new position index in visited
+    #         use_cond = (board[new_row, new_col] == 3 * self.fill_num + PATH) if not use_empty else (
+    #                     (board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY))
+    #
+    #         condition = (0 <= new_col < self.cols) and (0 <= new_row < self.rows) and visited[
+    #             pos_int] == -1 and queue[
+    #                         pos_int] == 0 and use_cond  # (board[new_row, new_col] == 3 * self.fill_num + PATH)
+    #
+    #         # Update the queue if condition is met in Jax
+    #         curr_val = jnp.max(jnp.where((queue > 0), queue, -jnp.inf))
+    #
+    #         queue = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_val + 1), lambda x: x, queue)
+    #         # queue = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_val + 1), lambda x: x, queue)
+    #         visited = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_int), lambda x: x, visited)
+    #
+    #     # remove current position from queue
+    #     queue = queue.at[curr_int].set(0)
+    #
+    #     return queue, visited, board
+    #
     def update_queue_and_visited(self, queue: Array, visited: Array, board: Array, key: Optional[PRNGKey] = 100,
                                  use_empty: Optional[bool] = False) -> Tuple[Array, Array, Array]:
         """Updates the queue and visited arrays
@@ -66,8 +123,6 @@ class Grid:
             queue (Array): Array indicating the next positions to visit
             visited (Array): Array indicating the previous state visited from each position
             board (Array): Array indicating the current state of the board
-            key (Optional[PRNGKey], optional): Key for random number generation. Defaults to 100.
-            use_empty (Optional[bool], optional): Whether to use empty positions or not. Defaults to False.
 
         Returns:
             Tuple[Array, Array, Array]: Updated queue, visited and board arrays
@@ -83,37 +138,79 @@ class Grid:
         row = [-1, 0, 1, 0]
         col = [0, 1, 0, -1]
 
-        # Loop through possible movements but shuffle the order
+        # Shuffle row and col in the same way
+        perm = jax.random.permutation(key, jnp.arange(4), independent=True)
 
-        range_list = jnp.arange(4)
-        range_list = jax.random.permutation(key, range_list, independent=True)
+        row = jnp.array(row, dtype=jnp.int32)[perm]
+        col = jnp.array(col, dtype=jnp.int32)[perm]
 
-        for i in range_list:
-            # Calculate new position
+        # Do a jax while loop of the update_queue_visited_loop
 
-            new_row = curr_pos[0] + row[i]
-            new_col = curr_pos[1] + col[i]
-            pos_int = self.convert_tuple_to_int((new_row, new_col))
+        # @jax.disable_jit()
+        def qv_loop_cond(full_qv_stack):
+            j, *_ = full_qv_stack
+            return j < 4
 
-            # Check value of new position index in visited
-            use_cond = (board[new_row, new_col] == 3 * self.fill_num + PATH) if not use_empty else (
-                        (board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY))
+        # @jax.disable_jit()
+        def qv_loop_body(full_qv_stack):
+            j, curr_pos, curr_int, row, col, visited, queue, board = full_qv_stack
+            j, curr_pos, curr_int, row, col, visited, queue, board = self.update_queue_visited_loop(j, curr_pos,
+                                                                                                    curr_int, row, col,
+                                                                                                    visited, queue,
+                                                                                                    board, use_empty)
 
-            condition = (0 <= new_col < self.cols) and (0 <= new_row < self.rows) and visited[
-                pos_int] == -1 and queue[
-                            pos_int] == 0 and use_cond  # (board[new_row, new_col] == 3 * self.fill_num + PATH)
+            return j, curr_pos, curr_int, row, col, visited, queue, board
 
-            # Update the queue if condition is met in Jax
-            curr_val = jnp.max(jnp.where((queue > 0), queue, -jnp.inf))
+        j = 0
+        full_qv_stack = (j, curr_pos, curr_int, row, col, visited, queue, board)
 
-            queue = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_val + 1), lambda x: x, queue)
-            # queue = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_val + 1), lambda x: x, queue)
-            visited = jax.lax.cond(condition, lambda x: x.at[pos_int].set(curr_int), lambda x: x, visited)
+        full_qv_stack = jax.lax.while_loop(qv_loop_cond, qv_loop_body, full_qv_stack)
+
+        *_, visited, queue, board = full_qv_stack
 
         # remove current position from queue
         queue = queue.at[curr_int].set(0)
 
         return queue, visited, board
+
+    def update_queue_visited_loop(self, j, curr_pos, curr_int, row, col, visited, queue, board, use_empty=False):
+        # Calculate new position
+        new_row = jnp.array(curr_pos, dtype=jnp.int32)[0] + jnp.array(row, dtype=jnp.int32)[j]
+        new_col = jnp.array(curr_pos, dtype=jnp.int32)[1] + jnp.array(col, dtype=jnp.int32)[j]
+        pos_int = self.convert_tuple_to_int((new_row, new_col))
+
+        # Check value of new position index in visited
+        size_cond = jnp.logical_and(jnp.logical_and(0 <= new_row, new_row < self.rows),
+                                    jnp.logical_and(0 <= new_col, new_col < self.cols))
+        cond_1 = (visited[pos_int] == -1)
+        cond_2 = (queue[pos_int] == 0)
+        # cond_3 = (board[new_row, new_col] == 0)
+
+        # cond_3 = (board[new_row, new_col] == 3 * self.fill_num + PATH) if not use_empty else ((board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY))
+
+        # cond_3 = jax.lax.cond(use_empty, lambda _: (board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY), lambda _: (board[new_row, new_col] == 3 * self.fill_num + PATH), None)
+
+        cond_3 = jnp.logical_or(jnp.logical_and(use_empty,
+                                                jnp.logical_or((board[new_row, new_col] == 3 * self.fill_num + PATH),
+                                                               (board[new_row, new_col] == EMPTY))),
+                                jnp.logical_and(~use_empty, (board[new_row, new_col] == 3 * self.fill_num + PATH)))
+
+        # cond_4 = (j < 4)
+
+        cond_a = size_cond  # & cond_4
+        cond_b = cond_1 & cond_2 & cond_3
+
+        condition = jax.lax.cond((cond_a & cond_b), lambda _: True, lambda _: False, None)
+
+        curr_val = jnp.max(jnp.where((queue > 0), queue, -jnp.inf))
+        queue = jax.lax.cond(
+            condition, lambda _: queue.at[pos_int].set(curr_val + 1), lambda _: queue, None)
+        visited = jax.lax.cond(condition, lambda _: visited.at[pos_int].set(curr_int), lambda _: visited, None)
+
+        # print('queue', queue)
+        # print('visited', visited)
+
+        return j + 1, curr_pos, curr_int, row, col, visited, queue, board
 
     def check_if_end_reached(self, wire: Wire, visited: Array) -> bool:
         """Check if the end of the wire has been reached"""
