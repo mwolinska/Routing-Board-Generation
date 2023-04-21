@@ -2,15 +2,20 @@ import random
 from typing import Tuple, Optional
 import jax.numpy as jnp
 import jax.random
-
 from chex import Array, PRNGKey
 
+<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_utils/grid_utils.py
 from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_reverse, stack_push
+=======
+from ic_routing_board_generation.board_generator.wire import Wire, create_wire, stack_reverse, stack_push
+
+>>>>>>> Including optimise_wire function:ic_routing_board_generation/board_generator/grid_utils.py
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
+
 
 # Usage Guide:
 # 1. Given a partially filled board, wire_start, wire_end, and wire_id, we use the thin_wire function to
-# thin out the wire so that is is a valid wire on the board.
+# thin out the wire so that is a valid wire on the board.
 
 # 2. If unable to provide the start and the end positions,
 # you can use the get_start_end_positions function to get the start and end positions of the wire on the board.
@@ -43,22 +48,26 @@ class Grid:
         self.cols = cols
         self.fill_num = fill_num
 
-
     def convert_tuple_to_int(self, position: Tuple[int, int]) -> int:
-        return int(position[0] * self.cols + position[1])
+        return jnp.array(position[0] * self.cols + position[1], dtype=jnp.int32)
+        # return int(position[0] * self.cols + position[1])
         # return position[0] * self.cols + position[1]
 
     def convert_int_to_tuple(self, position: int) -> Tuple[int, int]:
-        return int(position // self.cols), int(position % self.cols)
+        # return int(position // self.cols), int(position % self.cols)
+        return jnp.array([position // self.cols, position % self.cols], dtype=jnp.int32)
         # return position // self.cols, position % self.cols
 
-    def update_queue_and_visited(self, queue: Array, visited: Array, board: Array, key: Optional[PRNGKey]=100) -> Tuple[Array, Array, Array]:
+    def update_queue_and_visited(self, queue: Array, visited: Array, board: Array, key: Optional[PRNGKey] = 100,
+                                 use_empty: Optional[bool] = False) -> Tuple[Array, Array, Array]:
         """Updates the queue and visited arrays
 
         Args:
             queue (Array): Array indicating the next positions to visit
             visited (Array): Array indicating the previous state visited from each position
             board (Array): Array indicating the current state of the board
+            key (Optional[PRNGKey], optional): Key for random number generation. Defaults to 100.
+            use_empty (Optional[bool], optional): Whether to use empty positions or not. Defaults to False.
 
         Returns:
             Tuple[Array, Array, Array]: Updated queue, visited and board arrays
@@ -87,9 +96,12 @@ class Grid:
             pos_int = self.convert_tuple_to_int((new_row, new_col))
 
             # Check value of new position index in visited
+            use_cond = (board[new_row, new_col] == 3 * self.fill_num + PATH) if not use_empty else (
+                        (board[new_row, new_col] == 3 * self.fill_num + PATH) or (board[new_row, new_col] == EMPTY))
 
             condition = (0 <= new_col < self.cols) and (0 <= new_row < self.rows) and visited[
-                pos_int] == -1 and queue[pos_int] == 0 and (board[new_row, new_col] == 3 * self.fill_num + PATH)
+                pos_int] == -1 and queue[
+                            pos_int] == 0 and use_cond  # (board[new_row, new_col] == 3 * self.fill_num + PATH)
 
             # Update the queue if condition is met in Jax
             curr_val = jnp.max(jnp.where((queue > 0), queue, -jnp.inf))
@@ -229,10 +241,9 @@ def thin_wire(key: PRNGKey, board: Array, wire_start: Tuple[int, int], wire_end:
     # Initialize the wire
     wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=wire_end)
 
-
     # Set start and end in board to the same value as wire
-    board = board.at[wire_start].set(grid.fill_num*3 + 1)
-    board = board.at[wire_end].set(grid.fill_num*3 + 1)
+    board = board.at[wire_start].set(grid.fill_num * 3 + 1)
+    board = board.at[wire_end].set(grid.fill_num * 3 + 1)
 
     queue = jnp.zeros(max_size, dtype=jnp.int32)
     visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
@@ -255,7 +266,62 @@ def thin_wire(key: PRNGKey, board: Array, wire_start: Tuple[int, int], wire_end:
         queue = bfs_stack[3]
         visited = bfs_stack[4]
 
-        queue, visited, board = grid.update_queue_and_visited(queue, visited, board,key)
+        queue, visited, board = grid.update_queue_and_visited(queue, visited, board, key)
+
+        if grid.check_if_end_reached(wire, visited):
+            break
+
+    curr_pos = grid.convert_tuple_to_int(wire.end)
+    wire = grid.get_path((wire, visited, curr_pos))
+    board = grid.remove_path(board, wire)
+    board = grid.jax_fill_grid(wire, board)
+
+    return board
+
+
+def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
+    """Essentially the same as thin_wire but also uses empty spaces to optimise the wire
+    Args:
+        board: board to thin the wire on
+        wire_start: start position of the wire
+        wire_end: end position of the wire
+        wire_num: wire number
+        """
+    # Initialize the grid
+    grid = Grid(board.shape[0], board.shape[1], fill_num=wire_num)
+    max_size = board.shape[0] * board.shape[1]
+
+    start_num = 3 * wire_num + POSITION
+    end_num = 3 * wire_num + TARGET
+
+    # Find start and end positions
+    wire_start = jnp.argwhere(board == start_num)[0]
+    wire_end = jnp.argwhere(board == end_num)[0]
+
+    # Initialize the wire
+    wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=wire_end)
+
+    # Set start and end in board to the same value as wire
+    board = board.at[wire_start].set(grid.fill_num * 3 + 1)
+    board = board.at[wire_end].set(grid.fill_num * 3 + 1)
+
+    queue = jnp.zeros(max_size, dtype=jnp.int32)
+    visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
+
+    # Update queue to reflect the start position
+    queue = queue.at[grid.convert_tuple_to_int(wire.start)].set(1)
+
+    # Update visited to reflect the start position. This is done to avoid the start position being visited again.
+    # visited = visited.at[grid.convert_tuple_to_int(wire.start)].set(grid.convert_tuple_to_int(wire.start))
+
+    count = 0
+    for _ in range(max_size):
+        bfs_stack = (key, wire, board, queue, visited)
+        board = bfs_stack[2]
+        queue = bfs_stack[3]
+        visited = bfs_stack[4]
+
+        queue, visited, board = grid.update_queue_and_visited(queue, visited, board, key, use_empty=True)
 
         if grid.check_if_end_reached(wire, visited):
             break
@@ -279,7 +345,7 @@ if __name__ == '__main__':
     # wire_start = (4, 4)
     # wire_end = (1, 1)
     for i, board in enumerate(boards):
-        print(f'Original board {i+1}: \n {board} \n' )
+        print(f'Original board {i + 1}: \n {board} \n')
 
         wire_num = 0  # Wire number x, is x s.t. wire x is encoded as 3 * x + 1.
 
@@ -289,16 +355,17 @@ if __name__ == '__main__':
 
         key = jax.random.PRNGKey(seed)
 
-        board = thin_wire(key, board, wire_start, wire_end, wire_num)
+        board1 = thin_wire(key, board, wire_start, wire_end, wire_num)
+        board2 = optimise_wire(key, board, wire_num)
 
-        print(f'Board after thinning wire {1}: \n {board} \n')
+        print(f'Board after thinning wire {1}: \n {board1} \n')
+        print(f'Board after optimising wire {1}: \n {board2} \n')
 
     board_2 = jnp.array([[4, 4, 4, 4, 4, 4],
-       [4, 3, 6, 4, 4, 4],
-       [5, 1, 1, 1, 1, 2]], dtype=jnp.int32)
+                         [4, 3, 6, 4, 4, 4],
+                         [5, 1, 1, 1, 1, 2]], dtype=jnp.int32)
 
     print(f'Original board 3: \n {board_2} \n')
-
 
     for i in list(range(2)):
         wire_num = i
@@ -306,4 +373,8 @@ if __name__ == '__main__':
         seed = random.randint(0, 10000)
         key = jax.random.PRNGKey(seed)
         board_2 = thin_wire(key, board_2, wire_start, wire_end, wire_num)
+<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_utils/grid_utils.py
         print(f'Board after thinning wire {i+1}: \n {board_2} \n')
+=======
+        print(f'Board after thinning wire {i + 1}: \n {board_2} \n')
+>>>>>>> Including optimise_wire function:ic_routing_board_generation/board_generator/grid_utils.py
