@@ -2,16 +2,16 @@ import random
 import time
 from typing import List, Union, Dict, Tuple, Optional
 import numpy as np
-from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
-from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import RandomWalkBoard
-from ic_routing_board_generation.board_generator.board_generator_wfc_oj import WFCBoard
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.board_generator_numberlink_oj import NumberLinkBoard
-from ic_routing_board_generation.board_generator.exceptions import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import RandomWalkBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import WFCBoard
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_numberlink_oj import NumberLinkBoard
+from ic_routing_board_generation.board_generator.numpy_utils.exceptions import \
     IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
     DuplicateHeadsTailsError, MissingHeadTailError, InvalidWireStructureError, \
     PathNotFoundError
-from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
+from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import LSystemBoardGen
 
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 

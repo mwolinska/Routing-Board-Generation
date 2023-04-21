@@ -1,12 +1,11 @@
 import random
-from collections import deque
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 import jax.numpy as jnp
 import jax.random
 
 from chex import Array, PRNGKey
 
-from ic_routing_board_generation.board_generator.wire import Wire, create_wire, stack_reverse, stack_push
+from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_reverse, stack_push
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 
 # Usage Guide:

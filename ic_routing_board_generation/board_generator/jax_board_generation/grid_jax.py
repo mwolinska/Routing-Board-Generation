@@ -5,7 +5,7 @@ import jax.random
 from chex import PRNGKey, Array
 from copy import deepcopy
 
-from ic_routing_board_generation.board_generator.wire import Wire, create_wire, stack_reverse, stack_push
+from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_reverse, stack_push
 
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 

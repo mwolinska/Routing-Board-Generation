@@ -1,10 +1,7 @@
 import collections
-import itertools
-from collections import Counter
-from typing import List, Dict, Iterable, Optional
+from typing import List, Dict
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters, BarChartData
@@ -12,9 +9,9 @@ from ic_routing_board_generation.benchmarking.benchmark_utils import \
     generate_n_boards
 from ic_routing_board_generation.benchmarking.plotting_utils import \
     plot_heatmap, plot_comparison_heatmap
-from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import \
     RandomWalkBoard
-from ic_routing_board_generation.board_generator.board_processor_2 import \
+from ic_routing_board_generation.board_generator.numpy_utils.board_processor_2 import \
     BoardProcessor
 
 class EvaluateEmptyBoard:

@@ -4,7 +4,7 @@ from ic_routing_board_generation.benchmarking.benchmark_utils import \
     board_generation_params_from_grid_params
 from ic_routing_board_generation.benchmarking.empty_board_evaluation import \
     evaluate_generator_outputs_averaged_on_n_boards
-from ic_routing_board_generation.interface.board_generator_interface import \
+from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardName
 
 if __name__ == '__main__':

@@ -3,9 +3,9 @@ from typing import List, Tuple, Union, Optional, Dict, Callable
 import numpy as np
 from numpy import ndarray
 
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.grid import Grid
-from ic_routing_board_generation.board_generator.utils import \
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.grid import Grid
+from ic_routing_board_generation.board_generator.numpy_utils.utils import \
     get_heads_and_targets
 
 
@@ -37,7 +37,7 @@ class BFSBoard(AbstractBoard):
         self.max_attempts = max(max_attempts, rows * cols * num_agents)
         self._wires_on_board = 0
         self.clip_method_dict = self.get_clip_method_dict()
-        # self.fill_board(verbose=False)
+        self.fill_board(verbose=False)
 
     def generate_boards(self, number_of_boards: int) -> List[ndarray]:
         board_list = []

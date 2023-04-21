@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters
-from ic_routing_board_generation.interface.board_generator_interface import \
+from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardName, BoardGenerator
 
 

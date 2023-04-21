@@ -1,16 +1,16 @@
 from enum import Enum
 
-from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
-from ic_routing_board_generation.board_generator.bfs_board_variations import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board_variations import \
     BFSBoardMinBends, BFSBoardFifo, BFSBoardShortest, BFSBoardLongest
-from ic_routing_board_generation.board_generator.board_generator_numberlink_oj import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_numberlink_oj import \
     NumberLinkBoard
-from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import \
     RandomWalkBoard
-from ic_routing_board_generation.board_generator.board_generator_wfc_oj import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import \
     WFCBoard
 
-from ic_routing_board_generation.board_generator.lsystems_numpy import \
+from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import \
     LSystemBoardGen
 
 

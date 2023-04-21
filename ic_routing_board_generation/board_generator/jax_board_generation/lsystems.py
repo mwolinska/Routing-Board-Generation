@@ -1,7 +1,7 @@
 import jax.numpy as np
 from jax import random
 import jax
-from ic_routing_board_generation.board_generator.deque import (
+from ic_routing_board_generation.board_generator.jax_data_model.deque import (
     Agent, 
     create_stack, 
     stack_push_head, 
@@ -9,7 +9,7 @@ from ic_routing_board_generation.board_generator.deque import (
     stack_pop_head, 
     stack_pop_tail)
 
-from typing import List, NamedTuple, SupportsFloat as Numeric, Tuple
+from typing import List, SupportsFloat as Numeric, Tuple
 
 
 class LSystemBoardGen:

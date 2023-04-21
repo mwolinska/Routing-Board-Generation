@@ -1,6 +1,6 @@
 import numpy as np
 
-from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
 
 
 class BFSBoardMinBends(BFSBoard):

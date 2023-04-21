@@ -3,16 +3,12 @@ from functools import partial
 
 from chex import PRNGKey, Array
 
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-import numpy as np
-from copy import deepcopy
 # import random
-from typing import List, Tuple
+from typing import Tuple
 import jax.numpy as jnp
 import jax
 
-from ic_routing_board_generation.board_generator.grid_jax import Grid
-from ic_routing_board_generation.board_generator.wire import Wire, create_wire, \
+from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, \
     stack_push
 
 """

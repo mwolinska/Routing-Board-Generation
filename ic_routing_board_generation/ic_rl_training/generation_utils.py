@@ -1,6 +1,6 @@
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters
-from ic_routing_board_generation.board_generator.utils import \
+from ic_routing_board_generation.board_generator.numpy_utils.utils import \
     get_heads_and_targets
 from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardGenerator
