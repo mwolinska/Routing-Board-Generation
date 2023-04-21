@@ -5,17 +5,13 @@ from copy import deepcopy
 import random
 from typing import List, Tuple
 
-"""
 #from jax.numpy import asarray # Currently jaxlib is not supported on windows.  This will have to be sorted.
 #from env_viewer import RoutingViewer # Currently jaxlib is not supported on windows.  This will have to be sorted.
-# import jumanji.environments.combinatorial.routing.constants
-#from jumanji.environments.combinatorial.routing.constants import TARGET, HEAD, EMPTY
-#from jumanji.environments.combinatorial.routing.constants import SOURCE as WIRE
-"""
+
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3
-#  HEAD, TARGET, WIRE, EMPTY = 4,3,2,0
+# Available to import from routing.constants NOOP, LEFT, UP, RIGHT, DOWN
+#from jumanji.environments.combinatorial.routing.constants import EMPTY, PATH, POSITION, TARGET
 STARTING_POSITION = POSITION  # My internal variable to disambiguate the word "position"
-# Also available to import from constants NOOP, LEFT, LEFT, UP, RIGHT, DOWN
 
 
 @dataclass
@@ -86,6 +82,7 @@ class RandomWalkBoard(AbstractBoard):
             # board_output.add_wire_start_distance_directions()
             # board_output.add_wire_head_target_erode()
             self.add_wire_random_walk(2 * max(rows, cols))
+        #print("Generating Random Walk Board")
 
     def position_to_cell_type(self, position: Position) -> int:
         """

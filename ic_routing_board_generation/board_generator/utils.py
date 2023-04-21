@@ -14,6 +14,7 @@ def get_heads_and_targets(board_layout: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
     targets = []
     # Get the maximum value in the board layout
     max_val = np.max(board_layout)
+    max_val = int(max_val)
     # Get the heads and targets
     for i in range(1, max_val + 1):
         # Get the head and target

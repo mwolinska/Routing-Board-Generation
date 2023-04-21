@@ -1,0 +1,6 @@
+- env.ic_board.board_name=uniform
+- env.ic_board.grid_size=10
+- env.ic_board.num_agents=5
+- env.evaluation.eval_total_batch_size=5000
+- logger.save_checkpoint=true
+- env.training.num_epochs=500
