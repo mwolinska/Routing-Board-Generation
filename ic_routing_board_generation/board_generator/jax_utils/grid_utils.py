@@ -387,7 +387,7 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     wire_end = jnp.argwhere(board == end_num)[0]
 
     # Initialize the wire
-    wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=wire_end)
+    wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=(wire_end[0], wire_end[1]))
 
     # Set start and end in board to the same value as wire
     board = board.at[wire_start[0],wire_start[1]].set(grid.fill_num * 3 + 1)
