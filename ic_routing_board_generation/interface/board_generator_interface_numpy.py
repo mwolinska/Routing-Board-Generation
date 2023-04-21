@@ -10,13 +10,16 @@ from ic_routing_board_generation.board_generator.numpy_board_generation.board_ge
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import \
     WFCBoard
 
-from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import \
+from ic_routing_board_generation.board_generator.jax_board_generation.lsystems import \
     LSystemBoardGen
+from ic_routing_board_generation.board_generator.jax_board_generation.board_generator_random_seed_rb import \
+    RandomSeedBoard
 
 
 class BoardName(str, Enum):
     """Enum of implemented board generators."""
     RANDOM_WALK = "random_walk"
+    RANDOM_SEED = "random_seed"
     BFS_BASE = "bfs_base"
     BFS_MIN_BENDS = "bfs_min_bend"
     BFS_FIFO = "bfs_fifo"
@@ -30,6 +33,7 @@ class BoardGenerator:
     """Maps BoardGeneratorType to class of generator."""
     board_generator_dict = {
         BoardName.RANDOM_WALK: RandomWalkBoard,
+        BoardName.RANDOM_SEED: RandomSeedBoard,
         BoardName.BFS_BASE: BFSBoard,
         BoardName.BFS_MIN_BENDS: BFSBoardMinBends,
         BoardName.BFS_FIFO: BFSBoardFifo,

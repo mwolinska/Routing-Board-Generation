@@ -2,12 +2,12 @@ import random
 from typing import List, Tuple
 import numpy as np
 from copy import deepcopy
-from ic_routing_board_generation.board_generator.bfs_board import BFSBoard
-from ic_routing_board_generation.board_generator.board_generator_random_walk_rb import RandomWalkBoard
-from ic_routing_board_generation.board_generator.board_generator_wfc_oj import WFCBoard
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.lsystems import LSystemBoardGen
-from ic_routing_board_generation.board_generator.board_generator_data_model import Position
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import RandomWalkBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import WFCBoard
+from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import LSystemBoardGen
+from ic_routing_board_generation.board_generator.numpy_data_model.board_generator_data_model import Position
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji

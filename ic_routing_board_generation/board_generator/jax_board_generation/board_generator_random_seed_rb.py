@@ -1,11 +1,8 @@
-<<<<<<< refs/remotes/origin/dev-2:ic_routing_board_generation/board_generator/jax_board_generation/board_generator_random_seed_rb.py
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.post_processor_utils  import extend_wires_jax
-=======
+from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax
 from dataclasses import dataclass
-from ic_routing_board_generation.board_generator.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.post_processor_utils  import extend_wires_jax, training_board_from_solved_board_jax
->>>>>>> Added features to randomseed generator; single-sided extending, flip-flops:ic_routing_board_generation/board_generator/board_generator_random_seed_rb.py
+from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
+from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax, training_board_from_solved_board_jax
 #import numpy as np
 
 from jax import Array

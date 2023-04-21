@@ -90,7 +90,7 @@ def create_wire(
     Returns:
         stack: the created stack of size grid size x 2 - i.e. rows and columns
     """
-    return Wire(jnp.full((max_size, 2), fill_value=-1, dtype=int), 0, wire_id=wire_id, start=start, end=end)
+    return Wire(jnp.full((max_size), fill_value=-1, dtype=int), 0, wire_id=wire_id, start=start, end=end)
 
 
 def stack_push(stack: Wire, element: chex.Array) -> Wire:
