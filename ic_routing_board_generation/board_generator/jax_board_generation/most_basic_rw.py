@@ -114,7 +114,14 @@ class SequentialRandomWalk:
             A jnp.chex.Array of size 4 with the flat indices of adjacent cells.
         """
         adjacent_cells = self.adjacent_cells(cell)
+        # Get the wire id of the current cell
+        value = grid[jnp.divmod(cell, self._rows)]
+        wire_id = (value - 1) // 3
+
         _, available_cells_mask = jax.lax.scan(self.is_cell_free, grid, adjacent_cells)
+        # Also want to check if the cell is touching itself more than once
+        _, touching_cells_mask = jax.lax.scan(self.is_cell_touching_self, (grid, wire_id), adjacent_cells)
+        available_cells_mask = available_cells_mask & touching_cells_mask
         available_cells = jnp.where(available_cells_mask == 0, -1, adjacent_cells)
         return jnp.hstack((available_cells,
                            jnp.full(self._rows - len(available_cells) + 1,
@@ -134,12 +141,33 @@ class SequentialRandomWalk:
         """
         coordinate = jnp.divmod(cell, self._rows)
         return grid, jax.lax.select(cell == -1, False, grid[coordinate[0], coordinate[1]] == 0)
+    
+    def is_cell_touching_self(
+            self, grid_wire_id: Tuple[chex.Array, int], cell: int,
+        ) -> Tuple[Tuple[chex.Array, int], bool]: 
+        """Check if the cell is touching any of the wire's own cells more than once.
+        This means looking for surrounding cells of value 3 * wire_id + POSITION or
+        3 * wire_id + PATH.
+        """
+        grid, wire_id = grid_wire_id
+        # Get the adjacent cells of the current cell
+        adjacent_cells = self.adjacent_cells(cell)
+        def is_cell_touching_self_inner(grid, cell):
+            coordinate = jnp.divmod(cell, self._rows)
+            cell_value = grid[coordinate[0], coordinate[1]]
+            touching_self = jnp.logical_or(jnp.logical_or(cell_value == 3 * wire_id + POSITION, cell_value == 3 * wire_id + PATH), cell_value == 3 * wire_id + TARGET)
+            return grid, jnp.where(cell == -1, False, touching_self)
+
+        # Count the number of adjacent cells with the same wire id
+        _, touching_self_mask = jax.lax.scan(is_cell_touching_self_inner, grid, adjacent_cells)
+        # If the cell is touching itself more than once, return False
+        return (grid, wire_id), jnp.where(jnp.sum(touching_self_mask) > 1, False, True)
+
 
     def one_step(
             self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire]
         ) -> Tuple[chex.PRNGKey, chex.Array, Wire]:
-        """
-        Have a single agent take a single random step on the board.
+        """Have a single agent take a single random step on the board.
 
         Args:
             random_walk_tuple: a tuple of the key, the grid, the current wire, and the wire id.
@@ -362,8 +390,8 @@ class SequentialRandomWalk:
 
 
 if __name__ == "__main__":
-    board_generator = SequentialRandomWalk(10, 10, 3)
-    key = jax.random.PRNGKey(101)
+    board_generator = SequentialRandomWalk(100, 100, 10)
+    key = jax.random.PRNGKey(42)
     # jit generate
     board_generator_jit = jax.jit(board_generator.generate)
     print(board_generator_jit(key))
