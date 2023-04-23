@@ -11,7 +11,9 @@ from ic_routing_board_generation.board_generator.jax_board_generation.grid_jax i
 from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, \
     stack_push
 
-EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3
+from jumanji.environments.routing.connector.constants import (
+    PATH, POSITION, TARGET
+)
 @dataclass
 class Position:
     """  Class of 2D tuple of ints, indicating the size of an array or a 2D position or vector."""
@@ -30,8 +32,8 @@ class SequentialRandomWalk:
         return jnp.zeros((self._rows, self._cols), dtype=int)
 
     def pick_start(
-            self, key: chex.PRNGKey, grid: chex.Array, wire_id: int, max_length: int
-        ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int, int], bool]:
+        self, key: chex.PRNGKey, grid: chex.Array, wire_id: int, max_length: int
+    ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int, int], bool]:
         """Create a wire and populate start and end points randomly.
         
         Args:
@@ -143,8 +145,8 @@ class SequentialRandomWalk:
         return grid, jax.lax.select(cell == -1, False, grid[coordinate[0], coordinate[1]] == 0)
     
     def is_cell_touching_self(
-            self, grid_wire_id: Tuple[chex.Array, int], cell: int,
-        ) -> Tuple[Tuple[chex.Array, int], bool]: 
+        self, grid_wire_id: Tuple[chex.Array, int], cell: int,
+    ) -> Tuple[Tuple[chex.Array, int], bool]: 
         """Check if the cell is touching any of the wire's own cells more than once.
         This means looking for surrounding cells of value 3 * wire_id + POSITION or
         3 * wire_id + PATH.
@@ -165,8 +167,8 @@ class SequentialRandomWalk:
 
 
     def one_step(
-            self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire]
-        ) -> Tuple[chex.PRNGKey, chex.Array, Wire]:
+        self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire]
+    ) -> Tuple[chex.PRNGKey, chex.Array, Wire]:
         """Have a single agent take a single random step on the board.
 
         Args:
@@ -195,8 +197,8 @@ class SequentialRandomWalk:
         return key, grid, new_wire, wire_id
     
     def can_step(
-            self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire]
-        ) -> bool:
+        self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire]
+    ) -> bool:
         """Check that a given wire can take a step on the board (i.e. it has an available cell to step to).
 
         Args:
@@ -211,8 +213,8 @@ class SequentialRandomWalk:
         return jnp.any(available_cells != -1)
 
     def walk_randomly(
-            self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire, int, int]
-        ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]:
+        self, random_walk_tuple: Tuple[chex.PRNGKey, chex.Array, Wire, int, int]
+    ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]:
         """Perform the entire random walk for a single agent on the board.
 
         Args:
@@ -227,8 +229,8 @@ class SequentialRandomWalk:
         moved = False
 
         def single_step(
-                _, carry: Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]
-            ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]:
+            _, carry: Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]
+        ) -> Tuple[Tuple[chex.PRNGKey, chex.Array, Wire, int], bool]:
             """The body of the loop. Works by checking the agent is able to step, and then stepping if so.
             Also tracks whether the agent was able to move or not.
 
@@ -253,8 +255,8 @@ class SequentialRandomWalk:
         return random_walk_tuple, moved
 
     def add_agents(
-            self, key: chex.PRNGKey, board: chex.Array, max_length: int
-        ) -> Tuple[chex.Array, bool]:
+        self, key: chex.PRNGKey, board: chex.Array, max_length: int
+    ) -> Tuple[chex.Array, bool]:
         """Try to add all required agents to the board. This works by 
         adding each agent sequentially.
 
@@ -281,8 +283,8 @@ class SequentialRandomWalk:
         return random_walk_tuple[1], success
 
     def generate(
-            self, key: chex.PRNGKey
-        ) -> chex.Array:
+        self, key: chex.PRNGKey
+    ) -> chex.Array:
         """Generates a board using sequential random walk, with all wires still present.
         Works by first trying to generate a board with the longest wires possible, repeating with a smaller
         maximum possible length of wire until generation is succesful.
@@ -294,8 +296,8 @@ class SequentialRandomWalk:
             board: jnp.chex.Array with wires added (or a blank board if generation failed).
         """
         def try_to_generate(
-                self, max_length_int: int, i: int, state: Tuple[chex.Array, bool]
-            ) -> Tuple[Tuple[chex.Array, bool], bool]:
+            self, max_length_int: int, i: int, state: Tuple[chex.Array, bool]
+        ) -> Tuple[Tuple[chex.Array, bool], bool]:
             """Main loop. Checks whether a board has been successfully generated, tries to generate a new board if it hasn't.
             
             Args:
@@ -351,8 +353,8 @@ class SequentialRandomWalk:
         return jax.lax.cond(success, return_board, return_empty_board)
     
     def generate_starts_ends(
-            self, key: chex.PRNGKey
-        ) -> Tuple[Tuple[chex.Array, chex.Array], Tuple[chex.Array, chex.Array]]:
+        self, key: chex.PRNGKey
+    ) -> Tuple[Tuple[chex.Array, chex.Array], Tuple[chex.Array, chex.Array]]:
         """Call generate, take the first and last cells of each wire.
         Returns these cells formatted as required by the training process, i.e. as
         two tuples of dimension num_agents.
@@ -390,7 +392,7 @@ class SequentialRandomWalk:
 
 
 if __name__ == "__main__":
-    board_generator = SequentialRandomWalk(100, 100, 10)
+    board_generator = SequentialRandomWalk(10, 10, 5)
     key = jax.random.PRNGKey(42)
     # jit generate
     board_generator_jit = jax.jit(board_generator.generate)
