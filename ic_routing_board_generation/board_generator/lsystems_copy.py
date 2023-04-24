@@ -31,8 +31,8 @@ class LSystemBoardGen:
         self.n_iters = n_iters
         self.pushpullnone_ratios = pushpullnone_ratios
 
-    def initialise_starting_board(self,
-                                  key: random.PRNGKey) -> List[Agent]:
+    def generate_indices(self,
+                         key: random.PRNGKey) -> List[Agent]:
         """Create a list of agents with random initial starting and ending (as neighbours) locations."""
         row_indices, col_indices = jax.numpy.meshgrid(jax.numpy.arange(1, self.rows, 2), jax.numpy.arange(1, self.cols, 2), indexing='ij')
         index_choice = jax.numpy.stack((row_indices, col_indices), axis=-1).reshape(-1, 2)
@@ -41,16 +41,24 @@ class LSystemBoardGen:
         offset_array = jax.lax.select(randomness_type == 0, jax.numpy.array([[0, 1], [1, 0]]), jax.numpy.array([[1, 0], [0, 1]]))
         tail_offsets = jax.random.choice(key, offset_array, (self.num_agents,))
         tail_indices = head_indices + tail_offsets
-        
-        agents = []
-        for i in range(self.num_agents):
-            new_agent = create_stack(self.max_size, 2)
-            new_agent = stack_push_head(new_agent, head_indices[i])
-            new_agent = stack_push_tail(new_agent, tail_indices[i])
-            agents.append(new_agent)
-        return agents
-       
+        return head_indices, tail_indices
 
+    def initialise_starting_board_for_one_agent(self,
+                                                agent_num: int,
+                                                head_indices: jax.Array,
+                                                tail_indices: jax.Array) -> List[Agent]:
+        """Create a list of agents with random initial starting and ending (as neighbours) locations."""
+        new_agent = create_stack(self.max_size, 2)
+        new_agent = stack_push_head(new_agent, head_indices[agent_num])
+        new_agent = stack_push_tail(new_agent, tail_indices[agent_num])
+        return new_agent
+
+    def initialise_starting_board(self, key):
+        head_indices, tail_indices = self.generate_indices(key)
+        agents = jax.vmap(self.initialise_starting_board_for_one_agent, in_axes=(0, None, None))(
+            jax.numpy.arange(self.num_agents), head_indices, tail_indices)
+        grid = self.fill_solved_board(agents)
+        return agents, grid
 
 
     def heads_or_tails(self, key: random.PRNGKey) -> int:
@@ -149,47 +157,42 @@ class LSystemBoardGen:
     def fill_unsolved_board(self, agents: Agent) -> np.ndarray:
         """Fills an `unsolved` board with Agents."""
         board = np.zeros((self.rows, self.cols))
+        
         for i in range(len(agents)):
-            for j in range(len(agents[0].data)):
-                left, middle, right = self.is_empty_self_and_neighbours(j, agents[i])
-                board = jax.lax.select(self.is_head(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+2), board)
-                board = jax.lax.select(self.is_tail(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+3), board)
+            for j in range(self.max_size):
+                left, middle, right = self.is_empty_self_and_neighbours(j, agents, i)
+                board = jax.lax.select(self.is_head(left, middle, right), board.at[tuple(agents.data[i][j])].set(3*i+2), board)
+                board = jax.lax.select(self.is_tail(left, middle, right), board.at[tuple(agents.data[i][j])].set(3*i+3), board)
         return np.asarray(board, dtype=int)
     
-    
-    def is_empty_self_and_neighbours(self, idx: np.ndarray, agent: Agent) -> bool:
+    def is_empty_self_and_neighbours(self, idx: np.ndarray, agent: Agent, i: int) -> bool:
         """Tests if a location and its neighbours are empty."""
-        return np.all(-1 == agent.data[(idx-1)%self.max_size]), np.all(-1 == agent.data[idx]), np.all(-1 == agent.data[(idx+1)%self.max_size])
+        return np.all(-1 == agent.data[i][(idx-1)%self.max_size]), np.all(-1 == agent.data[i][idx]), np.all(-1 == agent.data[i][(idx+1)%self.max_size])
 
-    
     def is_body(self, left, mid, right) -> bool:
         """Tests if a location is a body."""
         return ~ (left | mid | right)
 
-    
     def is_head(self, left, mid, right) -> bool:
         """Tests if a location is a head."""
         return (~(left | mid)) & right
 
-    
     def is_tail(self, left, mid, right) -> bool:
         """Tests if a location is a tail."""
         return left & (~ (mid | right))
 
-    
     def fill_solved_board(self, agents: Agent) -> np.ndarray:
         """Fills a `solved` board with Agents."""
         board = np.zeros((self.rows, self.cols))
         
         for i in range(len(agents)):
-            for j in range(len(agents[0].data)):
-                left, middle, right = self.is_empty_self_and_neighbours(j, agents[i])
-                board = jax.lax.select(self.is_body(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+1), board)
-                board = jax.lax.select(self.is_head(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+2), board)
-                board = jax.lax.select(self.is_tail(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+3), board)
+            for j in range(self.max_size):
+                left, middle, right = self.is_empty_self_and_neighbours(j, agents, i)
+                board = jax.lax.select(self.is_body(left, middle, right), board.at[tuple(agents.data[i][j])].set(3*i+1), board)
+                board = jax.lax.select(self.is_head(left, middle, right), board.at[tuple(agents.data[i][j])].set(3*i+2), board)
+                board = jax.lax.select(self.is_tail(left, middle, right), board.at[tuple(agents.data[i][j])].set(3*i+3), board)
         return np.asarray(board, dtype=int)
 
-    
     def return_training_board(self, key: random.PRNGKey) -> np.ndarray:
         agents = self.initialise_starting_board(key)
         modified_agents = self.fill(key, agents, n_iters=5, pushpullnone_ratios=[2, 0.5, 1])
@@ -211,6 +214,7 @@ class LSystemBoardGen:
         """Method to extend all wires in the board."""
         return extend_wires_jax(self.fill_solved_board(agents), key)
 
+
 import time
 if __name__ == '__main__':
     
@@ -220,26 +224,3 @@ if __name__ == '__main__':
     agents = board.initialise_starting_board(key)
     new_agents = board.fill(key, agents, n_iters=5, pushpullnone_ratios=[2, 0.5, 1])
     print('board after fill\n', board.fill_solved_board(new_agents))
-
-    # alternatively, select an individual agent to push or pull
-    
-    # # ie) this below code works
-    # for _ in range(5):
-    #     for i in range(5):
-    #         which_agent = random.randint(key, (1,), 0, 5)[0]
-    #         print('pushing agent: ', which_agent)
-    #         agents[which_agent] = board.push(key, agents[which_agent], agents)
-    #         key, _ = random.split(key)
-    #         print('board after push\n', board.fill_solved_board(agents))
-
-    #     which_agent = random.randint(key, (1,), 0, 2)[0]
-    #     agents[which_agent] = board.pull(key, agents[which_agent], agents)
-    #     key, _ = random.split(key)
-    #     print('board after pull\n', board.fill_solved_board(agents))
-
-    # is_board_good = np.asarray([np.count_nonzero(nagent.data[:,0]+1)>1 for nagent in agents])
-    # print('is board good? ', np.all(is_board_good))
-
-    # alternatively, run a single command once
-    # board = LSystemBoardGen(rows=5, cols=5, num_agents=5)
-    # print('board after fill\n', board.return_training_board(key))
