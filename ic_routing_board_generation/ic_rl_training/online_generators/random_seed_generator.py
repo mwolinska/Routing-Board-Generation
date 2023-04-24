@@ -26,6 +26,7 @@ class RandomSeedGenerator(Generator):
         """
         super().__init__(grid_size, num_agents)
         self.board_generator = RandomSeedBoard(grid_size, grid_size, num_agents)
+        self.board_generator_call = jax.jit(self.board_generator.generate_starts_ends)
 
     def __call__(self, key: chex.PRNGKey) -> State:
         """Generates a `Connector` state that contains the grid and the agents' layout.
@@ -36,7 +37,7 @@ class RandomSeedGenerator(Generator):
         key, pos_key = jax.random.split(key)
 
         grid = jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.int32)
-        starts, targets = self.board_generator.generate_starts_ends(key)
+        starts, targets = self.board_generator_call(key)
         # jax.debug.print("our starts: {x}", x=starts)
         # jax.debug.print("our targets: {x}", x=targets)
         agent_position_values = jax.vmap(get_position)(

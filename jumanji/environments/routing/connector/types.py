@@ -42,6 +42,13 @@ class Agent:
         """returns: True if the agent has reached its target."""
         return jnp.all(self.position == self.target, axis=-1)
 
+    def __eq__(self, agent_2):
+        same_ids = (agent_2.id == self.id).all()
+        same_starts = (agent_2.start == self.start).all()
+        same_targets = (agent_2.target == self.target).all()
+        same_position = (agent_2.position == self.position).all()
+        return same_ids & same_starts & same_targets & same_position
+
 
 @dataclass
 class State:
