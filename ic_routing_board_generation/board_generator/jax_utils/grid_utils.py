@@ -314,7 +314,7 @@ def thin_wire(key: PRNGKey, board: Array, wire_start: Tuple[int, int], wire_end:
     return board
 
 
-def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
+def optimise_wire2(key: PRNGKey, board: Array, wire_num: int) -> Array:
     """Essentially the same as thin_wire but also uses empty spaces to optimise the wire
     Args:
         key: key to use for random number generation
@@ -367,6 +367,121 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     board = grid.jax_fill_grid(wire, board)
 
     return board
+
+def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
+    """Essentially the same as thin_wire but also uses empty spaces to optimise the wire
+    Args:
+        key: key to use for random number generation
+        board: board to thin the wire on
+        wire_num: wire number
+
+    Returns:
+        board with the wire optimised
+        """
+    # # Initialize the grid
+    # grid = Grid(board.shape[0], board.shape[1], fill_num=wire_num)
+    # max_size = board.shape[0] * board.shape[1]
+    #
+    # start_num = 3 * wire_num + POSITION
+    # end_num = 3 * wire_num + TARGET
+    #
+    # # Find start and end positions
+    # wire_start = jnp.argwhere(board == start_num)[0]
+    # wire_end = jnp.argwhere(board == end_num)[0]
+    #
+    # # Initialize the wire
+    # wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=(wire_end[0], wire_end[1]))
+    #
+    # # Set start and end in board to the same value as wire
+    # board = board.at[wire_start[0], wire_start[1]].set(grid.fill_num * 3 + 1)
+    #
+    # board = board.at[wire_end[0], wire_end[1]].set(grid.fill_num * 3 + 1)
+    #
+    # queue = jnp.zeros(max_size, dtype=jnp.int32)
+    # visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
+    #
+    # # Update queue to reflect the start position
+    # queue = queue.at[grid.convert_tuple_to_int(wire.start)].set(1)
+    #
+    # for _ in range(max_size):
+    #     bfs_stack = (key, wire, board, queue, visited)
+    #     board = bfs_stack[2]
+    #     queue = bfs_stack[3]
+    #     visited = bfs_stack[4]
+    #
+    #     queue, visited, board = grid.update_queue_and_visited(queue, visited, board, key, use_empty=True)
+    #
+    #     if grid.check_if_end_reached(wire, visited):
+    #         break
+    #
+    # curr_pos = grid.convert_tuple_to_int(wire.end)
+    # wire = grid.get_path((wire, visited, curr_pos))
+    # board = grid.remove_path(board, wire)
+    #
+    # board = grid.jax_fill_grid(wire, board)
+    #
+    # return board
+
+    grid = Grid(board.shape[0], board.shape[1], fill_num=wire_num)
+    max_size = board.shape[0] * board.shape[1]
+
+    start_num = 3 * wire_num + POSITION
+    end_num = 3 * wire_num + TARGET
+
+    flat_start = jnp.argmax(jnp.where(board == start_num, board, 0))
+    wire_start = grid.convert_int_to_tuple(flat_start)
+
+    flat_end = jnp.argmax(jnp.where(board == end_num, board, 0))
+    wire_end = grid.convert_int_to_tuple(flat_end)
+
+
+    # Initialize the wire
+    wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=(wire_end[0], wire_end[1]))
+
+    # Set start and end in board to the same value as wire
+    board = board.at[wire_start[0], wire_start[1]].set(grid.fill_num * 3 + 1)
+
+    board = board.at[wire_end[0], wire_end[1]].set(grid.fill_num * 3 + 1)
+
+    queue = jnp.zeros(max_size, dtype=jnp.int32)
+    visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
+
+    # Update queue to reflect the start position
+    queue = queue.at[grid.convert_tuple_to_int(wire.start)].set(1)
+
+    def loop_body(full_stack):
+        i, bfs_stack, end_reached = full_stack
+        key, wire, board, queue, visited = bfs_stack
+
+        # Update the queue and visited arrays
+        queue, visited, board = grid.update_queue_and_visited(queue, visited, board, key, use_empty=True)
+
+        # Check if the end has been reached
+        end_reached = grid.check_if_end_reached(wire, visited)
+
+        # Return the loop condition and the updated bfs_stack
+        return i + 1, (key, wire, board, queue, visited), end_reached
+
+    i = 0
+
+    loop_cond = lambda full_stack: jnp.logical_and(full_stack[0] < (grid.cols * grid.rows),
+                                                   jnp.logical_not(full_stack[-1]))
+
+    end_reached = False
+    bfs_stack = (key, wire, board, queue, visited)
+    full_stack = (i, bfs_stack, end_reached)
+
+    final_i, final_bfs_stack, end_reached = jax.lax.while_loop(loop_cond, loop_body,
+                                                               full_stack)
+
+    _,wire , board,_ , visited = final_bfs_stack
+
+    curr_pos = grid.convert_tuple_to_int(wire.end)
+    wire = grid.get_path((wire, visited, curr_pos))
+    board = grid.remove_path(board, wire)
+    board = grid.jax_fill_grid(wire, board)
+    return board
+
 
 
 if __name__ == '__main__':
