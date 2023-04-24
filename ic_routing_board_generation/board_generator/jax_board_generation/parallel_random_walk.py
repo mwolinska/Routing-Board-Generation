@@ -2,53 +2,75 @@ from typing import Tuple
 
 import chex
 import jax
-from chex import Array, Numeric, PRNGKey
+import jax.numpy as jnp
+from chex import Array, PRNGKey
+
 from jumanji.environments.routing.connector.constants import DOWN, UP, LEFT, \
     RIGHT, NOOP, POSITION, PATH, TARGET, EMPTY
-
-import jax.numpy as jnp
+from jumanji.environments.routing.connector.types import Agent
 from jumanji.environments.routing.connector.utils import move_position, \
     move_agent, get_agent_grid, get_correction_mask, get_target, \
-    connected_or_blocked, is_valid_position, get_position
-
-from jumanji.environments.routing.connector.types import Agent
+    get_position
 
 
 class ParallelRandomWalk:
-    def __init__(self, rows, cols, num_agents):
+    def __init__(self, rows: int, cols: int, num_agents:int):
         self.cols = cols
         self.rows = rows
         self.num_agents = num_agents
 
-    def initialise_agents(self, key: PRNGKey, grid: Array):
+    def initialise_agents(self, key: PRNGKey, grid: Array) -> Tuple[Array, Agent]:
+        """Initialises agents using random starting point and places heads on grid.
+
+        Args:
+            key: random key.
+            grid: empty grid.
+
+        Returns:
+            Tuple of grid with populated starting points and agents initialised with
+            the same starting points.
+
+        """
         starts_flat = jax.random.choice(
             key=key,
             a=jnp.arange(self.rows * self.cols),
             shape=(1, self.num_agents),
-            # Start and target positions for all agents
-            replace=False,  # Start and target positions cannot overlap
+            # Start positions for all agents
+            replace=False,
         )
 
         # Create 2D points from the flat arrays.
         starts = jnp.divmod(starts_flat[0], self.rows)
-        # targets = jnp.divmod(targets_flat, grid_size)
+        # Fill target with default value as targets will be assigned aftert random walk
         targets = tuple(jnp.full((2, self.num_agents), -1))
 
+        # Initialise agents
         agents = jax.vmap(Agent)(
             id=jnp.arange(self.num_agents),
             start=jnp.stack(starts, axis=1),
             target=jnp.stack(targets, axis=1),
             position=jnp.stack(starts, axis=1),
         )
-        grid = jax.vmap(self.update_grid, in_axes=(None, 0))(grid, agents)
+        # Place agent heads on grid
+        grid = jax.vmap(self._place_agent_heads_on_grid, in_axes=(None, 0))(grid, agents)
         grid = grid.max(axis=0)
         return grid, agents
 
-    def update_grid(self, grid, agent: Agent):
+    def _place_agent_heads_on_grid(self, grid: Array, agent: Agent) -> Array:
+        """Update grid with agent starting positions."""
         return grid.at[agent.start[0], agent.start[1]].set(get_position(agent.id))
 
     def generate_board(self, key: PRNGKey):
-        grid = self.return_blank_board()
+        """Generate solvable board using random walk.
+
+        Args:
+            key: random key.
+
+        Returns:
+            Tuple containing head and targets positons for each wire and the solved board
+            generated in the random walk.
+        """
+        grid = self._return_blank_board()
         key, step_key = jax.random.split(key)
         grid, agents = self.initialise_agents(key, grid)
 
@@ -56,6 +78,7 @@ class ParallelRandomWalk:
 
         _, grid, agents = jax.lax.while_loop(self.continue_stepping, self.step, stepping_tuple)
 
+        # Convert heads and targets to format accepted by generator
         heads = tuple(agents.start.T)
         targets = tuple(agents.position.T)
 
@@ -63,29 +86,34 @@ class ParallelRandomWalk:
         # self.step(step_key, grid, agents)
 
     def continue_stepping(self, stepping_tuple: Tuple[PRNGKey, Array, Agent]) -> bool:
+        """Determines if agents can continue taking steps."""
         key, grid, agents = stepping_tuple
-        dones = jax.vmap(self.blocked, in_axes=(None, 0))(grid, agents)
+        dones = jax.vmap(self._is_any_step_possible, in_axes=(None, 0))(grid, agents)
         return ~dones.all()
 
-    def blocked(self, grid, agent):
-        cell = self.convert_tuple_to_int(agent.position)
+    def _is_any_step_possible(self, grid: Array, agent: Agent) -> bool:
+        """Checks if any moves are available for the agent."""
+        cell = self._convert_tuple_to_flat_position(agent.position)
         return (self.available_cells(grid, cell) == -1).all()
 
-    def return_blank_board(self) -> chex.Array:
+    def _return_blank_board(self) -> Array:
+        """Return empty grid of correct size."""
         return jnp.zeros((self.rows, self.cols), dtype=int)
 
-    def step(self, stepping_tuple: Tuple[PRNGKey, Array, Agent]):
+    def step(self, stepping_tuple: Tuple[PRNGKey, Array, Agent]) -> Tuple[PRNGKey, Array, Agent]:
+        """Takes one step for all agents."""
         key, grid, agents = stepping_tuple
         agents, grid = self._step_agents(key, grid, agents)
         key, next_key = jax.random.split(key)
         return next_key, grid, agents
 
     def _step_agents(
-            self, key: chex.PRNGKey, grid: Array, agents: Agent,
-    ) -> Tuple[Agent, chex.Array]:
+            self, key: PRNGKey, grid: Array, agents: Agent,
+    ) -> Tuple[Agent, Array]:
         """Steps all agents at the same time correcting for possible collisions.
 
         If a collision occurs we place the agent with the lower `agent_id` in its previous position.
+        This method is equivalent in function to _step_agents from 'Connector' environment.
 
         Returns:
             Tuple: (agents, grid) after having applied each agents' action
@@ -93,7 +121,9 @@ class ParallelRandomWalk:
         agent_ids = jnp.arange(self.num_agents)
         keys = jax.random.split(key, num=self.num_agents)
 
-        actions = jax.vmap(self.select_action, in_axes=(0, None, 0))(keys, grid, agents)
+        # Randomly select action for each agent
+        actions = jax.vmap(self._select_action, in_axes=(0, None, 0))(keys, grid, agents)
+
         # Step all agents at the same time (separately) and return all of the grids
         agents, grids = jax.vmap(self._step_agent, in_axes=(0, None, 0))(
             agents, grid, actions
@@ -123,8 +153,19 @@ class ParallelRandomWalk:
         # Create the new grid by fixing old one with correction mask and adding the obstacles
         return agents, joined_grid + correction_mask
 
-    def select_action(self, key: PRNGKey, grid: Array, agent: Agent):
-        cell = self.convert_tuple_to_int(agent.position)
+    def _select_action(self, key: PRNGKey, grid: Array, agent: Agent) -> Array:
+        """Selects action for agent to take given its current position.
+
+        Args:
+            key: random key.
+            grid: current state of the grid.
+            agent: the agent.
+
+        Returns:
+            Integer corresponding to the action the agent will take in its next step.
+            Action indices match those in connector.constants.
+        """
+        cell = self._convert_tuple_to_flat_position(agent.position)
         available_cells = self.available_cells(grid=grid, cell=cell)
         step_coordinate_flat = jax.random.choice(
             key=key,
@@ -133,25 +174,25 @@ class ParallelRandomWalk:
             replace=True,
             p=available_cells != -1,
         )
-        # coordinate = jnp.divmod(step_coordinate_flat, self.rows)
 
         action = self.action_from_positions(cell, step_coordinate_flat)
         return action
 
-    def convert_int_to_tuple(self, position: int) -> Tuple[int, int]:
+    def _convert_flat_position_to_tuple(self, position: Array) -> Array:
         return jnp.array((position // self.cols), int(position % self.cols), int)
 
-    def convert_tuple_to_int(self, position: Array) -> int:
+    def _convert_tuple_to_flat_position(self, position: Array) -> Array:
         return jnp.array((position[0] * self.cols + position[1]), int)
 
-    def action_from_positions(self, position_1: int, position_2: int) -> int:
+    def action_from_positions(self, position_1: Array, position_2: Array) -> Array:
+        """Compares two positions and returns action id to get from one to the other."""
         position_1 = self.convert_int_to_array(position_1)
         position_2 = self.convert_int_to_array(position_2)
         action_tuple = position_2 - position_1
         return self.action_from_tuple(action_tuple)
 
-    def action_from_tuple(self, action_tuple: Array) -> int:
-        # all_actions = jnp.zeros(self.num_agents)
+    def action_from_tuple(self, action_tuple: Array) -> Array:
+
         action_multiplier = jnp.array([UP, DOWN, LEFT, RIGHT, NOOP])
         actions = jnp.array(
             [
@@ -168,8 +209,10 @@ class ParallelRandomWalk:
     def convert_int_to_array(self, position: int) -> Array:
         return jnp.array([position // self.cols, position % self.cols], int)
 
-    def adjacent_cells(self, cell: int) -> chex.Array:
-        """Given a cell, return a jnp.chex.Array of size 4 with the flat indices of
+    def adjacent_cells(self, cell: int) -> Array:
+        """Returns Aray of adjacent cells to the input.
+
+        Given a cell, return a jnp.chex.Array of size 4 with the flat indices of
         adjacent cells. Padded with -1's if less than 4 adjacent cells (if on the edge of the grid).
 
         Args:
@@ -197,11 +240,11 @@ class ParallelRandomWalk:
         mask = mask & row_col_mask
         return jnp.where(mask == 0, -1, cells_to_check)
 
-    def available_cells(self, grid: chex.Array, cell: int) -> chex.Array:
-        """ Given a cell and the grid of the board, see which adjacent cells are available to move to
-        (i.e. are currently unoccupied).
-        TODO: Expand this to also check that cells do not touch the current wire more than once,
-        to improve quality of generated boards.
+    def available_cells(self, grid: chex.Array, cell: Array) -> Array:
+        """Returns list of cells that can be stepped into from the input cell's position.
+
+        Given a cell and the grid of the board, see which adjacent cells are available to move to
+        (i.e. are currently unoccupied) to avoid stepping over exisitng wires.
 
         Args:
             grid: the current grid of the board.
@@ -217,17 +260,15 @@ class ParallelRandomWalk:
 
         _, available_cells_mask = jax.lax.scan(self.is_cell_free, grid, adjacent_cells)
         # Also want to check if the cell is touching itself more than once
-        _, touching_cells_mask = jax.lax.scan(self.is_cell_touching_self, (grid, wire_id), adjacent_cells)
+        _, touching_cells_mask = jax.lax.scan(self._is_cell_doubling_back, (grid, wire_id), adjacent_cells)
         available_cells_mask = available_cells_mask & touching_cells_mask
         available_cells = jnp.where(available_cells_mask == 0, -1, adjacent_cells)
-        # print("avail cells")
-        # print(grid)
-        # print(adjacent_cells)
+
         return available_cells
 
     def is_cell_free(
-            self, grid: chex.Array, cell: int,
-    ) -> Tuple[chex.Array, bool]:
+            self, grid: chex.Array, cell: Array,
+    ) -> Tuple[Array, Array]:
         """Check if a given cell is free, i.e. has a value of 0.
 
         Args:
@@ -240,18 +281,19 @@ class ParallelRandomWalk:
         coordinate = jnp.divmod(cell, self.rows)
         return grid, jax.lax.select(cell == -1, False, grid[coordinate[0], coordinate[1]] == 0)
 
-    def is_cell_touching_self(
+    def _is_cell_doubling_back(
             self, grid_wire_id: Tuple[chex.Array, int], cell: int,
     ) -> Tuple[Tuple[chex.Array, int], bool]:
-        """Check if the cell is touching any of the wire's own cells more than once.
+        """Checks if moving into and adjacent position would result in a wire doubling back on itself.
+
+        Check if the cell is touching any of the wire's own cells more than once.
         This means looking for surrounding cells of value 3 * wire_id + POSITION or
         3 * wire_id + PATH.
-        # TODO (MW/ OJ): Why 3?
         """
         grid, wire_id = grid_wire_id
         # Get the adjacent cells of the current cell
         adjacent_cells = self.adjacent_cells(cell)
-        def is_cell_touching_self_inner(grid, cell):
+        def is_cell_touching_self_inner(grid: Array, cell: Array) -> Tuple[Array, Array]:
             coordinate = jnp.divmod(cell, self.rows)
             cell_value = grid[coordinate[0], coordinate[1]]
             touching_self = jnp.logical_or(
@@ -264,7 +306,6 @@ class ParallelRandomWalk:
         _, touching_self_mask = jax.lax.scan(is_cell_touching_self_inner, grid, adjacent_cells)
         # If the cell is touching itself more than once, return False
         return (grid, wire_id), jnp.where(jnp.sum(touching_self_mask) > 1, False, True)
-
 
     def _step_agent(
         self, agent: Agent, grid: Array, action: int,
@@ -312,19 +353,6 @@ class ParallelRandomWalk:
         not_connected = ~agent.connected
 
         return in_bounds & open_cell & not_connected
-
-    def _get_action_mask(self, agent: Agent, grid: chex.Array) -> chex.Array:
-        """Gets an agent's action mask."""
-        # Don't check action 0 because no-op is always valid
-        actions = jnp.arange(1, 5)
-
-        def is_valid_action(action: int) -> chex.Array:
-            agent_pos = move_position(agent.position, action)
-            return is_valid_position(grid, agent, agent_pos)
-
-        mask = jnp.ones(5, dtype=bool)
-        mask = mask.at[actions].set(jax.vmap(is_valid_action)(actions))
-        return mask
 
 if __name__ == '__main__':
     board_generator = ParallelRandomWalk(10, 10, 5)
