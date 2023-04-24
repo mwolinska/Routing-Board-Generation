@@ -172,7 +172,7 @@ class Grid:
         wire_visited_tuple = jax.lax.while_loop(cond_fun, body_fun, wire_visited_tuple)
 
         wire, visited, _ = wire_visited_tuple
-        wire = stack_reverse(wire)
+        # wire = stack_reverse(wire)
 
         return wire
 
@@ -236,8 +236,8 @@ class Grid:
 
         # populate these positions in the flattened board
         board_flat = board.ravel()
-        board_flat = board_flat.at[start].set(3 * wire_num + POSITION)
-        board_flat = board_flat.at[end].set(3 * wire_num + TARGET)
+        board_flat = board_flat.at[start].set(3 * wire_num + TARGET) # Recall that path ordering is reversed
+        board_flat = board_flat.at[end].set(3 * wire_num + POSITION) # Recall that path ordering is reversed
         board_flat = board_flat.at[path[1:-1]].set(3 * wire_num + PATH)
 
         # reshape the board
@@ -368,6 +368,7 @@ def optimise_wire2(key: PRNGKey, board: Array, wire_num: int) -> Array:
 
     return board
 
+
 def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     """Essentially the same as thin_wire but also uses empty spaces to optimise the wire
     Args:
@@ -434,7 +435,6 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     flat_end = jnp.argmax(jnp.where(board == end_num, board, 0))
     wire_end = grid.convert_int_to_tuple(flat_end)
 
-
     # Initialize the wire
     wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=(wire_end[0], wire_end[1]))
 
@@ -474,14 +474,13 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     final_i, final_bfs_stack, end_reached = jax.lax.while_loop(loop_cond, loop_body,
                                                                full_stack)
 
-    _,wire , board,_ , visited = final_bfs_stack
+    _, wire, board, _, visited = final_bfs_stack
 
     curr_pos = grid.convert_tuple_to_int(wire.end)
     wire = grid.get_path((wire, visited, curr_pos))
     board = grid.remove_path(board, wire)
     board = grid.jax_fill_grid(wire, board)
     return board
-
 
 
 if __name__ == '__main__':
