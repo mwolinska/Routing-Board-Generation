@@ -14,8 +14,6 @@ from typing import List, NamedTuple, SupportsFloat as Numeric, Tuple
 import grid_utils
 
 
-
-
 class LSystemBoardGen:
     def __init__(self,
                  rows: int,
