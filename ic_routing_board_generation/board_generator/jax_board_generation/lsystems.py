@@ -1,6 +1,7 @@
 import jax.numpy as np
 from jax import random
 import jax
+import chex
 from ic_routing_board_generation.board_generator.jax_data_model.deque import (
     Agent, 
     create_stack, 
@@ -28,8 +29,6 @@ class LSystemBoardGen:
         self.n_iters = n_iters
         self.pushpullnone_ratios = pushpullnone_ratios
 
-
-    
     def initialise_starting_board(self,
                                   key: random.PRNGKey) -> List[Agent]:
         """Create a list of agents with random initial starting locations."""
@@ -46,12 +45,10 @@ class LSystemBoardGen:
             new_agent = create_stack(self.max_size, 2)
             agents.append(stack_push_head(new_agent, np.asarray([row_indices[i], col_indices[i]]))) # initial coords given here
         return agents
-
     
-    def heads_or_tails(self, key: random.PRNGKey) -> int:
+    def heads_or_tails(self, key: random.PRNGKey) -> chex.Array:
         """Given `key`choose a random growth or shrink direction for an Agent."""
         return random.randint(key, (), -1, 1)
-
     
     def find_empty_neighbours(self, loc: Tuple[int, int], agents: List[Agent]) -> np.ndarray:
         """Given a location tuple, find the empty neighbours of a board location.
@@ -72,14 +69,12 @@ class LSystemBoardGen:
         neighbors = [v1, v2, v3, v4]
         return np.asarray(neighbors, dtype=int), np.asarray(neighbour_locs)
 
-    
     def growth_neighbour_loc(self, key: random.PRNGKey, neighbour_locs: np.ndarray, neighbours: np.ndarray) -> np.ndarray:
         """Chooses the location of the next growth of an Agent according to free space in neighbouring cells."""
         which_neighbour = jax.lax.select(neighbours.sum()>0, jax.random.choice(key, 4, (), p=neighbours), -1)
         loc = jax.lax.select(which_neighbour >= 0, neighbour_locs[which_neighbour], np.asarray((-1, -1)))
         return loc
 
-    
     def grow_agent(self, side:int, loc: np.ndarray, agent: Agent) -> Agent:
         """Given a location tuple and an Agent, grow the Agent in the given direction."""        
         grown_agent = jax.lax.cond(side == 0, lambda _: stack_push_head(agent, loc), lambda _: stack_push_tail(agent, loc), None)
@@ -95,7 +90,6 @@ class LSystemBoardGen:
         agent = jax.lax.cond(loc[0] >= 0, lambda _: self.grow_agent(side, loc, agent), lambda _: agent, None)                               # deterministic
         return agent
 
-    
     def shrink_agent(self, side: int, agent: Agent) -> Agent:
         """Given a direction and an Agent, shrink the Agent in the given direction."""
         agent = jax.lax.cond(side == 0, stack_pop_head, stack_pop_tail, agent)
@@ -130,14 +124,11 @@ class LSystemBoardGen:
             action = jax.random.choice(key, 3, (), p=np.asarray(self.pushpullnone_ratios))
             nagent = jax.lax.cond(action == 0, self.push, self.pull, key, agents[i], new_agents)
             new_agents[i] = nagent
-        # agents = new_agents
         return (key, new_agents)
 
-    
     def fill_method(self, inp) -> None:
         return jax.lax.fori_loop(0, self.n_iters, self.fill_method_inner, inp)
 
-    
     def fill_unsolved_board(self, agents: Agent) -> np.ndarray:
         """Fills an `unsolved` board with Agents."""
         board = np.zeros((self.rows, self.cols))
@@ -148,22 +139,18 @@ class LSystemBoardGen:
                 board = jax.lax.select(self.is_tail(left, middle, right), board.at[tuple(agents[i].data[j])].set(3*i+3), board)
         return np.asarray(board, dtype=int)
     
-    
     def is_empty_self_and_neighbours(self, idx: np.ndarray, agent: Agent) -> bool:
         """Tests if a location and its neighbours are empty."""
         return np.all(-1 == agent.data[(idx-1)%self.max_size]), np.all(-1 == agent.data[idx]), np.all(-1 == agent.data[(idx+1)%self.max_size])
 
-    
     def is_body(self, left, mid, right) -> bool:
         """Tests if a location is a body."""
         return ~ (left | mid | right)
 
-    
     def is_head(self, left, mid, right) -> bool:
         """Tests if a location is a head."""
         return (~(left | mid)) & right
 
-    
     def is_tail(self, left, mid, right) -> bool:
         """Tests if a location is a tail."""
         return left & (~ (mid | right))
