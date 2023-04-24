@@ -213,7 +213,7 @@ class Grid:
         return board
 
     @staticmethod
-    def jax_fill_grid(wire: Wire, board: Array) -> Array:
+    def jax_fill_grid2(wire: Wire, board: Array) -> Array:
         """Places a wire path on the board in a Jax way
                 paths are encoded as 3 * wire_num + 1
                 starts are encoded as 3 * wire_num + 2
@@ -239,6 +239,57 @@ class Grid:
         board_flat = board_flat.at[start].set(3 * wire_num + TARGET) # Recall that path ordering is reversed
         board_flat = board_flat.at[end].set(3 * wire_num + POSITION) # Recall that path ordering is reversed
         board_flat = board_flat.at[path[1:-1]].set(3 * wire_num + PATH)
+
+        # reshape the board
+        board = board_flat.reshape(board.shape)
+        return board
+
+    @staticmethod
+    def jax_fill_grid(wire: Wire, board: Array) -> Array:
+        """Places a wire path on the board in a Jax way
+                paths are encoded as 3 * wire_num + 1
+                starts are encoded as 3 * wire_num + 2
+                ends are encoded as 3 * wire_num + 3
+
+            Args:
+                wire: wire to place on the board
+                board: board to place the wire on
+            Returns:
+                board with the wire placed on it
+                """
+        # path = wire.path[:wire.insertion_index]
+        # # Get the wire number
+        # wire_num = wire.wire_id
+        #
+        # # Start is at the first position in the path
+        # start = path[0]
+        # # End is at the last position in the path
+        # end = path[-1]
+        #
+        # # populate these positions in the flattened board
+        # board_flat = board.ravel()
+        # board_flat = board_flat.at[start].set(3 * wire_num + TARGET) # Recall that path ordering is reversed
+        # board_flat = board_flat.at[end].set(3 * wire_num + POSITION) # Recall that path ordering is reversed
+        # board_flat = board_flat.at[path[1:-1]].set(3 * wire_num + PATH)
+
+        board_flat = board.ravel()
+        # Need to populate the start and end positions and the path positions using a jax while loop.
+        # The loop will stop when -1 is reached in the path
+        def cond_fun(i_board_tuple):
+            i, board_flat = i_board_tuple
+            return wire.path[i] != -1
+
+        def body_fun(i_board_tuple):
+            i, board_flat = i_board_tuple
+            board_flat = board_flat.at[wire.path[i]].set(3 * wire.wire_id + PATH)
+            return i + 1, board_flat
+
+        i, board_flat = jax.lax.while_loop(cond_fun, body_fun, (0, board_flat))
+
+        # update the start and end positions
+        board_flat = board_flat.at[wire.path[i -1]].set(3 * wire.wire_id + POSITION)
+        board_flat = board_flat.at[wire.path[0]].set(3 * wire.wire_id + TARGET)
+
 
         # reshape the board
         board = board_flat.reshape(board.shape)
@@ -479,6 +530,7 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     curr_pos = grid.convert_tuple_to_int(wire.end)
     wire = grid.get_path((wire, visited, curr_pos))
     board = grid.remove_path(board, wire)
+
     board = grid.jax_fill_grid(wire, board)
     return board
 
