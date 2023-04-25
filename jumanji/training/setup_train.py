@@ -79,7 +79,6 @@ def setup_logger(cfg: DictConfig) -> Logger:
 
 def _make_raw_env(cfg: DictConfig) -> Environment:
     env: Environment = jumanji.make(cfg.env.registered_version)
-    print("_make_raw_env")
     if isinstance(env, Connector):
         env = MultiToSingleWrapper(env)
     return env
