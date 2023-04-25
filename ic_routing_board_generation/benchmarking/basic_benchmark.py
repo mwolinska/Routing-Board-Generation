@@ -234,7 +234,7 @@ class BasicBenchmark:
         ax.scatter(inds, data, marker='o', color='k', s=30, zorder=3)
         if stds is not None:
             stds = np.array(stds)
-            ax.vlines(inds, data - (stds/2), data + (stds/2), color='blue', linestyle='-',
+            ax.vlines(inds, data - (stds), data + (stds), color='blue', linestyle='-',
                   lw=3)
         plt.tight_layout()
         if file_name is not None:
