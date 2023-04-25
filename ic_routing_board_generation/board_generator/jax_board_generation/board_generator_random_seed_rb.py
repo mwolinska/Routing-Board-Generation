@@ -3,7 +3,8 @@ from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_
 from dataclasses import dataclass
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.jax_utils.grid_utils import optimise_wire
-from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax, training_board_from_solved_board_jax
+from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax, \
+    training_board_from_solved_board_jax
 from ic_routing_board_generation.board_generator.numpy_utils.post_processor_utils_numpy import count_detours
 #import numpy as np
 
@@ -91,8 +92,8 @@ class RandomSeedBoard(AbstractBoard):
         key, seedkey = jax.random.split(key)
 
         board_layout = self.return_seeded_board(seedkey)
-        print("SEEDED BOARD")
-        print(board_layout)
+        # print("SEEDED BOARD")
+        # print(board_layout)
 
         # While Loop: Loop through specified num of iterations as long as convergence hasn't occurred
         def ext_iterations_cond(carry):
@@ -103,10 +104,10 @@ class RandomSeedBoard(AbstractBoard):
             board_layout, key, iteration_num, converged = carry
             iteration_num = iteration_num + 1
 
-            print("Extension iteration ", iteration_num + 1)
+            # print("Extension iteration ", iteration_num + 1)
             key, extkey, optkey = jax.random.split(key, 3)
             board_layout = extend_wires_jax(board_layout, extkey, randomness, two_sided, extension_steps)
-            print(board_layout)
+            # print(board_layout)
             optkeys = jax.random.split(optkey, self._wires_on_board)
             board_layout_save = deepcopy(board_layout)
 
@@ -119,14 +120,14 @@ class RandomSeedBoard(AbstractBoard):
             carry = (board_layout_save, optkeys)
             board_layout, _ = jax.lax.fori_loop(0, self._wires_on_board, optimise_loop_func, carry)
 
-            print("Optimization")
-            print(board_layout)
+            # print("Optimization")
+            # print(board_layout)
             #print("Detours = ", count_detours(np_array(board_layout)))
-
 
             #   WHILE LOOP
             carry = (board_layout, key, iteration_num, converged)
             return carry
+        
         # For ext_iterations while loop
         converged = False
         iteration_num = 0
@@ -175,7 +176,7 @@ class RandomSeedBoard(AbstractBoard):
 
         def find_positions(wire_id):
             wire_positions = board_layout == 3 * wire_id + POSITION
-            wire_targets = board_layout == 3 * wire_id + TARGET
+            wire_targets = board_layout   == 3 * wire_id + TARGET
 
             # Compute indices where wire_positions and wire_targets are True
             start_indices = jnp.argwhere(wire_positions, size=2)
