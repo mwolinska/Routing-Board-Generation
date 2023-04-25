@@ -45,6 +45,8 @@ class ParallelRandomWalkGenerator(Generator):
 
         grid = jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.int32)
         starts, targets, solved_grid = self.board_generator.generate_board(key)
+        starts = tuple(starts)
+        targets = tuple(targets)
         agent_position_values = jax.vmap(get_position)(
             jnp.arange(self.num_agents))
         agent_target_values = jax.vmap(get_target)(jnp.arange(self.num_agents))
