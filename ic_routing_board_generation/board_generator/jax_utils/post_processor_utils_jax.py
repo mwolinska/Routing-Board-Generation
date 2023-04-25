@@ -92,7 +92,7 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
     def while_body(carry):
         prev_layout, board_layout, key, step_num = carry
         step_num = step_num + 1
-        print("Extension Step ", step_num)
+        # print("Extension Step ", step_num)
 
         # Randomly flip/flop the board between iterations to remove any directional bias.
         key, flipkey, flopkey = jax.random.split(key, 3)
