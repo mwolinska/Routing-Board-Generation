@@ -24,6 +24,8 @@ from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
     PickleLogger
 from ic_routing_board_generation.ic_rl_training.offline_generation.dataset_generator import \
     BoardDatasetGenerator
+from ic_routing_board_generation.ic_rl_training.offline_generation.dataset_generator_jax import \
+    BoardDatasetGeneratorJAX
 from ic_routing_board_generation.ic_rl_training.online_generators.parallel_random_walk_generator import \
     ParallelRandomWalkGenerator
 from ic_routing_board_generation.ic_rl_training.online_generators.random_seed_generator import \
@@ -102,6 +104,15 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             grid_size=cfg.env.ic_board.grid_size,
             num_agents=cfg.env.ic_board.num_agents,
             board_generator=cfg.env.ic_board.board_name,
+        )
+    elif cfg.env.ic_board.generation_type == "offline_seed_extension":
+        generator = BoardDatasetGeneratorJAX(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+            randomness=cfg.env.seed_extension.randomness,
+            two_sided=cfg.env.seed_extension.two_sided,
+            extension_iterations=cfg.env.seed_extension.extension_iterations,
+            extension_steps=cfg.env.seed_extension.extension_steps,
         )
     elif cfg.env.ic_board.generation_type == "online_uniform":
         generator = UniformRandomGenerator(
