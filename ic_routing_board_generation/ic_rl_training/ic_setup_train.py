@@ -24,6 +24,8 @@ from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
     PickleLogger
 from ic_routing_board_generation.ic_rl_training.offline_generation.dataset_generator import \
     BoardDatasetGenerator
+from ic_routing_board_generation.ic_rl_training.online_generators.parallel_random_walk_generator import \
+    ParallelRandomWalkGenerator
 from ic_routing_board_generation.ic_rl_training.online_generators.random_seed_generator import \
     RandomSeedGenerator
 from ic_routing_board_generation.ic_rl_training.online_generators.sequential_random_walk_generator import \
@@ -118,7 +120,10 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             num_agents=cfg.env.ic_board.num_agents,
         )
     elif cfg.env.ic_board.generation_type == "online_parallel_rw":
-        raise NotImplementedError
+        generator = ParallelRandomWalkGenerator(
+            grid_size=cfg.env.ic_board.grid_size,
+            num_agents=cfg.env.ic_board.num_agents,
+        )
     elif cfg.env.ic_board.generation_type == "online_lsystems":
         raise NotImplementedError
     else:
