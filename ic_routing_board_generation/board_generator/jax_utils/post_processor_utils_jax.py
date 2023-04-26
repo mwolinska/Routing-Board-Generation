@@ -50,7 +50,7 @@ def extend_wires_jax(
     # Continue as long as the algorithm is still changing the board
     step_num = 0
 
-    def extend_cond(carry: Tuple[chex.Array, chex.Array, chex.PRNGKey, int]) -> bool:
+    def can_extend(carry: Tuple[chex.Array, chex.Array, chex.PRNGKey, int]) -> bool:
         """Continue as long as the algorithm is still changing the board,
         and we haven't exceeded the maximum number of steps.
         """
@@ -59,7 +59,7 @@ def extend_wires_jax(
             step_num < extension_steps
         )
 
-    def extend_body(carry: Tuple[chex.Array, chex.Array, chex.PRNGKey, int]) -> Tuple:
+    def extend(carry: Tuple[chex.Array, chex.Array, chex.PRNGKey, int]) -> Tuple:
         """Extend each wire by one step"""
         prev_layout, board_layout, key, step_num = carry
         step_num = step_num + 1
@@ -205,7 +205,7 @@ def extend_wires_jax(
 
     # For jax.lax.while_loop
     carry = (prev_layout, board_layout, key, step_num)
-    _, board_layout, _, _ = jax.lax.while_loop(extend_cond, extend_body, carry)
+    _, board_layout, _, _ = jax.lax.while_loop(can_extend, extend, carry)
     return board_layout
 
 
@@ -261,32 +261,23 @@ def get_neighbors_same_wire_jax(
         (jnp.array) : a list of cells (2D positions) adjacent to the queried cell which belong to the same wire
                         The output will always have four entries but some will be INVALID.
     """
-    output_array = jnp.array([INVALID, INVALID, INVALID, INVALID])
+    rows, cols = board_layout.shape
+    directions = jnp.array([[-1, 0], [0, -1], [1, 0], [0, 1]])
     wire_num = position_to_wire_num_jax(input_pos, board_layout)
-    row, col = input_pos[0], input_pos[1]
-    pos_up = jnp.array((row - 1, col))
-    pos_down = jnp.array((row + 1, col))
-    pos_left = jnp.array((row, col - 1))
-    pos_right = jnp.array((row, col + 1))
-    # Check each of the four directions
-    adjacent_cell = jax.lax.select(
-        position_to_wire_num_jax(pos_up, board_layout) == wire_num, pos_up, INVALID
-    )
-    output_array = output_array.at[0].set(adjacent_cell)
-    adjacent_cell = jax.lax.select(
-        position_to_wire_num_jax(pos_down, board_layout) == wire_num, pos_down, INVALID
-    )
-    output_array = output_array.at[1].set(adjacent_cell)
-    adjacent_cell = jax.lax.select(
-        position_to_wire_num_jax(pos_left, board_layout) == wire_num, pos_left, INVALID
-    )
-    output_array = output_array.at[2].set(adjacent_cell)
-    adjacent_cell = jax.lax.select(
-        position_to_wire_num_jax(pos_right, board_layout) == wire_num,
-        pos_right,
-        INVALID,
-    )
-    output_array = output_array.at[3].set(adjacent_cell)
+
+    def check_same_wire(direction: jnp.array) -> jnp.array:
+        adjacent_pos = input_pos + direction
+        adjacent_x, adjacent_y = adjacent_pos
+        in_bounds = jnp.logical_and(
+            jnp.logical_and(adjacent_x >= 0, adjacent_x < rows),
+            jnp.logical_and(adjacent_y >= 0, adjacent_y < cols)
+        )
+        wire_adjacent = jax.lax.select(
+            in_bounds, board_layout[adjacent_x, adjacent_y], -1
+        )
+        return jax.lax.select(wire_adjacent == wire_num, adjacent_pos, INVALID)
+
+    output_array = jax.vmap(check_same_wire)(directions)
     return output_array
 
 
@@ -303,27 +294,22 @@ def num_wire_adjacencies_jax(
     Returns:
         (chex.Array) : The number of adjacent cells belonging to the specified wire
     """
-    num_adjacencies = 0
-    # Check above
-    wire_adjacent = position_to_wire_num_jax(
-        jnp.array((input_pos[0] - 1, input_pos[1])), board_layout
-    )
-    num_adjacencies = num_adjacencies + jax.lax.select(wire_adjacent == wire_num, 1, 0)
-    # Check below
-    wire_adjacent = position_to_wire_num_jax(
-        jnp.array((input_pos[0] + 1, input_pos[1])), board_layout
-    )
-    num_adjacencies = num_adjacencies + jax.lax.select(wire_adjacent == wire_num, 1, 0)
-    # Check left
-    wire_adjacent = position_to_wire_num_jax(
-        jnp.array((input_pos[0], input_pos[1] - 1)), board_layout
-    )
-    num_adjacencies = num_adjacencies + jax.lax.select(wire_adjacent == wire_num, 1, 0)
-    # Check right
-    wire_adjacent = position_to_wire_num_jax(
-        jnp.array((input_pos[0], input_pos[1] + 1)), board_layout
-    )
-    num_adjacencies = num_adjacencies + jax.lax.select(wire_adjacent == wire_num, 1, 0)
+    rows, cols = board_layout.shape
+    directions = jnp.array([[-1, 0], [0, -1], [1, 0], [0, 1]])
+
+    def check_adjacency(direction: jnp.array) -> int:
+        adjacent_pos = input_pos + direction
+        adjacent_x, adjacent_y = adjacent_pos
+        in_bounds = jnp.logical_and(
+            jnp.logical_and(adjacent_x >= 0, adjacent_x < rows),
+            jnp.logical_and(adjacent_y >= 0, adjacent_y < cols)
+        )
+        wire_adjacent = jax.lax.select(
+            in_bounds, board_layout[adjacent_x, adjacent_y], -1
+        )
+        return jax.lax.select(wire_adjacent == wire_num, 1, 0)
+
+    num_adjacencies = jnp.sum(jax.vmap(check_adjacency)(directions))
     return num_adjacencies
 
 

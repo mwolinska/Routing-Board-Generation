@@ -3,28 +3,10 @@ from typing import Tuple, Optional
 import jax.numpy as jnp
 import jax.random
 from chex import Array, PRNGKey
-from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_reverse, stack_push
+from ic_routing_board_generation.board_generator.jax_data_model.wire import Wire, create_wire, stack_push
 
 EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 
-
-# Usage Guide:
-# 1. Given a partially filled board, wire_start, wire_end, and wire_id, we use the thin_wire function to
-# thin out the wire so that is a valid wire on the board.
-
-# 2. If unable to provide the start and the end positions,
-# you can use the get_start_end_positions function to get the start and end positions of the wire on the board.
-
-# Example below
-
-#   wire_num = 0  # Wire number x, is x s.t. wire x is encoded as 3 * x + 1.
-#   wire_start, wire_end = get_start_end_positions(board, wire_num)
-#   seed = random.randint(0, 10000)
-#   key = jax.random.PRNGKey(seed)
-#   board = thin_wire(key, board, wire_start, wire_end, wire_num)
-
-
-# Make a function that thins out a wire when given a board and wire
 
 class Grid:
     def __init__(self, rows: int, cols: int, fill_num: Optional[int] = 0) -> None:
@@ -257,20 +239,6 @@ class Grid:
             Returns:
                 board with the wire placed on it
                 """
-        # path = wire.path[:wire.insertion_index]
-        # # Get the wire number
-        # wire_num = wire.wire_id
-        #
-        # # Start is at the first position in the path
-        # start = path[0]
-        # # End is at the last position in the path
-        # end = path[-1]
-        #
-        # # populate these positions in the flattened board
-        # board_flat = board.ravel()
-        # board_flat = board_flat.at[start].set(3 * wire_num + TARGET) # Recall that path ordering is reversed
-        # board_flat = board_flat.at[end].set(3 * wire_num + POSITION) # Recall that path ordering is reversed
-        # board_flat = board_flat.at[path[1:-1]].set(3 * wire_num + PATH)
 
         board_flat = board.ravel()
         # Need to populate the start and end positions and the path positions using a jax while loop.
@@ -430,49 +398,6 @@ def optimise_wire(key: PRNGKey, board: Array, wire_num: int) -> Array:
     Returns:
         board with the wire optimised
         """
-    # # Initialize the grid
-    # grid = Grid(board.shape[0], board.shape[1], fill_num=wire_num)
-    # max_size = board.shape[0] * board.shape[1]
-    #
-    # start_num = 3 * wire_num + POSITION
-    # end_num = 3 * wire_num + TARGET
-    #
-    # # Find start and end positions
-    # wire_start = jnp.argwhere(board == start_num)[0]
-    # wire_end = jnp.argwhere(board == end_num)[0]
-    #
-    # # Initialize the wire
-    # wire = create_wire(max_size=max_size, wire_id=wire_num, start=wire_start, end=(wire_end[0], wire_end[1]))
-    #
-    # # Set start and end in board to the same value as wire
-    # board = board.at[wire_start[0], wire_start[1]].set(grid.fill_num * 3 + 1)
-    #
-    # board = board.at[wire_end[0], wire_end[1]].set(grid.fill_num * 3 + 1)
-    #
-    # queue = jnp.zeros(max_size, dtype=jnp.int32)
-    # visited = -1 * jnp.ones(max_size, dtype=jnp.int32)
-    #
-    # # Update queue to reflect the start position
-    # queue = queue.at[grid.convert_tuple_to_int(wire.start)].set(1)
-    #
-    # for _ in range(max_size):
-    #     bfs_stack = (key, wire, board, queue, visited)
-    #     board = bfs_stack[2]
-    #     queue = bfs_stack[3]
-    #     visited = bfs_stack[4]
-    #
-    #     queue, visited, board = grid.update_queue_and_visited(queue, visited, board, key, use_empty=True)
-    #
-    #     if grid.check_if_end_reached(wire, visited):
-    #         break
-    #
-    # curr_pos = grid.convert_tuple_to_int(wire.end)
-    # wire = grid.get_path((wire, visited, curr_pos))
-    # board = grid.remove_path(board, wire)
-    #
-    # board = grid.jax_fill_grid(wire, board)
-    #
-    # return board
 
     grid = Grid(board.shape[0], board.shape[1], fill_num=wire_num)
     max_size = board.shape[0] * board.shape[1]
