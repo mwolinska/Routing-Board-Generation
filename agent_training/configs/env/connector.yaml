@@ -12,6 +12,7 @@ seed_extension:
     two_sided: true
     extension_iterations: 1
     extension_steps: 1e23
+    number_of_boards: 10
 
 network:
     transformer_num_blocks: 4

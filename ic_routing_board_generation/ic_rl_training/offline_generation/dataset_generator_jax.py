@@ -1,8 +1,12 @@
+import time
 from typing import Optional
 
 import chex
 import jax
 from jax import numpy as jnp
+
+from ic_routing_board_generation.board_generator.jax_board_generation.parallel_random_walk import \
+    ParallelRandomWalk
 from jumanji.environments.routing.connector.utils import get_position, get_target
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
@@ -25,16 +29,25 @@ class BoardDatasetGeneratorJAX(Generator):
                  randomness: float = 1,
                  two_sided: bool = False,
                  extension_iterations: int = 1,
-                 extension_steps: int = 1e23) -> None:
+                 extension_steps: int = 1e23,
+                 board_name: str = "offline_seed_extension",
+                 number_of_boards: int = 10000,
+                 ) -> None:
         super().__init__(grid_size, num_agents)
+        self.board_name = board_name
+        if board_name == "offline_seed_extension":
+            self.board_generator = RandomSeedBoard(grid_size, grid_size, num_agents)
+            self.board_generator_call = jax.jit(self.board_generator.generate_starts_ends)
+            self.randomness = randomness
+            self.two_sided = two_sided
+            self.extension_iterations = extension_iterations
+            self.extension_steps = extension_steps
 
-        self.board_generator = RandomSeedBoard(grid_size, grid_size, num_agents)
-        self.board_generator_call = jax.jit(self.board_generator.generate_starts_ends)
-        self.randomness = randomness
-        self.two_sided = two_sided
-        self.extension_iterations = extension_iterations
-        self.extension_steps = extension_steps
-        heads, targets = self.generate_n_boards(jax.random.PRNGKey(0), 10)
+        else:
+            self.board_generator = ParallelRandomWalk(grid_size, grid_size, num_agents)
+            self.board_generator_call = jax.jit(self.board_generator.generate_board)
+
+        heads, targets = self.generate_n_boards(jax.random.PRNGKey(0), number_of_boards)
 
         self.heads = jnp.array(heads)
         self.targets = jnp.array(targets)
@@ -43,16 +56,19 @@ class BoardDatasetGeneratorJAX(Generator):
         heads_list = []
         targets_list = []
         for i in range(n_boards):
-            old_key, new_key = jax.random.split(key)
-
-            heads_for_board, targets_for_board = \
-                self.board_generator_call(new_key, self.randomness, self.two_sided,
-                                          self.extension_iterations, self.extension_steps,
-                                          )
+            key = jax.random.PRNGKey(i)
+            # old_key, new_key = jax.random.split(key)
+            if self.board_name == "offline_seed_extension":
+                heads_for_board, targets_for_board = \
+                    self.board_generator_call(key, self.randomness, self.two_sided,
+                                              self.extension_iterations, self.extension_steps,
+                                              )
+            else:
+                heads_for_board, targets_for_board, _ = self.board_generator_call(key)
             heads_list.append(heads_for_board)
             targets_list.append(targets_for_board)
 
-            key = new_key
+            # key = new_key
         return heads_list, targets_list
 
     def __call__(self, key: chex.PRNGKey) -> State:
@@ -104,8 +120,6 @@ class BoardDatasetGeneratorJAX(Generator):
 
 
 if __name__ == '__main__':
-    test = BoardDatasetGeneratorJAX(10, 5)
-
-
-
-    print()
+    tic = time.time()
+    test = BoardDatasetGeneratorJAX(10, 5, board_name="offline_parallel_RW", number_of_boards=100000)
+    print(time.time() - tic)

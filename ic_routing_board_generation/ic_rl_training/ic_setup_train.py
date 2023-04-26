@@ -105,7 +105,7 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             num_agents=cfg.env.ic_board.num_agents,
             board_generator=cfg.env.ic_board.board_name,
         )
-    elif cfg.env.ic_board.generation_type == "offline_seed_extension":
+    elif cfg.env.ic_board.generation_type == "offline_seed_extension" or cfg.env.ic_board.generation_type == "offline_parallel_rw":
         generator = BoardDatasetGeneratorJAX(
             grid_size=cfg.env.ic_board.grid_size,
             num_agents=cfg.env.ic_board.num_agents,
@@ -113,6 +113,8 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             two_sided=cfg.env.seed_extension.two_sided,
             extension_iterations=cfg.env.seed_extension.extension_iterations,
             extension_steps=cfg.env.seed_extension.extension_steps,
+            board_name=cfg.env.ic_board.generation_type,
+            number_of_boards=cfg.env.seed_extension.number_of_boards,
         )
     elif cfg.env.ic_board.generation_type == "online_uniform":
         generator = UniformRandomGenerator(
