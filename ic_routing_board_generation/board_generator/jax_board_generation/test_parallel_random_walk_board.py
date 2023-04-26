@@ -450,7 +450,7 @@ class TestParallelRandomWalk:
             _, _, board = parallel_random_walk.generate_board(jax.random.PRNGKey(i))
             boards_generated.append(board)
 
-        for i in range(number_of_keys_to_test):
+        for _ in range(number_of_keys_to_test):
             board = boards_generated.pop()
             for j in range(len(boards_generated)):
-                assert (board == boards_generated[j]).all() == False
+                assert (board == boards_generated[j]).all() is False
