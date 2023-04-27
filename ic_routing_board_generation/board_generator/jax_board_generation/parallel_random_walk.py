@@ -72,7 +72,11 @@ class ParallelRandomWalk:
         heads = agents.start.T
         targets = agents.position.T
 
-        return heads, targets, grid
+        solved_grid = self.update_solved_board_with_head_target_encodings(
+            grid, tuple(heads), tuple(targets)
+        )
+
+        return heads, targets, solved_grid
 
     def _step(
         self, stepping_tuple: Tuple[chex.PRNGKey, chex.Array, Agent]
@@ -103,7 +107,7 @@ class ParallelRandomWalk:
         )
 
         # Step all agents at the same time (separately) and return all of the grids
-        agents, grids = jax.vmap(self._step_agent, in_axes=(0, None, 0))(
+        new_agents, grids = jax.vmap(self._step_agent, in_axes=(0, None, 0))(
             agents, grid, actions
         )
 
@@ -125,7 +129,7 @@ class ParallelRandomWalk:
                 lambda: old_agent,
                 lambda: new_agent,
             )
-        )(collided_agents, agents, agents)
+        )(collided_agents, agents, new_agents)
         # Create the new grid by fixing old one with correction mask and adding the obstacles
         return agents, joined_grid + correction_mask
 
@@ -417,6 +421,24 @@ class ParallelRandomWalk:
     def _return_blank_board(self) -> chex.Array:
         """Return empty grid of correct size."""
         return jnp.zeros((self.rows, self.cols), dtype=int)
+
+    def update_solved_board_with_head_target_encodings(
+        self,
+        solved_grid: chex.Array,
+        heads: Tuple[chex.Array, chex.Array],
+        targets: Tuple[chex.Array, chex.Array],
+    ) -> chex.Array:
+        agent_position_values = jax.vmap(get_position)(
+            jnp.arange(self.num_agents)
+        )
+        agent_target_values = jax.vmap(get_target)(
+            jnp.arange(self.num_agents)
+        )
+        # Transpose the agent_position_values to match the shape of the grid.
+        # Place the agent values at starts and targets.
+        solved_grid = solved_grid.at[heads].set(agent_position_values)
+        solved_grid = solved_grid.at[targets].set(agent_target_values)
+        return solved_grid
 
 
 if __name__ == "__main__":
