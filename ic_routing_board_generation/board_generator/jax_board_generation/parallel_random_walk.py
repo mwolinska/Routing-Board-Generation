@@ -92,7 +92,7 @@ class ParallelRandomWalk:
         This method is equivalent in function to _step_agents from 'Connector' environment.
 
         Returns:
-            Tupleof agents and grid after having applied each agents' action
+            Tuple of agents and grid after having applied each agents' action
         """
         agent_ids = jnp.arange(self.num_agents)
         keys = jax.random.split(key, num=self.num_agents)
@@ -180,12 +180,12 @@ class ParallelRandomWalk:
         """Determines if agents can continue taking steps."""
         key, grid, agents = stepping_tuple
         dones = jax.vmap(self._is_any_step_possible, in_axes=(None, 0))(grid, agents)
-        return ~dones.all()
+        return bool(~dones.all())
 
     def _is_any_step_possible(self, grid: chex.Array, agent: Agent) -> bool:
         """Checks if any moves are available for the agent."""
         cell = self._convert_tuple_to_flat_position(agent.position)
-        return (self._available_cells(grid, cell) == -1).all()
+        return bool((self._available_cells(grid, cell) == -1).all())
 
     def _select_action(
         self, key: chex.PRNGKey, grid: chex.Array, agent: Agent
@@ -337,7 +337,7 @@ class ParallelRandomWalk:
         # Get the adjacent cells of the current cell
         adjacent_cells = self._adjacent_cells(cell)
 
-        def is_cell_touching_self_inner(
+        def is_cell_doubling_back_inner(
             grid: chex.Array, cell: chex.Array
         ) -> Tuple[chex.Array, chex.Array]:
             coordinate = jnp.divmod(cell, self.rows)
@@ -352,11 +352,11 @@ class ParallelRandomWalk:
             return grid, jnp.where(cell == -1, False, touching_self)
 
         # Count the number of adjacent cells with the same wire id
-        _, touching_self_mask = jax.lax.scan(
-            is_cell_touching_self_inner, grid, adjacent_cells
+        _, doubling_back_mask = jax.lax.scan(
+            is_cell_doubling_back_inner, grid, adjacent_cells
         )
         # If the cell is touching itself more than once, return False
-        return (grid, wire_id), jnp.where(jnp.sum(touching_self_mask) > 1, False, True)
+        return (grid, wire_id), jnp.where(jnp.sum(doubling_back_mask) > 1, False, True)
 
     def _step_agent(
         self,

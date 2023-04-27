@@ -71,7 +71,7 @@ class TestParallelRandomWalkGenerator:
 
     def test_random_walk_generator__call(
         self,
-            parallel_random_walk_generator,
+        parallel_random_walk_generator: ParallelRandomWalkGenerator,
         key: chex.PRNGKey,
     ) -> None:
         """Tests that generator generates valid boards."""
@@ -90,7 +90,7 @@ class TestParallelRandomWalkGenerator:
 
     def test_random_walk_generator__no_retrace(
         self,
-            parallel_random_walk_generator,
+        parallel_random_walk_generator: ParallelRandomWalkGenerator,
         key: chex.PRNGKey,
     ) -> None:
         """Checks that generator only traces the function once and works when jitted."""
