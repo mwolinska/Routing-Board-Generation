@@ -219,28 +219,26 @@ class RandomSeedBoard(AbstractBoard):
         return board_layout
         """
 
+        if extension_iterations > 1:
+            def optim_extend_func(board_layout, key):
+                key, extkey, optkey = jax.random.split(key, 3)
+                optkeys = jax.random.split(optkey, self._wires_on_board)
+                #board_layout_save = deepcopy(board_layout)
+                # Optimise each wire individually
+                def optimise_wire_loop_func(wire_num, carry):
+                    board_layout, keys = carry
+                    board_layout = optimise_wire(keys[wire_num], board_layout, wire_num)
+                    carry = (board_layout, keys)
+                    return carry
+                carry = (board_layout, optkeys)
+                board_layout, _ = jax.lax.fori_loop(0, self._wires_on_board, optimise_wire_loop_func, carry)
+                # Extend all the wires
+                board_layout = extend_wires_jax(board_layout, extkey, randomness, two_sided, extension_steps)
+                # print(board_layout)
+                return board_layout, None
 
-        def optim_extend_func(board_layout, key):
-            key, extkey, optkey = jax.random.split(key, 3)
-            optkeys = jax.random.split(optkey, self._wires_on_board)
-            #board_layout_save = deepcopy(board_layout)
-
-            # Optimise each wire individually
-            def optimise_wire_loop_func(wire_num, carry):
-                board_layout, keys = carry
-                board_layout = optimise_wire(keys[wire_num], board_layout, wire_num)
-                carry = (board_layout, keys)
-                return carry
-            carry = (board_layout, optkeys)
-            board_layout, _ = jax.lax.fori_loop(0, self._wires_on_board, optimise_wire_loop_func, carry)
-
-            # Extend all the wires
-            board_layout = extend_wires_jax(board_layout, extkey, randomness, two_sided, extension_steps)
-            # print(board_layout)
-            return board_layout, None
-
-        keys = jax.random.split(key, extension_iterations-1)
-        board_layout, _ = jax.lax.scan(optim_extend_func, board_layout, keys)
+            keys = jax.random.split(key, extension_iterations-1)
+            board_layout, _ = jax.lax.scan(optim_extend_func, board_layout, keys)
         return board_layout
 
 
