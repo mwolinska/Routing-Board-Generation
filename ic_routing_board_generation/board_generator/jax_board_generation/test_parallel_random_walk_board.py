@@ -155,7 +155,7 @@ class TestParallelRandomWalk:
     )
     def test_generate_board(
         parallel_random_walk: ParallelRandomWalk,
-        _: Tuple[chex.PRNGKey, Tuple[chex.Array, chex.Array, chex.Array]],
+        function_input: chex.PRNGKey,
         expected_value: Tuple[chex.Array, chex.Array, chex.Array],
     ) -> None:
         expected_heads, expected_targets, expected_grid = expected_value
@@ -272,7 +272,7 @@ class TestParallelRandomWalk:
     )
     def test_is_any_step_possible(
         parallel_random_walk: ParallelRandomWalk,
-        function_input: Tuple[chex.Array, chex.Agent],
+        function_input: Tuple[chex.Array, chex],
         expected_value: chex.Array,
     ) -> None:
         grid, agents = function_input

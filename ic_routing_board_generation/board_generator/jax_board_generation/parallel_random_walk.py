@@ -184,12 +184,12 @@ class ParallelRandomWalk:
         """Determines if agents can continue taking steps."""
         key, grid, agents = stepping_tuple
         dones = jax.vmap(self._is_any_step_possible, in_axes=(None, 0))(grid, agents)
-        return bool(~dones.all())
+        return ~dones.all()
 
     def _is_any_step_possible(self, grid: chex.Array, agent: Agent) -> bool:
         """Checks if any moves are available for the agent."""
         cell = self._convert_tuple_to_flat_position(agent.position)
-        return bool((self._available_cells(grid, cell) == -1).all())
+        return (self._available_cells(grid, cell) == -1).all()
 
     def _select_action(
         self, key: chex.PRNGKey, grid: chex.Array, agent: Agent
