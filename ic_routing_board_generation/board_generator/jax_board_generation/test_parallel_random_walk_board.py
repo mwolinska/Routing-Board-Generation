@@ -60,6 +60,17 @@ valid_end_grid = jnp.array(
     dtype=int,
 )
 
+valid_end_grid2 = jnp.array(
+    [
+        [2, 1, 1, 0, 3],
+        [5, 0, 1, 1, 1],
+        [4, 4, 7, 7, 7],
+        [0, 4, 7, 0, 7],
+        [6, 4, 9, 0, 8],
+    ],
+    dtype=int,
+)
+
 grid_to_test_available_cells = jnp.array(
     [
         [1, 1, 1, 1, 2],
@@ -109,7 +120,7 @@ agents_reshaped_for_generator = Agent(
     id=jnp.arange(3),
     start=jnp.array([[0, 1, 4], [0, 0, 4]]),
     target=jnp.array([[-1, -1, -1], [-1, -1, -1]]),
-    position=jnp.array([[0, 2, 4], [4, 4, 1]]),
+    position=jnp.array([[0, 4, 4], [4, 0, 2]]),
 )
 
 agents_starting = Agent(
@@ -147,7 +158,7 @@ class TestParallelRandomWalk:
                     (
                         agents_reshaped_for_generator.start,
                         agents_reshaped_for_generator.position,
-                        valid_end_grid,
+                        valid_end_grid2,
                     ),
                 )
             ),
@@ -173,10 +184,10 @@ class TestParallelRandomWalk:
             _, _, board = parallel_random_walk.generate_board(jax.random.PRNGKey(i))
             boards_generated.append(board)
 
-        for _ in range(number_of_keys_to_test):
+        for i in range(number_of_keys_to_test):
             board = boards_generated.pop()
             for j in range(len(boards_generated)):
-                assert (board == boards_generated[j]).all() is False
+                assert (board == boards_generated[j]).all() == False
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -272,7 +283,7 @@ class TestParallelRandomWalk:
     )
     def test_is_any_step_possible(
         parallel_random_walk: ParallelRandomWalk,
-        function_input: Tuple[chex.Array, chex],
+        function_input: Tuple[chex.Array, Agent],
         expected_value: chex.Array,
     ) -> None:
         grid, agents = function_input

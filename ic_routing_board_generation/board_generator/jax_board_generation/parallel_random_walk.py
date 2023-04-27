@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Tuple
+from typing import Tuple, Any
 
 import chex
 import jax
@@ -180,13 +180,13 @@ class ParallelRandomWalk:
 
     def _continue_stepping(
         self, stepping_tuple: Tuple[chex.PRNGKey, chex.Array, Agent]
-    ) -> bool:
+    ) -> chex.Array:
         """Determines if agents can continue taking steps."""
         key, grid, agents = stepping_tuple
         dones = jax.vmap(self._is_any_step_possible, in_axes=(None, 0))(grid, agents)
         return ~dones.all()
 
-    def _is_any_step_possible(self, grid: chex.Array, agent: Agent) -> bool:
+    def _is_any_step_possible(self, grid: chex.Array, agent: Agent) -> chex.Array:
         """Checks if any moves are available for the agent."""
         cell = self._convert_tuple_to_flat_position(agent.position)
         return (self._available_cells(grid, cell) == -1).all()
@@ -425,15 +425,11 @@ class ParallelRandomWalk:
     def update_solved_board_with_head_target_encodings(
         self,
         solved_grid: chex.Array,
-        heads: Tuple[chex.Array, chex.Array],
-        targets: Tuple[chex.Array, chex.Array],
+        heads: Tuple[Any, ...],
+        targets: Tuple[Any, ...],
     ) -> chex.Array:
-        agent_position_values = jax.vmap(get_position)(
-            jnp.arange(self.num_agents)
-        )
-        agent_target_values = jax.vmap(get_target)(
-            jnp.arange(self.num_agents)
-        )
+        agent_position_values = jax.vmap(get_position)(jnp.arange(self.num_agents))
+        agent_target_values = jax.vmap(get_target)(jnp.arange(self.num_agents))
         # Transpose the agent_position_values to match the shape of the grid.
         # Place the agent values at starts and targets.
         solved_grid = solved_grid.at[heads].set(agent_position_values)
@@ -458,8 +454,6 @@ if __name__ == "__main__":
     # _, grid, agents = jax.lax.while_loop(
     #     self._continue_stepping, self._step, stepping_tuple
     # )
-
-
 
     grid = board_generator._return_blank_board()
 
