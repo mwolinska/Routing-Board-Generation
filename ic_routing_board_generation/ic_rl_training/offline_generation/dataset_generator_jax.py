@@ -57,10 +57,11 @@ class BoardDatasetGeneratorJAX(Generator):
         solved_boards_list = []
         if generate_solved_boards and self.board_name == "offline_seed_extension":
             solved_board_call = jax.jit(self.board_generator.return_solved_board)
-
+        keys = jax.random.split(key, n=n_boards)
         for i in range(n_boards):
             # key = jax.random.PRNGKey(i)
-            old_key, new_key = jax.random.split(key)
+            # old_key, new_key = jax.random.split(key)
+            key = keys[i]
             if self.board_name == "offline_seed_extension":
                 if generate_solved_boards:
                     heads_for_board = None
@@ -81,7 +82,7 @@ class BoardDatasetGeneratorJAX(Generator):
             heads_list.append(heads_for_board)
             targets_list.append(targets_for_board)
 
-            key = new_key
+            # key = new_key
         return heads_list, targets_list, solved_boards_list
 
     def __call__(self, key: chex.PRNGKey) -> State:
