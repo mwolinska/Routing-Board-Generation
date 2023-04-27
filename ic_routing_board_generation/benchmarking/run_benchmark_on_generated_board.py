@@ -16,14 +16,14 @@ if __name__ == '__main__':
     # Option 2:specify board generation parameters
     # board_list = [
     #     BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
-    #                               generator_type=BoardName.LSYSTEMS),
-    #     BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
-    #                               generator_type=BoardName.BFS_SHORTEST),
+    #                               generator_type=BoardName.RANDOM_SEED),
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
-    #     #                           generator_type=BoardName.RANDOM_WALK),
+    #     #                           generator_type=BoardName.BFS_SHORTEST),
+    #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
+    #     #                           generator_type=BoardName.JAX_SEED_EXTENSION),
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
     #     #                           generator_type=BoardName.LSYSTEMS),
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
     #     #                           generator_type=BoardName.WFC),
     # ]
-    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=1000, plot_individually=False)
+    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=5000, plot_individually=False)

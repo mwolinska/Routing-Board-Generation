@@ -18,7 +18,7 @@ from hydra import compose, initialize
 
 # TODO (Marta): create master plotting loop for bar charts
 # TODO (Marta): refactor plotting functions into plotting utils
-
+plt.style.use('science.mplstyle')
 class BasicBenchmark:
     def __init__(
         self,
@@ -219,6 +219,7 @@ class BasicBenchmark:
         file_name: Optional[str] = None,
         stds=None,
     ):
+        plt.style.use('science.mplstyle')
         fig, ax = plt.subplots()
         ax.bar(labels, data)
         ax.set(

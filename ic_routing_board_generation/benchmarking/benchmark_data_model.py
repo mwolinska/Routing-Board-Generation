@@ -79,6 +79,7 @@ class BarChartData:
     stds: Optional[List[float]]
 
     def plot(self):
+        plt.style.use('science.mplstyle')
         fig, ax = plt.subplots()
         ax.bar(self.x_labels, self.y_data)
         ax.set(
