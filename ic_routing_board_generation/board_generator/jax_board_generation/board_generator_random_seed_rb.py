@@ -1,11 +1,7 @@
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax
-from dataclasses import dataclass
-from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.jax_utils.grid_utils import optimise_wire
 from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax, \
     training_board_from_solved_board_jax
-from ic_routing_board_generation.board_generator.numpy_utils.post_processor_utils_numpy import count_detours
 #import numpy as np
 
 from jax import Array
@@ -13,9 +9,10 @@ from jax.random import PRNGKey
 import jax.numpy as jnp
 import jax
 
-from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
-STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
+from jumanji.environments.routing.connector.constants import POSITION, TARGET, EMPTY
 
+STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
+# from copy import deepcopy
 #@jax.disable_jit()
 #@jax.jit
 class RandomSeedBoard(AbstractBoard):
@@ -46,6 +43,32 @@ class RandomSeedBoard(AbstractBoard):
 
     #@jax.disable_jit()
     #@jax.jit
+    # def return_seeded_board(self, key: PRNGKey) -> Array:
+    #     """ Generate and return an array of the board with the connecting wires encoded.
+    #
+    #     Args:
+    #         key (PRNGKey) : Random number generator key
+    #
+    #     Returns:
+    #         (Array) : 2D layout of the board with all wirings encoded
+    #     """
+    #     def generate_indices(key: jax.random.PRNGKey):
+    #         """Create a list of agents with random initial starting and ending (as neighbours) locations."""
+    #         row_indices, col_indices = jax.numpy.meshgrid(jax.numpy.arange(1, self._rows, 2), jax.numpy.arange(1, self._cols, 2), indexing='ij')
+    #         index_choice = jax.numpy.stack((row_indices, col_indices), axis=-1).reshape(-1, 2)
+    #         head_indices = jax.random.choice(key, index_choice, (self._num_agents,), replace=False)
+    #         randomness_type = jax.random.randint(key, (), 0, 2)
+    #         offset_array = jax.lax.select(randomness_type == 0, jax.numpy.array([[0, 1], [1, 0]]), jax.numpy.array([[1, 0], [0, 1]]))
+    #         tail_offsets = jax.random.choice(key, offset_array, (self._num_agents,))
+    #         tail_indices = head_indices + tail_offsets
+    #         return head_indices - 1, tail_indices - 1
+    #
+    #     xs, ys = generate_indices(key)
+    #     board = jax.numpy.zeros((self.grid_size, self.grid_size), int)
+    #     board = board.at[(xs[:, 0], xs[:, 1])].set(jnp.arange(len(xs))*3 + TARGET)
+    #     board = board.at[(ys[:, 0], ys[:, 1])].set(jnp.arange(len(ys))*3 + POSITION)
+    #     return board
+
     def return_seeded_board(self, key: PRNGKey) -> Array:
         """ Generate and return an array of the board with the connecting wires encoded.
 
@@ -55,21 +78,36 @@ class RandomSeedBoard(AbstractBoard):
         Returns:
             (Array) : 2D layout of the board with all wirings encoded
         """
-        def generate_indices(key: jax.random.PRNGKey):
+
+        def generate_indices_one_side():
             """Create a list of agents with random initial starting and ending (as neighbours) locations."""
-            row_indices, col_indices = jax.numpy.meshgrid(jax.numpy.arange(1, self._rows, 2), jax.numpy.arange(1, self._cols, 2), indexing='ij')
+            row_indices, col_indices = jax.numpy.meshgrid(jax.numpy.arange(1, self._rows, 2),
+                                                          jax.numpy.arange(1, self._cols, 2),
+                                                          indexing='ij')
             index_choice = jax.numpy.stack((row_indices, col_indices), axis=-1).reshape(-1, 2)
             head_indices = jax.random.choice(key, index_choice, (self._num_agents,), replace=False)
-            randomness_type = jax.random.randint(key, (), 0, 2)
-            offset_array = jax.lax.select(randomness_type == 0, jax.numpy.array([[0, 1], [1, 0]]), jax.numpy.array([[1, 0], [0, 1]]))
+            offset_array = jax.numpy.array([[-1, 0], [0, -1]])
             tail_offsets = jax.random.choice(key, offset_array, (self._num_agents,))
             tail_indices = head_indices + tail_offsets
-            return head_indices - 1, tail_indices - 1
+            return head_indices, tail_indices
 
-        xs, ys = generate_indices(key)
+        def generate_indices_other_side():
+            """Create a list of agents with random initial starting and ending (as neighbours) locations."""
+            row_indices, col_indices = jax.numpy.meshgrid(jax.numpy.arange(0, self._rows - 1, 2),
+                                                          jax.numpy.arange(0, self._cols - 1, 2),
+                                                          indexing='ij')
+            index_choice = jax.numpy.stack((row_indices, col_indices), axis=-1).reshape(-1, 2)
+            head_indices = jax.random.choice(key, index_choice, (self._num_agents,), replace=False)
+            offset_array = jax.numpy.array([[0, 1], [1, 0]])
+            tail_offsets = jax.random.choice(key, offset_array, (self._num_agents,))
+            tail_indices = head_indices + tail_offsets
+            return head_indices, tail_indices
+
+        xs, ys = jax.lax.cond(jax.random.randint(key, (), 0, 2), generate_indices_one_side,
+                              generate_indices_other_side)
         board = jax.numpy.zeros((self.grid_size, self.grid_size), int)
-        board = board.at[(xs[:, 0], xs[:, 1])].set(jnp.arange(len(xs))*3 + TARGET)
-        board = board.at[(ys[:, 0], ys[:, 1])].set(jnp.arange(len(ys))*3 + POSITION)
+        board = board.at[(xs[:, 0], xs[:, 1])].set(jnp.arange(len(xs)) * 3 + TARGET)
+        board = board.at[(ys[:, 0], ys[:, 1])].set(jnp.arange(len(ys)) * 3 + POSITION)
         return board
 
     def return_solved_board(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True,
@@ -87,8 +125,7 @@ class RandomSeedBoard(AbstractBoard):
         Returns:
             (Array) : 2D layout of the board with all wirings encoded
         """
-        from numpy import array as np_array
-        from copy import deepcopy
+        # from copy import deepcopy
         key, seedkey = jax.random.split(key)
 
         board_layout = self.return_seeded_board(seedkey)
@@ -109,7 +146,8 @@ class RandomSeedBoard(AbstractBoard):
             board_layout = extend_wires_jax(board_layout, extkey, randomness, two_sided, extension_steps)
             # print(board_layout)
             optkeys = jax.random.split(optkey, self._wires_on_board)
-            board_layout_save = deepcopy(board_layout)
+            # board_layout_save = deepcopy(board_layout)
+            board_layout_save = jnp.array(board_layout)
 
             # Optimise each wire individually
             def optimise_loop_func(wire_num, carry):

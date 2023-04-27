@@ -21,9 +21,11 @@ def plot_comparison_heatmap(
     num_agents: int,
     number_of_boards_averaged: int,
 ):
-    n_rows = max(math.ceil(len(list_of_scores) / 3), 1)
-    n_columns = 3
-    fig = plt.figure(figsize=(6, 2 * n_rows + 0.5))
+    plt.style.use('science.mplstyle')
+    n_columns = 4
+    n_rows = max(math.ceil(len(list_of_scores) / n_columns), 1)
+
+    fig = plt.figure(figsize=(9, 2 * n_rows + 0.5))
     grid = AxesGrid(fig, 111,
                     nrows_ncols=(n_rows, n_columns),
                     axes_pad=0.3,
@@ -31,7 +33,7 @@ def plot_comparison_heatmap(
                     cbar_location='right',
                     cbar_pad=0.1
                     )
-    plt.suptitle(f"Scores per Cell Averaged on {number_of_boards_averaged} Boards with {num_agents} wires ", fontsize=12, y=0.98)
+    plt.suptitle(f"Scores per Cell Averaged on {number_of_boards_averaged} Boards with {num_agents} wires ", fontsize=16, y=0.98)
 
     all_scores = np.array(list_of_scores).flatten()
     min_score = all_scores.min()

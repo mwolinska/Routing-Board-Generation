@@ -1,4 +1,5 @@
 import collections
+import pickle
 from typing import List, Dict
 
 import numpy as np
@@ -6,13 +7,17 @@ import numpy as np
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters, BarChartData
 from ic_routing_board_generation.benchmarking.benchmark_utils import \
-    generate_n_boards
+    generate_n_boards, load_pickle
 from ic_routing_board_generation.benchmarking.plotting_utils import \
     plot_heatmap, plot_comparison_heatmap
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import \
     RandomWalkBoard
 from ic_routing_board_generation.board_generator.numpy_utils.board_processor_2 import \
     BoardProcessor
+from ic_routing_board_generation.ic_rl_training.offline_generation.dataset_generator_jax import \
+    BoardDatasetGeneratorJAX
+from ic_routing_board_generation.interface.board_generator_interface_numpy import BoardName
+
 
 class EvaluateEmptyBoard:
     def __init__(self, filled_training_board: np.ndarray):
@@ -30,9 +35,9 @@ class EvaluateEmptyBoard:
         divisible_by_three_mask = self.filled_board % 3 == 0
 
         empty_slots_mask = np.array(is_zero_mask, dtype=int) * self.empty_slot_score
-        heads = np.array(self.filled_board % 3 == 1, dtype=int) * self.end_score
+        heads = np.array(self.filled_board % 3 == 2, dtype=int) * self.end_score
         targets = np.array(divisible_by_three_mask * ~is_zero_mask, dtype=int) * self.end_score
-        routes = np.array(self.filled_board % 3 == 2, dtype=int) * self.wire_score
+        routes = np.array(self.filled_board % 3 == 1, dtype=int) * self.wire_score
 
         return np.sum([empty_slots_mask, heads, targets, routes], axis=0)
 
@@ -42,21 +47,21 @@ class EvaluateEmptyBoard:
         # total_num_wires = len(np.unique(training_board_filtered)[np.unique(training_board_filtered)!= 0])
         padded_array = np.pad(individual_score, 1, mode="constant")
 
-        # filter = np.array(
-        #     [
-        #         [1, 2, 1],
-        #         [2, 4, 2],
-        #         [1, 2, 1],
-        #     ]
-        # )
-
         filter = np.array(
             [
-                [0, 1, 0],
                 [1, 2, 1],
-                [0, 1, 0],
+                [2, 4, 2],
+                [1, 2, 1],
             ]
         )
+
+        # filter = np.array(
+        #     [
+        #         [0, 1, 0],
+        #         [1, 2, 1],
+        #         [0, 1, 0],
+        #     ]
+        # )
 
         scores = []
         for row in range(1, len(padded_array) - 1):
@@ -162,10 +167,20 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     all_board_statistics = []
     for board_parameters in board_parameters_list:
         print(board_parameters)
-        board_list = generate_n_boards(board_parameters, number_of_boards)
+        if board_parameters.generator_type == BoardName.JAX_PARALLEL_RW: # or board_parameters.generator_type == BoardName.JAX_SEED_EXTENSION:
+            board_list = BoardDatasetGeneratorJAX(
+                board_name=board_parameters.generator_type.value,
+                grid_size=board_parameters.rows,
+                num_agents=board_parameters.number_of_wires,
+                number_of_boards=number_of_boards,
+                generate_solved_boards=True,
+            ).solved_boards
+        else:
+            board_list = generate_n_boards(board_parameters, number_of_boards)
         board_statistics = {}
         sum_all_boards = np.zeros([board_parameters.rows, board_parameters.columns])
         for board in board_list:
+            board = np.array(board)
             board_evaluator = EvaluateEmptyBoard(board)
             scored_board = board_evaluator.scored_board
             sum_all_boards += scored_board
@@ -185,6 +200,9 @@ def evaluate_generator_outputs_averaged_on_n_boards(
             scores_list, board_names, board_parameters_list[0].number_of_wires,
             number_of_boards_averaged=number_of_boards,
         )
+    print(all_board_statistics)
+    with open("all_board_stats.pkl", "wb") as file:
+        pickle.dump(all_board_statistics, file)
     convert_dict_lit_to_plotting_format(all_board_statistics)
 
 def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
@@ -229,7 +247,8 @@ def _update_dictionary(dictionary_to_update, new_dictionary):
 
 
 if __name__ == '__main__':
-
+    benchmark = load_pickle("all_board_stats.pkl")
+    convert_dict_lit_to_plotting_format(benchmark)
     # board = np.array(
     #    [
     #        [7, 3, 9, 12],
@@ -239,18 +258,18 @@ if __name__ == '__main__':
     #    ]
     # )
 
-    board = np.array(
-       [
-           [7, 3, 2, 2],
-           [5, 8, 9, 2],
-           [5, 10, 4, 2],
-           [6, 12, 11, 13]
-       ]
-    )
-    board_ = RandomWalkBoard(10, 10, 5)
-    print(board_.return_solved_board())
-    boardprocessor_ = BoardProcessor(board_)
-    print(boardprocessor_.get_board_layout())
+    # board = np.array(
+    #    [
+    #        [7, 3, 2, 2],
+    #        [5, 8, 9, 2],
+    #        [5, 10, 4, 2],
+    #        [6, 12, 11, 13]
+    #    ]
+    # )
+    # board_ = RandomWalkBoard(10, 10, 5)
+    # print(board_.return_solved_board())
+    # boardprocessor_ = BoardProcessor(board_)
+    # print(boardprocessor_.get_board_layout())
 
     # evaluator = EvaluateEmptyBoard(board)
     # scores = evaluator.score_from_neighbours()

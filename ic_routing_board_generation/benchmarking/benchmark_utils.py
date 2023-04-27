@@ -12,6 +12,7 @@ from ic_routing_board_generation.interface.board_generator_interface_numpy impor
 def load_pickle(filename: str):
     with open(filename, "rb") as file:
         benchmark = pickle.load(file)
+    return benchmark
 
 def make_benchmark_folder(with_time: bool = True):
     path = Path(__file__).parent.parent.parent
@@ -75,3 +76,7 @@ def generate_n_boards(
         board_list.append(board)
 
     return board_list
+
+if __name__ == '__main__':
+    test = load_pickle("all_board_stats.pkl")
+    print(test)

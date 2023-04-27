@@ -9,7 +9,7 @@ from ic_routing_board_generation.benchmarking.benchmark_utils import \
 
 from ic_routing_board_generation.benchmarking.benchmark_data_model import \
     BoardGenerationParameters
-from ic_routing_board_generation.interface.board_generator_interface import \
+from ic_routing_board_generation.interface.board_generator_interface_numpy import \
     BoardName
 
 
@@ -65,8 +65,8 @@ if __name__ == '__main__':
         )
     else:
         ######### Change these parameters are required
-        folder_name = "20230208_benchmark_23_45" # this must be a folder under ic/experiments/benchmarks
-        save_plots = True
+        folder_name = "20230412_benchmark_23_02" # this must be a folder under ic/experiments/benchmarks
+        save_plots = False
         # Option 1: get all files from folder
         all_files = files_list_from_benchmark_experiment(folder_name)
 

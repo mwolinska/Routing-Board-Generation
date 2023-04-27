@@ -62,7 +62,7 @@ class ParallelRandomWalk:
         key, step_key = jax.random.split(key)
         grid, agents = self._initialise_agents(key, grid)
 
-        stepping_tuple = (key, grid, agents)
+        stepping_tuple = (step_key, grid, agents)
 
         _, grid, agents = jax.lax.while_loop(
             self._continue_stepping, self._step, stepping_tuple
@@ -72,7 +72,11 @@ class ParallelRandomWalk:
         heads = agents.start.T
         targets = agents.position.T
 
-        return heads, targets, grid
+        solved_grid = self.update_solved_board_with_head_target_encodings(
+            grid, tuple(heads), tuple(targets)
+        )
+
+        return heads, targets, solved_grid
 
     def _step(
         self, stepping_tuple: Tuple[chex.PRNGKey, chex.Array, Agent]
@@ -103,7 +107,7 @@ class ParallelRandomWalk:
         )
 
         # Step all agents at the same time (separately) and return all of the grids
-        agents, grids = jax.vmap(self._step_agent, in_axes=(0, None, 0))(
+        new_agents, grids = jax.vmap(self._step_agent, in_axes=(0, None, 0))(
             agents, grid, actions
         )
 
@@ -125,7 +129,7 @@ class ParallelRandomWalk:
                 lambda: old_agent,
                 lambda: new_agent,
             )
-        )(collided_agents, agents, agents)
+        )(collided_agents, agents, new_agents)
         # Create the new grid by fixing old one with correction mask and adding the obstacles
         return agents, joined_grid + correction_mask
 
@@ -151,7 +155,7 @@ class ParallelRandomWalk:
         )
 
         # Create 2D points from the flat arrays.
-        starts = jnp.divmod(starts_flat[0], self.rows)
+        starts = jnp.divmod(starts_flat[0], self.cols)
         # Fill target with default value as targets will be assigned aftert random walk
         targets = jnp.full((2, self.num_agents), -1)
 
@@ -266,8 +270,8 @@ class ParallelRandomWalk:
         mask = is_id_positive & is_id_in_grid
 
         # Ensure adjacent cells doesn't involve going off the grid
-        unflatten_available = jnp.divmod(cells_to_check, self.rows)
-        unflatten_current = jnp.divmod(cell, self.rows)
+        unflatten_available = jnp.divmod(cells_to_check, self.cols)
+        unflatten_current = jnp.divmod(cell, self.cols)
         is_same_row = unflatten_available[0] == unflatten_current[0]
         is_same_col = unflatten_available[1] == unflatten_current[1]
         row_col_mask = is_same_row | is_same_col
@@ -290,7 +294,7 @@ class ParallelRandomWalk:
         """
         adjacent_cells = self._adjacent_cells(cell)
         # Get the wire id of the current cell
-        value = grid[jnp.divmod(cell, self.rows)]
+        value = grid[jnp.divmod(cell, self.cols)]
         wire_id = (value - 1) // 3
 
         _, available_cells_mask = jax.lax.scan(self._is_cell_free, grid, adjacent_cells)
@@ -317,7 +321,7 @@ class ParallelRandomWalk:
         Returns:
             A tuple of the new grid and a boolean indicating whether the cell is free or not.
         """
-        coordinate = jnp.divmod(cell, self.rows)
+        coordinate = jnp.divmod(cell, self.cols)
         return grid, jax.lax.select(
             cell == -1, False, grid[coordinate[0], coordinate[1]] == 0
         )
@@ -340,7 +344,7 @@ class ParallelRandomWalk:
         def is_cell_doubling_back_inner(
             grid: chex.Array, cell: chex.Array
         ) -> Tuple[chex.Array, chex.Array]:
-            coordinate = jnp.divmod(cell, self.rows)
+            coordinate = jnp.divmod(cell, self.cols)
             cell_value = grid[coordinate[0], coordinate[1]]
             touching_self = jnp.logical_or(
                 jnp.logical_or(
@@ -418,11 +422,102 @@ class ParallelRandomWalk:
         """Return empty grid of correct size."""
         return jnp.zeros((self.rows, self.cols), dtype=int)
 
+    def update_solved_board_with_head_target_encodings(
+        self,
+        solved_grid: chex.Array,
+        heads: Tuple[chex.Array, chex.Array],
+        targets: Tuple[chex.Array, chex.Array],
+    ) -> chex.Array:
+        agent_position_values = jax.vmap(get_position)(
+            jnp.arange(self.num_agents)
+        )
+        agent_target_values = jax.vmap(get_target)(
+            jnp.arange(self.num_agents)
+        )
+        # Transpose the agent_position_values to match the shape of the grid.
+        # Place the agent values at starts and targets.
+        solved_grid = solved_grid.at[heads].set(agent_position_values)
+        solved_grid = solved_grid.at[targets].set(agent_target_values)
+        return solved_grid
+
 
 if __name__ == "__main__":
-    board_generator = ParallelRandomWalk(5, 5, 3)
-    key = jax.random.PRNGKey(0)
+    board_generator = ParallelRandomWalk(10, 10, 5)
+    key = jax.random.PRNGKey(1)
 
+    # board_generator_jit = jax.jit(board_generator.generate_board)
+    # heads, targets, grid = board_generator_jit(key)
+    # print(grid)
+
+    # grid = self._return_blank_board()
+    # key, step_key = jax.random.split(key)
+    # grid, agents = self._initialise_agents(key, grid)
+    #
+    # stepping_tuple = (key, grid, agents)
+    #
+    # _, grid, agents = jax.lax.while_loop(
+    #     self._continue_stepping, self._step, stepping_tuple
+    # )
+
+
+
+    grid = board_generator._return_blank_board()
+
+    another_key, step_key = jax.random.split(key)
+    grid, agents = board_generator._initialise_agents(another_key, grid)
+
+    stepping_tuple = (another_key, grid, agents)
+    continue_stepping = True
+    while continue_stepping:
+        stepping_tuple = board_generator._step(stepping_tuple)
+        continue_stepping = board_generator._continue_stepping(stepping_tuple)
+        print(stepping_tuple[1])
+        print(stepping_tuple[2])
+
+    # board.
+    # board_generator.generate_board(key)
     board_generator_jit = jax.jit(board_generator.generate_board)
     heads, targets, grid = board_generator_jit(key)
     print(grid)
+    # grid_size = 4
+    # num_agents = 3
+    # grid = jnp.array(
+    #     [
+    #         [0, 0, 0, 0],
+    #         [0, 0, 0, 0],
+    #         [0, 0, 0, 0],
+    #         [0, 0, 0, 0],
+    #     ]
+    # )
+    # cell = 9
+    # agents = Agent(
+    #     id=jnp.array([]),
+    #     start=jnp.array([[3, 0, 0], [3, 0, 1]]),
+    #     target=jnp.array([[-1, -1, -1], [-1, -1, -1]]),
+    #     position=jnp.array([[3, 0, 0], [3, 0, 1]]),
+    # )
+
+    # starts_flat, targets_flat = jax.random.choice(
+    #     key=key,
+    #     a=jnp.arange(grid_size ** 2),
+    #     shape=(2, num_agents),
+    #     # Start and target positions for all agents
+    #     replace=False,  # Start and target positions cannot overlap
+    # )
+    #
+    # # Create 2D points from the flat arrays.
+    # starts = jnp.divmod(starts_flat, grid_size)
+    # targets = jnp.divmod(targets_flat, grid_size)
+    # agents = jax.vmap(Agent)(
+    #     id=jnp.arange(3),
+    #     start=jnp.stack(starts, axis=1),
+    #     target=jnp.stack(targets, axis=1),
+    #     position=jnp.stack(starts, axis=1),
+    # )
+
+    # print(board.generate_board(key))
+
+    # board._step_agents(key, grid, agents)
+    # print(board.select_action(key, grid, agent))
+
+    # print(board.action_from_positions(10, 0))
