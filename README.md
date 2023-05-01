@@ -67,3 +67,6 @@ Usage: (see `agent_training/configs/env/connector.yaml` and `agent_training/conf
 python3 agent_training/training_script.py
 # env.ic_board.generation_type=seq_parallel_rw env.ic_board.board_name=none can be appended as arguments for different board generation types
 ```
+
+### Trained agents
+
