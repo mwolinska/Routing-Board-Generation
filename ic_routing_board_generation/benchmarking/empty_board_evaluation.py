@@ -194,10 +194,10 @@ def evaluate_generator_outputs_averaged_on_n_boards(
         board_statistics = {k: (np.mean(np.array(v)), np.std(np.array(v))) for k, v in dict(board_statistics).items()}
         board_statistics["generator_type"] = str(board_parameters.generator_type.value)
         all_board_statistics.append(board_statistics)
-    with open("all_board_stats.pkl", "wb") as file:
-        pickle.dump(all_board_statistics, file)
-    with open("heatmap_stats.pkl", "wb") as file:
-        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+    # with open("all_board_stats.pkl", "wb") as file:
+    #     pickle.dump(all_board_statistics, file)
+    # with open("heatmap_stats.pkl", "wb") as file:
+    #     pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
 
     if plot_individually or len(board_parameters_list) == 1:
         for score in scores_list:
@@ -218,6 +218,22 @@ def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
     data_per_key = []
     list_of_keys = [x for x in list_of_dict[0].keys()]
     list_of_board_names = [x["generator_type"] for x in list_of_dict]
+
+    titles = {'num_wires': " Number of Wires on Board",
+ 'avg_wire_length': "Average Wire Length",
+ 'avg_wire_bends': "Average Number of Bends per Wire" ,
+ 'avg_head_target_distance': "Average Manahttan Distance from Head to Target",
+ 'percent_filled': "Percent of Board Filled with Wires",
+ 'count_detours': "Average Number of Detours",
+ 'heatmap_score_diversity': "Average Heatmap Diversity Score",
+              }
+    y_labels = {'num_wires': "Number of Wires",
+ 'avg_wire_length': "Wire Length",
+ 'avg_wire_bends': "Number of Bends per Wire" ,
+ 'avg_head_target_distance': "Manhattan Distance",
+ 'percent_filled': "Percent of Board Filled with Wires",
+ 'count_detours': " Number of Detours",
+ 'heatmap_score_diversity': "Heatmap Diversity Score",}
     for key in list_of_keys: #and key != "generator_type"
         if key == "generator_type":
             continue
@@ -228,11 +244,11 @@ def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
             key_stds.append(board_data[key][1])
 
         bar_chart = BarChartData(
-            x_axis_label="generator type",
-            y_axis_label=key,
+            x_axis_label="Generator Type",
+            y_axis_label=y_labels[key],
             x_labels=list_of_board_names,
             y_data=key_data,
-            title=key,
+            title=titles[key],
             output_filename=None,
             stds=key_stds,
         )

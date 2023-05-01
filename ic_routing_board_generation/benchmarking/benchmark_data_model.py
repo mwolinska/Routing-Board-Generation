@@ -1,5 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Optional, Iterable
 
 import numpy as np
@@ -79,7 +80,13 @@ class BarChartData:
     stds: Optional[List[float]]
 
     def plot(self):
-        plt.style.use('science.mplstyle')
+        # plt.style.use('science.mplstyle')
+        plt.style.use('tableau-colorblind10')
+        plt.rcParams["font.family"] = "Times"
+        plt.rcParams["font.size"] = 14
+        plt.rcParams['figure.dpi'] = 900
+        plt.rcParams["figure.figsize"] = (7, 4.5)
+
         fig, ax = plt.subplots()
         ax.bar(self.x_labels, self.y_data)
         ax.set(
@@ -102,6 +109,9 @@ class BarChartData:
         if self.output_filename is not None:
             fig.savefig(str(self.directory_string) + str(self.output_filename))
         else:
+            time = datetime.now().strftime("%H_%M")
+            plt.savefig(f"figs/{self.title}_{time}.pdf")
+            plt.savefig(f"figs/{self.title}_{time}.png")
             plt.show()
 
 if __name__ == '__main__':

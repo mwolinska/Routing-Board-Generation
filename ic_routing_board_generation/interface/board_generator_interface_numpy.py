@@ -22,19 +22,19 @@ from ic_routing_board_generation.ic_rl_training.online_generators.uniform_genera
 
 class BoardName(str, Enum):
     """Enum of implemented board generators."""
-    RANDOM_WALK = "random_walk"
-    JAX_PARALLEL_RW = "offline_parallel_rw"
-    BFS_BASE = "bfs_base"
-    BFS_MIN_BENDS = "bfs_min_bend"
-    BFS_FIFO = "bfs_fifo"
-    BFS_SHORTEST = "bfs_short"
-    BFS_LONGEST = "bfs_long"
-    LSYSTEMS = "lsystems_standard"
-    WFC = "wfc"
-    # NUMBERLINK = "numberlink"
+    RANDOM_WALK = "RandomWalk"
+    JAX_PARALLEL_RW = "ParallelRandomWalk"
+    BFS_BASE = "BFSBase"
+    BFS_MIN_BENDS = "BFSMin_Bends"
+    BFS_FIFO = "BFSFIFO"
+    BFS_SHORTEST = "BFSShort"
+    BFS_LONGEST = "BFSLong"
+    LSYSTEMS = "L-Systems"
+    WFC = "WFC"
+    NUMBERLINK = "NumberLink"
 
-    # JAX_SEED_EXTENSION = "offline_seed_extension"
-    # JAX_UNIFORM = "jax_uniform"
+    # JAX_SEED_EXTENSION = "JAX Seed Extension"
+    # JAX_UNIFORM = "JAX Uniform"
 
 
 class BoardGenerator:
@@ -49,7 +49,7 @@ class BoardGenerator:
         BoardName.BFS_LONGEST: BFSBoardLongest,
         BoardName.LSYSTEMS: LSystemBoardGen,
         BoardName.WFC: WFCBoard,
-        # BoardName.NUMBERLINK: NumberLinkBoard,
+        BoardName.NUMBERLINK: NumberLinkBoard,
 
         # BoardName.JAX_SEED_EXTENSION: RandomSeedBoard,
         # BoardName.JAX_UNIFORM: UniformRandomGenerator,
