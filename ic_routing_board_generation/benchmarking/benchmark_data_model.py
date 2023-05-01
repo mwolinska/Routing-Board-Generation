@@ -85,7 +85,7 @@ class BarChartData:
         plt.rcParams["font.family"] = "Times"
         plt.rcParams["font.size"] = 14
         plt.rcParams['figure.dpi'] = 900
-        plt.rcParams["figure.figsize"] = (7, 3.5)
+        plt.rcParams["figure.figsize"] = (7, 4.5)
 
         fig, ax = plt.subplots()
         ax.bar(self.x_labels, self.y_data)

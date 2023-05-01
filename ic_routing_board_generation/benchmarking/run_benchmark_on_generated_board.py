@@ -8,7 +8,6 @@ from ic_routing_board_generation.interface.board_generator_interface_numpy impor
     BoardName
 
 if __name__ == '__main__':
-
     # Option 1: run for all generators
     grid_params = [(10, 10, 5)]
     board_list = board_generation_params_from_grid_params(grid_params)
@@ -26,7 +25,7 @@ if __name__ == '__main__':
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
     #     #                           generator_type=BoardName.WFC),
     # ]
-    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=2, plot_individually=False)
+    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=2000, plot_individually=False)
     # test = load_pickle("all_board_stats.pkl")
     # test_2 = load_pickle("heatmap_stats.pkl")
     # print(test)

@@ -28,7 +28,7 @@ time=None):
     plt.style.use('tableau-colorblind10')
     plt.rcParams["font.family"] = "Times"
     plt.rcParams["font.size"] = 14
-    plt.rcParams['figure.dpi'] = 300
+    plt.rcParams['figure.dpi'] = 600
     n_columns = 5
     n_rows = max(math.ceil(len(list_of_scores) / n_columns), 1)
 

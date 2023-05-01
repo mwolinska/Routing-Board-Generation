@@ -3,8 +3,12 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 def plot_compile_time():
-    plt.style.use('science.mplstyle')
-
+    # plt.style.use('science.mplstyle')
+    plt.style.use('tableau-colorblind10')
+    plt.rcParams["font.family"] = "Times"
+    plt.rcParams["font.size"] = 14
+    plt.rcParams['figure.dpi'] = 900
+    plt.rcParams["figure.figsize"] = (7, 4.5)
     fig, ax = plt.subplots()
     single_board = [1.09, 9.83, 2.93, 7.43]
     batch_boards = [0.719, 16.5, 4.2, 13.2]
@@ -47,10 +51,16 @@ def plot_compile_time():
     #            mode="expand", borderaxespad=0, ncol=2)
     plt.legend()
     plt.tight_layout()
+    plt.savefig("figs/compile_time")
     plt.show()
 
 def plot_cache_time():
-    plt.style.use('science.mplstyle')
+    # plt.style.use('science.mplstyle')
+    plt.style.use('tableau-colorblind10')
+    plt.rcParams["font.family"] = "Times"
+    plt.rcParams["font.size"] = 14
+    plt.rcParams['figure.dpi'] = 900
+    plt.rcParams["figure.figsize"] = (7, 4.5)
 
     fig, ax = plt.subplots()
     single_board = [213, 545, 255, 998]
@@ -94,6 +104,7 @@ def plot_cache_time():
     #            mode="expand", borderaxespad=0, ncol=2)
     # plt.legend()
     plt.tight_layout()
+    plt.savefig("figs/cache_time")
     plt.show()
 
 
@@ -101,7 +112,11 @@ def plot_cache_time():
 
 def plot_connections_trained_agents():
     # plt.style.use('science.mplstyle')
-
+    plt.style.use('tableau-colorblind10')
+    plt.rcParams["font.family"] = "Times"
+    plt.rcParams["font.size"] = 12
+    plt.rcParams['figure.dpi'] = 900
+    plt.rcParams["figure.figsize"] = (8, 7)
     fig, ax = plt.subplots()
 
     fig.set_size_inches(8, 3.5)
@@ -119,25 +134,25 @@ def plot_connections_trained_agents():
 
     ax.bar(r, bfs_base,
             width=width, edgecolor='black',
-            label='BFS base')
+            label='BFSBase')
     ax.bar(r + width, bfs_min,
             width=width, edgecolor='black',
-            label='BFS min_bends')
+            label='BFSMin_Bends')
     ax.bar(r + 2 * width, bfs_longest,
            width=width, edgecolor='black',
-           label='BFS longest')
+           label='BFSLong')
     ax.bar(r + 3 * width, random_walk_np,
            width=width, edgecolor='black',
-           label='Numpy Random Walk')
+           label='NumpyRandomWalk')
     ax.bar(r + 4 * width, random_seed,
            width=width, edgecolor='black',
-           label='Seed Extension')
+           label='SeedExtension')
     ax.bar(r + 5 * width, number_link,
            width=width, edgecolor='black',
-           label='Number Link')
+           label='NumberLink')
     ax.bar(r + 6 * width, eval_trained_agent,
            width=width, edgecolor='black',
-           label='Evaluation during training')
+           label='Online Evaluation')
 
 
 
@@ -149,7 +164,7 @@ def plot_connections_trained_agents():
     )
     # ax2.set(ylabel="Generation time for batch of 100 boards, ms")
     # ax.set_xticks(r)
-    ax.set_xticks(r + 6 * width / 2, ['UniformRandom', "BFS_Short", 'NumpyRandomWalk', 'NumberLink', 'LSystems'])
+    ax.set_xticks(r + 6 * width / 2, ['UniformRandom', "BFSShort", 'NumpyRandomWalk', 'NumberLink', 'L-Systems'])
 
     # ax.yaxis.label.set_color('b')
     # ax.tick_params(axis='y', colors='b')
@@ -168,10 +183,13 @@ def plot_connections_trained_agents():
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     # plt.legend()
     plt.tight_layout()
+    plt.savefig("figs/agent_training")
     plt.show()
 
 
 
 
 if __name__ == '__main__':
+    # plot_compile_time()
+    # plot_cache_time()
     plot_connections_trained_agents()
