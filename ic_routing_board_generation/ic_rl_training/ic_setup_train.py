@@ -98,6 +98,7 @@ def setup_logger(cfg: DictConfig) -> Logger:
 
 
 def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> Environment:
+    
     # env: Environment = jumanji.make(cfg.env.registered_version)
     if cfg.env.ic_board.generation_type == "offline":
         generator = BoardDatasetGenerator(
