@@ -18,7 +18,7 @@ from hydra import compose, initialize
 
 # TODO (Marta): create master plotting loop for bar charts
 # TODO (Marta): refactor plotting functions into plotting utils
-plt.style.use('science.mplstyle')
+# plt.style.use('science.mplstyle')
 class BasicBenchmark:
     def __init__(
         self,
@@ -60,7 +60,7 @@ class BasicBenchmark:
                         save_outputs: bool = False,
                         ):
         benchmark_data = []
-        benchmark_folder = None if not save_outputs else make_benchmark_folder(with_time=True)
+        benchmark_folder = None if not save_outputs else make_benchmar_folder(with_time=True)
         for board_parameters in benchmark_parameters_list:
             with initialize(version_base=None,
                             config_path="../../agent_training/configs"):
@@ -219,7 +219,7 @@ class BasicBenchmark:
         file_name: Optional[str] = None,
         stds=None,
     ):
-        plt.style.use('science.mplstyle')
+        # plt.style.use('science.mplstyle')
         fig, ax = plt.subplots()
         ax.bar(labels, data)
         ax.set(

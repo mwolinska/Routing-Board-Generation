@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 from typing import List
 
 import numpy as np
@@ -22,9 +23,13 @@ def plot_comparison_heatmap(
     list_of_titles: List[str],
     num_agents: int,
     number_of_boards_averaged: int,
-):
-    plt.style.use('science.mplstyle')
-    n_columns = 4
+time=None):
+    # plt.style.use('science.mplstyle')
+    plt.style.use('tableau-colorblind10')
+    plt.rcParams["font.family"] = "Times"
+    plt.rcParams["font.size"] = 14
+    plt.rcParams['figure.dpi'] = 300
+    n_columns = 5
     n_rows = max(math.ceil(len(list_of_scores) / n_columns), 1)
 
     fig = plt.figure(figsize=(9, 2 * n_rows + 0.5))
@@ -60,4 +65,7 @@ def plot_comparison_heatmap(
     cbar = ax.cax.colorbar(im)
     cbar = grid.cbar_axes[0].colorbar(im)
     plt.tight_layout()
+    time = datetime.now().strftime("%H_%M")
+    plt.savefig(f"figs/heatmap_{time}.pdf")
+    plt.savefig(f"figs/heatmap_{time}.png")
     plt.show()

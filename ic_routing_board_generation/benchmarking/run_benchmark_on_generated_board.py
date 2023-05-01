@@ -26,8 +26,8 @@ if __name__ == '__main__':
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
     #     #                           generator_type=BoardName.WFC),
     # ]
-    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=2000, plot_individually=False)
-    test = load_pickle("all_board_stats.pkl")
-    test_2 = load_pickle("heatmap_stats.pkl")
-    print(test)
-    print(test_2)
+    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=2, plot_individually=False)
+    # test = load_pickle("all_board_stats.pkl")
+    # test_2 = load_pickle("heatmap_stats.pkl")
+    # print(test)
+    # print(test_2)
