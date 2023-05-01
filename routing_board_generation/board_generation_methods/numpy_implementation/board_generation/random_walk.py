@@ -1,54 +1,32 @@
-from dataclasses import dataclass
 from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import AbstractBoard
 import numpy as np
 from copy import deepcopy
 import random
 from typing import List, Tuple
 
-#from jax.numpy import asarray # Currently jaxlib is not supported on windows.  This will have to be sorted.
-#from env_viewer import RoutingViewer # Currently jaxlib is not supported on windows.  This will have to be sorted.
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.board_generator_data_model import \
+    Position
 
-EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3
+
 # Available to import from routing.constants NOOP, LEFT, UP, RIGHT, DOWN
-#from jumanji.environments.combinatorial.routing.constants import EMPTY, PATH, POSITION, TARGET
+from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
+import random
+from copy import deepcopy
+from typing import List, Tuple
+
+import numpy as np
+# Available to import from routing.constants NOOP, LEFT, UP, RIGHT, DOWN
+from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
+
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
+    AbstractBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.board_generator_data_model import \
+    Position
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import \
+    IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
+    InvalidWireStructureError, MissingHeadTailError, DuplicateHeadsTailsError
+
 STARTING_POSITION = POSITION  # My internal variable to disambiguate the word "position"
-
-
-@dataclass
-class Position:
-    """  Class of 2D tuple of ints, indicating the size of an array or a 2D position or vector."""
-    x: int
-    y: int
-
-
-class IncorrectBoardSizeError(Exception):
-    """ Raised when a board size does not match the specified dimensions."""
-    pass
-
-
-class NumAgentsOutOfRangeError(Exception):
-    """ Raised when self._wires_on_board is negative."""
-    pass
-
-
-class EncodingOutOfRangeError(Exception):
-    """ Raised when one or more cells on the board have an invalid index."""
-    pass
-
-
-class DuplicateHeadsTailsError(Exception):
-    """ Raised when one of the heads or tails of a wire is duplicated."""
-    pass
-
-
-class MissingHeadTailError(Exception):
-    """ Raised when one of the heads or tails of a wire is missing."""
-    pass
-
-
-class InvalidWireStructureError(Exception):
-    """ Raised when one or more of the wires has an invalid structure, e.g. looping or branching."""
-    pass
 
 
 class RandomWalkBoard(AbstractBoard):
@@ -79,10 +57,7 @@ class RandomWalkBoard(AbstractBoard):
         self.layout = np.zeros((rows, cols), int)
         # Add wires to the board
         while (self._wires_on_board < self._num_agents) and not self.is_full():
-            # board_output.add_wire_start_distance_directions()
-            # board_output.add_wire_head_target_erode()
             self.add_wire_random_walk(2 * max(rows, cols))
-        #print("Generating Random Walk Board")
 
     def position_to_cell_type(self, position: Position) -> int:
         """
@@ -214,7 +189,6 @@ class RandomWalkBoard(AbstractBoard):
         # Walk randomly from the head
         for step in range(max_steps):
             new_cell = random.choice(open_adjacent_cells)
-            #print("step=",step, "cell=", new_cell)
             wire_list.append(new_cell)
             position = Position(new_cell[0], new_cell[1])
             open_adjacent_cells = self.get_open_adjacent_cells(position, wire_list)
@@ -818,7 +792,6 @@ def print_board(board_training: np.ndarray, board_solution: np.ndarray, num_agen
     print(board_training)
     print("Solved board")
     print(board_solution)
-    return
 
 
 def get_detour_stats(rows: int, cols: int, num_agents: int, num_boards: int = 1000):
@@ -880,14 +853,6 @@ if __name__ == "__main__":
     my_board = RandomWalkBoard(rows, cols, num_agents)
     board_training, board_solution, wires_on_board = my_board.return_training_board(), my_board.return_solved_board(), my_board._wires_on_board
     print_board(board_training, board_solution, wires_on_board)
-    """
-    viewer = RoutingViewer(_wires_on_board=_wires_on_board, grid_rows=rows, grid_cols=cols,
-                           viewer_width=500, viewer_height=500)
-    im_training = f'board_{rows}x{cols}_w_{_wires_on_board}_wires.png'
-    im_solution = f'solved_board_{rows}x{cols}_w_{_wires_on_board}_wires.png'
-    viewer.render(board_training, save_img=im_training)
-    viewer.render(board_solution, save_img=im_solution)
-    """
 
     rows, cols = 20, 20
     num_agents = 17

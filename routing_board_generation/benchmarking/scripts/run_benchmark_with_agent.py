@@ -65,11 +65,8 @@ if __name__ == '__main__':
         ######### Change these parameters are required
         folder_name = "20230412_benchmark_23_02" # this must be a folder under ic/experiments/benchmarks
         save_plots = False
-        # Option 1: get all files from folder
+        # get all files from folder
         all_files = files_list_from_benchmark_experiment(folder_name)
-
-        # Option 2: Provide board generation parameters
-        # TODO (MW): add example
         #########
         all_files = [file for file in all_files if file[-4:] == ".pkl"]
         directory_string = str(directory_string_from_benchamrk_experiement(folder_name)) + "/"

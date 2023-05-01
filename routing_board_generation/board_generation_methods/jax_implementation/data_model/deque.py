@@ -1,8 +1,7 @@
 from typing import NamedTuple, Tuple
+
 import chex
 import jax.numpy as jnp
-import jax
-
 
 """Define a stack data structure which can be used with Jax.
 

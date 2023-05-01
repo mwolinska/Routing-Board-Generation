@@ -6,7 +6,7 @@ from jumanji.training.loggers import Logger
 
 
 class PickleLogger(Logger):
-    """Logs to terminal."""
+    """Logs information in format accepted by BenchmarkOnRandomAgent."""
 
     def __init__(
         self, name: Optional[str] = None, save_checkpoint: bool = False
@@ -20,7 +20,7 @@ class PickleLogger(Logger):
         self.eval_log_stochastic = {}
         self.episode_counter = 0
 
-    def _format_values(self, data: Dict[str, Any]) -> str:
+    def _format_values(self, data: Dict[str, Any]) -> Dict[float, float]:
         return {key: float(value) for key,value in sorted(data.items())}
 
     def return_eval_dict(self):
@@ -53,8 +53,5 @@ class PickleLogger(Logger):
             temp_dict = collections.defaultdict(list)
             for key, value in dictionary_to_update.items():
                 temp_dict[key] = value + [new_dictionary[key]]
-            # temp_dict = collections.defaultdict(int)
-            # for key, value in chain(dictionary_to_update.items(), new_dictionary.items()):
-            #     temp_dict[key] += value
 
         return temp_dict

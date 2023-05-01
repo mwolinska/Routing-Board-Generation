@@ -40,7 +40,7 @@ from jumanji.environments.routing.connector.utils import (
 )
 
 
-class ParallelRandomWalk:
+class ParallelRandomWalkBoard:
     def __init__(self, rows: int, cols: int, num_agents: int):
         self.cols = cols
         self.rows = rows
@@ -438,7 +438,7 @@ class ParallelRandomWalk:
 
 
 if __name__ == "__main__":
-    board_generator = ParallelRandomWalk(10, 10, 5)
+    board_generator = ParallelRandomWalkBoard(10, 10, 5)
     key = jax.random.PRNGKey(1)
 
     # board_generator_jit = jax.jit(board_generator.generate_board)

@@ -1,14 +1,13 @@
 from enum import Enum
 
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import \
+    JAXLSystemBoard
 from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
-    ParallelRandomWalk
+    ParallelRandomWalkBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
     BFSBoard
-
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import \
     BFSBoardMinBends, BFSBoardFifo, BFSBoardShortest, BFSBoardLongest
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.lsystems import \
-    LSystemBoardGen
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
     NumberLinkBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
@@ -38,13 +37,13 @@ class BoardGenerator:
     """Maps BoardGeneratorType to class of generator."""
     board_generator_dict = {
         BoardName.RANDOM_WALK: RandomWalkBoard,
-        BoardName.JAX_PARALLEL_RW: ParallelRandomWalk,
+        BoardName.JAX_PARALLEL_RW: ParallelRandomWalkBoard,
         BoardName.BFS_BASE: BFSBoard,
         BoardName.BFS_MIN_BENDS: BFSBoardMinBends,
         BoardName.BFS_FIFO: BFSBoardFifo,
         BoardName.BFS_SHORTEST: BFSBoardShortest,
         BoardName.BFS_LONGEST: BFSBoardLongest,
-        BoardName.LSYSTEMS: LSystemBoardGen,
+        BoardName.LSYSTEMS: JAXLSystemBoard,
         BoardName.WFC: WFCBoard,
         BoardName.NUMBERLINK: NumberLinkBoard,
 

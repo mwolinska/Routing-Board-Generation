@@ -29,9 +29,9 @@ from routing_board_generation.rl_training.offline_generation.dataset_generator_j
 from routing_board_generation.rl_training.online_generators.parallel_random_walk_generator import \
     ParallelRandomWalkGenerator
 from routing_board_generation.rl_training.online_generators.random_seed_generator import \
-    RandomSeedGenerator
+    SeedExtensionGenerator
 from routing_board_generation.rl_training.online_generators.sequential_random_walk_generator import \
-    JaxRandomWalkGenerator
+    SequentialRandomWalkGenerator
 from routing_board_generation.rl_training.online_generators.uniform_generator import \
     UniformRandomGenerator
 from routing_board_generation.interface.board_generator_interface import \
@@ -123,13 +123,13 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             num_agents=cfg.env.ic_board.num_agents,
         )
     elif cfg.env.ic_board.generation_type == "online_seq_rw":
-        generator = JaxRandomWalkGenerator(
+        generator = SequentialRandomWalkGenerator(
             grid_size=cfg.env.ic_board.grid_size,
             num_agents=cfg.env.ic_board.num_agents,
         )
 
     elif cfg.env.ic_board.generation_type == "online_random_seed":
-        generator = RandomSeedGenerator(
+        generator = SeedExtensionGenerator(
             grid_size=cfg.env.ic_board.grid_size,
             num_agents=cfg.env.ic_board.num_agents,
         )

@@ -6,43 +6,12 @@ from routing_board_generation.board_generation_methods.numpy_implementation.data
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
+
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import \
+    IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
+    InvalidWireStructureError, MissingHeadTailError, DuplicateHeadsTailsError
+
 STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
-
-
-# Define exceptions for the board validity checks
-class IncorrectBoardSizeError(Exception):
-    """ Raised when a board size does not match the specified dimensions."""
-    pass
-
-
-class NumAgentsOutOfRangeError(Exception):
-    """ Raised when self._wires_on_board is negative."""
-    pass
-
-
-class EncodingOutOfRangeError(Exception):
-    """ Raised when one or more cells on the board have an invalid index."""
-    pass
-
-
-class DuplicateHeadsTailsError(Exception):
-    """ Raised when one of the heads or tails of a wire is duplicated."""
-    pass
-
-
-class MissingHeadTailError(Exception):
-    """ Raised when one of the heads or tails of a wire is missing."""
-    pass
-
-
-class InvalidWireStructureError(Exception):
-    """ Raised when one or more of the wires has an invalid structure, e.g. looping or branching."""
-    pass
-
-
-class PathNotFoundError(Exception):
-    """ Raised when a path cannot be found between a head and a target."""
-    pass
 
 
 def get_wires_on_board(board_layout) -> int:
@@ -188,8 +157,7 @@ def swap_heads_targets(self):
 
 
 def shuffle_wire_encodings(self):
-    """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place
-    """
+    """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
     # shuffle the indices of the wires and then assign them to the wires in order
     new_indices = list(range(len(self.paths)))
     random.shuffle(new_indices)

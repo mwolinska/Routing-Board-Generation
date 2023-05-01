@@ -110,7 +110,6 @@ class RoutingViewer:
         """
         color = self.palette[value if value < 1 else 1 + (value - 1) // 3]  # colour issue fixed: '1' used to be '2'.
 
-
         if value > 1 and (value - TARGET) % 3 == 0:                         # I am changing target and head to be of the new version 
             pygame.draw.ellipse(self.screen, color, rect, width=5)
         else:

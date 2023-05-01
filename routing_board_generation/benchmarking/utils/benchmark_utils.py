@@ -54,13 +54,8 @@ def generate_n_boards(
     board_parameters: BoardGenerationParameters,
     number_of_boards: int,
 ):
-    # TODO (Marta): add exception of all board_gen_parameters are not the same (with the exception of board_type
     board_list = []
     board_class = BoardGenerator.get_board_generator(board_parameters.generator_type)
-    board_generator = board_class(
-        rows=board_parameters.rows, cols=board_parameters.columns,
-        num_agents=board_parameters.number_of_wires,
-    )
     for _ in range(number_of_boards):
         board = None
         none_counter = 0
@@ -76,7 +71,3 @@ def generate_n_boards(
         board_list.append(board)
 
     return board_list
-
-if __name__ == '__main__':
-    test = load_pickle("../all_board_stats.pkl")
-    print(test)

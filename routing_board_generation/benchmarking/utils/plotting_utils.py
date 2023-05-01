@@ -8,7 +8,6 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 
 
 def plot_heatmap(scores: np.ndarray):
-    # TODO (Marta): Add saving capability
     fig, ax = plt.subplots()
     im = ax.imshow(scores, cmap='Purples', interpolation='nearest')
     # Create colorbar
@@ -23,8 +22,7 @@ def plot_comparison_heatmap(
     list_of_titles: List[str],
     num_agents: int,
     number_of_boards_averaged: int,
-time=None):
-    # plt.style.use('science.mplstyle')
+):
     plt.style.use('tableau-colorblind10')
     plt.rcParams["font.family"] = "Times"
     plt.rcParams["font.size"] = 14
@@ -69,3 +67,4 @@ time=None):
     plt.savefig(f"figs/heatmap_{time}.pdf")
     plt.savefig(f"figs/heatmap_{time}.png")
     plt.show()
+    # TODO: sort out saving figures

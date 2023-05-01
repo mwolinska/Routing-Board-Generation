@@ -17,7 +17,7 @@ INVALID4 = jnp.array([(-999, -999), (-999, -999), (-999, -999), (-999, -999)])  
 
 #@jax.disable_jit()
 #@jax.jit
-class RandomSeedBoard(AbstractBoard):
+class SeedExtensionBoard(AbstractBoard):
     """ The boards are 2D arrays of wiring routed on a printed circuit board.
 
     The encoding of the board cells is as follows:
@@ -622,4 +622,4 @@ class RandomSeedBoard(AbstractBoard):
 
 ##############################################################################################
 if __name__ == '__main__':
-    board_object = RandomSeedBoard(3, 3, 3)
+    board_object = SeedExtensionBoard(3, 3, 3)
