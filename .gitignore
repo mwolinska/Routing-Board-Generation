@@ -1,18 +1,3 @@
-# Danila's files:
-ic_routing_board_generation/board_generator/test-lsystems.ipynb
-test-route.ipynb
-agent_training/README_TRAINING_dk_copy.md
-ic_routing_board_generation/board_generator/uo_boardproc.py
-test-lsystems.ipynb
-
-ic_routing_board_generation/board_generator/lsystem_board_jax.py
-ic_routing_board_generation/board_generator/lsystem_board_old.py
-ic_routing_board_generation/board_generator/lsystem_board_partial_jax.py
-ic_routing_board_generation/board_generator/lsystem_board_working.py
-ic_routing_board_generation/board_generator/lsystems_FINAL.py
-ic_routing_board_generation/board_generator/lsystems-base.py
-
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
