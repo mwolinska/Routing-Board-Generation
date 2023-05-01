@@ -87,7 +87,7 @@ def stack_push_head(stack: Agent, element: chex.Array) -> Agent:
     """
     return Agent(
         stack.data.at[stack.head_insertion_index].set(element),
-        stack.head_insertion_index + 1,
+        (stack.head_insertion_index + 1) % stack.data.shape[0],
         stack.tail_insertion_index
         )
 
@@ -104,7 +104,7 @@ def stack_push_tail(stack: Agent, element: chex.Array) -> Agent:
     return Agent(
         stack.data.at[stack.tail_insertion_index].set(element),
         stack.head_insertion_index,
-        stack.tail_insertion_index - 1,
+        (stack.tail_insertion_index - 1) % stack.data.shape[0],
     )
 
 def stack_pop_head(stack: Agent) -> Tuple[Agent, chex.Array]:
