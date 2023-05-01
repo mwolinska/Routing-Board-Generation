@@ -132,7 +132,8 @@ class RandomSeedBoard(AbstractBoard):
         # print("SEEDED BOARD")
         # print(board_layout)
 
-        # While Loop: Loop through specified num of iterations as long as convergence hasn't occurred
+        # While Loop: Loop through specified num of extension/optimisation iterations
+        # as long as convergence hasn't occurred
         def ext_iterations_cond(carry):
             board_layout, key, iteration_num, converged = carry
             return ~converged & (iteration_num < extension_iterations)
@@ -150,13 +151,13 @@ class RandomSeedBoard(AbstractBoard):
             board_layout_save = jnp.array(board_layout)
 
             # Optimise each wire individually
-            def optimise_loop_func(wire_num, carry):
+            def optimise_wire_loop_func(wire_num, carry):
                 board_layout, keys = carry
                 board_layout = optimise_wire(keys[wire_num], board_layout, wire_num)
                 carry = (board_layout, keys)
                 return carry
-            carry = (board_layout_save, optkeys)
-            board_layout, _ = jax.lax.fori_loop(0, self._wires_on_board, optimise_loop_func, carry)
+            carry = (board_layout, optkeys)
+            board_layout, _ = jax.lax.fori_loop(0, self._wires_on_board, optimise_wire_loop_func, carry)
 
             # print("Optimization")
             # print(board_layout)
@@ -174,6 +175,8 @@ class RandomSeedBoard(AbstractBoard):
         # END WHILE LOOP
     
         return board_layout
+
+
 
     #@jax.jit
     def return_training_board(self, key: PRNGKey, randomness: float = 0.0, two_sided: bool = True,
