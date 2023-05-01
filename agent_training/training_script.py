@@ -25,6 +25,11 @@ from tqdm.auto import trange
 from jumanji.training import utils
 from jumanji.training.agents.random import RandomAgent
 from jumanji.training.loggers import TerminalLogger
+
+
+import sys
+sys.path.append("../")
+
 from ic_routing_board_generation.ic_rl_training.ic_setup_train import (
     setup_agent,
     setup_env,
@@ -33,6 +38,8 @@ from ic_routing_board_generation.ic_rl_training.ic_setup_train import (
     setup_training_state, )
 from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
     PickleLogger
+
+
 from jumanji.training.timer import Timer
 from jumanji.training.types import TrainingState
 
