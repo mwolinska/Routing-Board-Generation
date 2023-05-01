@@ -494,4 +494,3 @@ def count_detours_jax(board_layout: Array, count_current_wire: bool = False) -> 
             common = (set(right) & set(left))
             num_detours += len(common)
     return num_detours
-
