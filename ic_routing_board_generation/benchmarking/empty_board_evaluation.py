@@ -10,6 +10,8 @@ from ic_routing_board_generation.benchmarking.benchmark_utils import \
     generate_n_boards, load_pickle
 from ic_routing_board_generation.benchmarking.plotting_utils import \
     plot_heatmap, plot_comparison_heatmap
+from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board_variations import \
+    BFSBoardShortest
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import \
     RandomWalkBoard
 from ic_routing_board_generation.board_generator.numpy_utils.board_processor_2 import \
@@ -192,6 +194,11 @@ def evaluate_generator_outputs_averaged_on_n_boards(
         board_statistics = {k: (np.mean(np.array(v)), np.std(np.array(v))) for k, v in dict(board_statistics).items()}
         board_statistics["generator_type"] = str(board_parameters.generator_type.value)
         all_board_statistics.append(board_statistics)
+    with open("all_board_stats.pkl", "wb") as file:
+        pickle.dump(all_board_statistics, file)
+    with open("heatmap_stats.pkl", "wb") as file:
+        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+
     if plot_individually or len(board_parameters_list) == 1:
         for score in scores_list:
             plot_heatmap(scores=score)
@@ -203,6 +210,8 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     print(all_board_statistics)
     with open("all_board_stats.pkl", "wb") as file:
         pickle.dump(all_board_statistics, file)
+    with open("heatmap_stats.pkl", "wb") as file:
+        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
     convert_dict_lit_to_plotting_format(all_board_statistics)
 
 def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
@@ -248,32 +257,35 @@ def _update_dictionary(dictionary_to_update, new_dictionary):
 
 if __name__ == '__main__':
     benchmark = load_pickle("all_board_stats.pkl")
-    convert_dict_lit_to_plotting_format(benchmark)
+    print()
+    # convert_dict_lit_to_plotting_format(benchmark)
     # board = np.array(
     #    [
-    #        [7, 3, 9, 12],
-    #        [5, 2, 8, 11],
-    #        [5, 2, 8, 11],
-    #        [6, 4, 10, 13]
+    #        [2, 5, 8, 11],
+    #        [1, 4, 7, 10],
+    #        [1, 4, 7, 10],
+    #        [3, 6, 9, 12]
     #    ]
     # )
 
     # board = np.array(
     #    [
-    #        [7, 3, 2, 2],
-    #        [5, 8, 9, 2],
-    #        [5, 10, 4, 2],
-    #        [6, 12, 11, 13]
+    #        [2, 11, 10, 10],
+    #        [1, 7, 8, 10],
+    #        [1, 9, 12, 10],
+    #        [3, 6, 4, 5]
     #    ]
     # )
-    # board_ = RandomWalkBoard(10, 10, 5)
+    board_ = BFSBoardShortest(8, 8, 5)
+    board = board_.return_solved_board()
     # print(board_.return_solved_board())
     # boardprocessor_ = BoardProcessor(board_)
     # print(boardprocessor_.get_board_layout())
 
-    # evaluator = EvaluateEmptyBoard(board)
-    # scores = evaluator.score_from_neighbours()
+    evaluator = EvaluateEmptyBoard(board)
+    scores = evaluator.score_from_neighbours()
     #
     # print(scores)
     # print(np.unique(scores, return_counts=True))
-    # plot_heatmap(scores)
+    plot_heatmap(scores)
+    print()
