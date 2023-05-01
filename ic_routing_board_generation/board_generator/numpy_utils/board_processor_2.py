@@ -221,7 +221,7 @@ class BoardProcessor:
         return filled_positions / total_positions
 
     def distance_between_heads_and_targets(self) -> List[float]:
-        """Returns the L2 distance between the heads and targets of the wires"""
+        """Returns the L1 distance between the heads and targets of the wires"""
         distances = []
         for head, target in zip(self.heads, self.targets):
             distances.append(self.get_distance_between_cells(head, target))
@@ -229,8 +229,8 @@ class BoardProcessor:
 
     @staticmethod
     def get_distance_between_cells(cell1: Tuple[int, int], cell2: Tuple[int, int]) -> float:
-        """Returns the L2 distance between two cells"""
-        return ((cell1[0] - cell2[0]) ** 2 + (cell1[1] - cell2[1]) ** 2) ** 0.5
+        """Returns the L1 distance between two cells"""
+        return abs(cell1[0] - cell2[0]) + abs(cell1[1] - cell2[1])
 
     def remove_wire(self, wire_index: int) -> None:
         """Removes a wire from the board"""
@@ -259,7 +259,10 @@ class BoardProcessor:
 
     def get_board_statistics(self) -> Dict[str, Union[int, float]]:
         """Returns a dictionary of statistics about the board"""
+
         num_wires = len(self.heads)
+        if num_wires == 0:
+            num_wires = 1
         wire_lengths = [self.get_path_length(path) for path in self.paths]
         avg_wire_length = sum(wire_lengths) / num_wires
         wire_bends = [self.count_path_bends(path) for path in self.paths]

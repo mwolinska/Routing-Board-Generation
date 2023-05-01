@@ -1,10 +1,6 @@
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
-from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax
-from dataclasses import dataclass
-from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.jax_utils.grid_utils import optimise_wire
 from ic_routing_board_generation.board_generator.jax_utils.post_processor_utils_jax import extend_wires_jax, training_board_from_solved_board_jax
-from ic_routing_board_generation.board_generator.numpy_utils.post_processor_utils_numpy import count_detours
 #import numpy as np
 
 from jax import Array
@@ -12,7 +8,7 @@ from jax.random import PRNGKey
 import jax.numpy as jnp
 import jax
 
-from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
+from jumanji.environments.routing.connector.constants import EMPTY, POSITION, TARGET
 STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
 
 #@jax.disable_jit()
@@ -122,7 +118,6 @@ class RandomSeedBoard(AbstractBoard):
         Returns:
             (Array) : 2D layout of the board with all wirings encoded
         """
-        from numpy import array as np_array
         from copy import deepcopy
         key, seedkey = jax.random.split(key)
 

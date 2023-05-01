@@ -57,7 +57,7 @@ class BoardDatasetGeneratorJAX(Generator):
         solved_boards_list = []
         if generate_solved_boards and self.board_name == "offline_seed_extension":
             solved_board_call = jax.jit(self.board_generator.return_solved_board)
-        keys = jax.random.split(key, n=n_boards)
+        keys = jax.random.split(key, num=n_boards)
         for i in range(n_boards):
             # key = jax.random.PRNGKey(i)
             # old_key, new_key = jax.random.split(key)

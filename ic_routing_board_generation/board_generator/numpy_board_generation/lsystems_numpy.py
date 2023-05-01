@@ -221,6 +221,7 @@ class LSystemBoardGen:
         return self.convert_to_jumanji(route=False)
 
     def return_solved_board(self) -> np.ndarray:
+        self.fill(n_steps=10, pushpullnone_ratios=[2, 1, 1])
         return self.convert_to_jumanji(route=True)
 
 

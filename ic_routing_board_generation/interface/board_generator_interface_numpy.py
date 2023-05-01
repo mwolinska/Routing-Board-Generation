@@ -29,7 +29,7 @@ class BoardName(str, Enum):
     BFS_FIFO = "bfs_fifo"
     BFS_SHORTEST = "bfs_short"
     BFS_LONGEST = "bfs_long"
-    # LSYSTEMS = "lsystems_standard"
+    LSYSTEMS = "lsystems_standard"
     WFC = "wfc"
     # NUMBERLINK = "numberlink"
 
@@ -47,7 +47,7 @@ class BoardGenerator:
         BoardName.BFS_FIFO: BFSBoardFifo,
         BoardName.BFS_SHORTEST: BFSBoardShortest,
         BoardName.BFS_LONGEST: BFSBoardLongest,
-        # BoardName.LSYSTEMS: LSystemBoardGen,
+        BoardName.LSYSTEMS: LSystemBoardGen,
         BoardName.WFC: WFCBoard,
         # BoardName.NUMBERLINK: NumberLinkBoard,
 

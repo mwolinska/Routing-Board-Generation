@@ -2,13 +2,17 @@
 import os
 from typing import Optional, Union
 import numpy as np
+from numpy import asarray
+
+from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import \
+    LSystemBoardGen
 from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
 from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_numberlink_oj import NumberLinkBoard
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import RandomWalkBoard
 from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import WFCBoard
 from ic_routing_board_generation.board_generator.numpy_utils.board_processor_2 import BoardProcessor, BFS_fill, LSystem_fill
-from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
+# from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
 from ic_routing_board_generation.visualisation.env_viewer import RoutingViewer
 
 

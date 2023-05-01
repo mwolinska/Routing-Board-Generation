@@ -1,14 +1,8 @@
 import random
-from typing import List, Tuple
+from typing import List
 import numpy as np
 from copy import deepcopy
-from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import RandomWalkBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import WFCBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import LSystemBoardGen
 from ic_routing_board_generation.board_generator.numpy_data_model.board_generator_data_model import Position
-from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
-
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
@@ -498,4 +492,3 @@ def count_detours(board_layout: np.ndarray, count_current_wire: bool = False) ->
             common = (set(right) & set(left))
             num_detours += len(common)
     return num_detours
-

@@ -12,6 +12,8 @@ def plot_heatmap(scores: np.ndarray):
     im = ax.imshow(scores, cmap='Purples', interpolation='nearest')
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
     plt.show()
 
 
@@ -53,6 +55,7 @@ def plot_comparison_heatmap(
                 bottom=False,
                 labelleft=False,
                 labelbottom=False)
+
 
     cbar = ax.cax.colorbar(im)
     cbar = grid.cbar_axes[0].colorbar(im)

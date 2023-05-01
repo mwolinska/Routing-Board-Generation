@@ -1,5 +1,7 @@
 from enum import Enum
 
+from ic_routing_board_generation.board_generator.jax_board_generation.parallel_random_walk import \
+    ParallelRandomWalk
 from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
 from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board_variations import \
     BFSBoardMinBends, BFSBoardFifo, BFSBoardShortest, BFSBoardLongest
@@ -28,6 +30,7 @@ class BoardName(str, Enum):
     LSYSTEMS_STANDARD = "lsystems_standard"
     WFC = "wfc"
     NUMBERLINK = "numberlink"
+    JAX_PARALLEL_RW = "jax_parallel_rw"
 
 class BoardGenerator:
     """Maps BoardGeneratorType to class of generator."""
@@ -42,6 +45,7 @@ class BoardGenerator:
         BoardName.LSYSTEMS_STANDARD: LSystemBoardGen,
         BoardName.WFC: WFCBoard,
         BoardName.NUMBERLINK: NumberLinkBoard,
+        BoardName.JAX_PARALLEL_RW: ParallelRandomWalk,
     }
 
     @classmethod
