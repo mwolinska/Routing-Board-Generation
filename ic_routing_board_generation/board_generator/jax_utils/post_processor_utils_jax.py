@@ -1,19 +1,12 @@
-import random
-from typing import List, Tuple
-import numpy as np
+from jax import Array
+from jax.random import PRNGKey
+import jax.numpy as jnp
+import jax
 from copy import deepcopy
-from ic_routing_board_generation.board_generator.numpy_board_generation.bfs_board import BFSBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_random_walk_rb import RandomWalkBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.board_generator_wfc_oj import WFCBoard
-from ic_routing_board_generation.board_generator.numpy_board_generation.lsystems_numpy import LSystemBoardGen
-from ic_routing_board_generation.board_generator.numpy_data_model.board_generator_data_model import Position
-from ic_routing_board_generation.board_generator.numpy_data_model.abstract_board import AbstractBoard
-
-
-# EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
 STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
-
+INVALID = jnp.array((-999, -999))  # Encoding for an invalid 2D position for lists that must be of constant length
+INVALID4 = jnp.array([(-999, -999), (-999, -999), (-999, -999), (-999, -999)]) # Encoding for list of four invalid positions
 
 # Define exceptions for the board validity checks
 class IncorrectBoardSizeError(Exception):
@@ -51,18 +44,6 @@ class PathNotFoundError(Exception):
     pass
 
 
-
-####################################################################################################
-# JAX UTILS ########################################################################################
-from jax import Array
-from jax.random import PRNGKey
-import jax.numpy as jnp
-import jax
-INVALID = jnp.array((-999, -999))  # Encoding for an invalid 2D position for lists that must be of constant length
-INVALID4 = jnp.array([(-999, -999), (-999, -999), (-999, -999), (-999, -999)]) # Encoding for list of four invalid positions
-
-
-#@jax.disable_jit()
 #@jax.jit
 def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
                      two_sided: bool = True, extension_steps: int = 1e23) -> Array:
@@ -104,27 +85,6 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
         # Make a copy of the board_layout to check if it changes
         prev_layout = deepcopy(board_layout)
 
-
-
-
-
-        """
-        # TRY JUST SAMPLING THE EXTENDABLES
-        targets_bool = (((board_layout // 3) == TARGET) & (board_layout != 0))
-        targets_pos = jnp.argwhere(targets_bool, size=num_extendables, fill_value=(-999, -999))
-        print("targets=", targets_pos)
-        starts_targets_bool = (((board_layout // 3) != PATH) & (board_layout != 0))
-        starts_targets_pos = jnp.argwhere(starts_targets_bool, size=num_extendables, fill_value=(-999, -999))
-        print("starts_targets=", starts_targets_pos)
-        extendables_pos = jax.lax.select(two_sided, starts_targets_pos, targets_pos)
-        print("extendables_pos=", extendables_pos)
-        """
-
-
-
-
-
-        # """  THIS WORKS BUT DOESN'T IMPROVE COMPILE TIME MUCH COMPARED TO NESTED FOR LOOPS
         def row_func(row, carry):
             board_layout, key = carry
             def col_func(col, carry):
@@ -141,20 +101,6 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
                     cell_or_invalid = jax.lax.select(num_adjacencies > 1, INVALID, cell_pos)
                     return cell_or_invalid
                 poss_extension_list = jax.vmap(invalidate_func, in_axes=(0, None, None))(poss_extension_list, current_wire_num, board_layout)
-
-                """  WHY DOESN'T THIS GIVE THE SAME RESULT??!?!!!?!?
-                def invalidate_extension_list_func(i, carry):
-                    poss_extension_list, current_wire_num, board_layout = carry
-                    cell_pos = poss_extension_list[i]
-                    num_adjacencies = num_wire_adjacencies_jax(cell_pos, current_wire_num, board_layout)
-                    cell_or_invalid = jax.lax.select(num_adjacencies > 1, INVALID, cell_pos)
-                    poss_extension_list = poss_extension_list.at[i].set(cell_or_invalid)
-                    carry = (poss_extension_list, current_wire_num, board_layout)
-                    return carry
-
-                carry = (poss_extension_list_save, current_wire_num, board_layout)
-                poss_extension_list2, _, _ = jax.lax.fori_loop(0, 3, invalidate_extension_list_func, carry)
-                """
 
                 # Get the position of the wire that led into this cell and prioritize continuing the same direction
                 prev_neighbor = get_previous_neighbor_jax(current_pos, board_layout)
@@ -219,11 +165,6 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
             return board_layout, key
         carry = (board_layout, key)
         board_layout, key = jax.lax.fori_loop(0, rows, row_func, carry)
-
-        """ THIS FLATTENED FORI LOOP WORKS BIT IT MAKES COMPILE TIME LONGER?!
-        carry = (board_layout, key)
-        board_layout, key = jax.lax.fori_loop(0, rows*cols, row_col_func, carry)
-        """
 
         # Undo random flip/flopping to compare to prev_layout
         board_layout = jax.lax.select(do_flip, board_layout[::-1, :], board_layout)
@@ -409,7 +350,7 @@ def cell_encoding_to_wire_num_jax(cell_encoding: Array) -> Array:
     """
     #output = jax.lax.select(cell_encoding == 0, -1, int((cell_encoding - 1) // 3))
     output = jax.lax.select(cell_encoding == 0, -1, (cell_encoding - 1) // 3)
-    return jax.lax.convert_element_type(output, np.int32)
+    return jax.lax.convert_element_type(output, jnp.int32)
 
 
 #@jax.jit
@@ -442,55 +383,6 @@ def training_board_from_solved_board_jax(board_layout: Array) -> Array:
         Returns:
             (Array): 2D layout of the encoded training board
     """
-    rows, cols = board_layout.shape
-    for row in range(rows):
-        for col in range(cols):
-            old_encoding = board_layout[row, col]
-            new_encoding = jax.lax.select((old_encoding % 3) == PATH, 0, old_encoding)
-            board_layout = board_layout.at[row, col].set(new_encoding)
-    return board_layout
-
-
-#TODO JAXIFY
-def count_detours_jax(board_layout: Array, count_current_wire: bool = False) -> jnp.array:
-    """ Returns the number of wires that have to detour around a head or target cell.
-
-        Args:
-            board_layout (Array): 2D layout of the board with wires encoded
-            count_current_wire (bool): Should we count wires that wrap around their own heads/targets?
-                                            (default = False)
-
-        Returns:
-            (jnp.array(int)) : The number of wires that have to detour around a head or target cell.
-    """
-    rows, cols = board_layout.shape
-    num_detours = 0
-    for x in range(rows):
-        for y in range(cols):
-            cell_type = position_to_cell_type(Position(x, y), board_layout)
-            if (cell_type != STARTING_POSITION) and (cell_type != TARGET):
-                continue
-            current_wire = position_to_wire_num(Position(x, y), board_layout)
-            #
-            above = board_layout[:x, y]
-            above = [cell_label_to_wire_num(cell_label) for cell_label in above if cell_label != 0]
-            if not count_current_wire:
-                above = [wire_num for wire_num in above if wire_num != current_wire]
-            below = board_layout[x + 1:, y]
-            below = [cell_label_to_wire_num(cell_label) for cell_label in below if cell_label != 0]
-            if not count_current_wire:
-                below = [wire_num for wire_num in below if wire_num != current_wire]
-            common = (set(above) & set(below))
-            num_detours += len(common)
-            #
-            left = board_layout[x, :y].tolist()
-            left = [cell_label_to_wire_num(cell_label) for cell_label in left if cell_label != 0]
-            if not count_current_wire:
-                left = [wire_num for wire_num in left if wire_num != current_wire]
-            right = board_layout[x, y+1:].tolist()
-            right = [cell_label_to_wire_num(cell) for cell in right if cell != 0]
-            if not count_current_wire:
-                right = [wire_num for wire_num in right if wire_num != current_wire]
-            common = (set(right) & set(left))
-            num_detours += len(common)
-    return num_detours
+    board_path_bool = ((board_layout % 3) == PATH)
+    board_layout_paths_removed = board_layout * ~board_path_bool
+    return board_layout_paths_removed
