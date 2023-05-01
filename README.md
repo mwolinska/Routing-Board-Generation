@@ -32,8 +32,13 @@ pip install -r requirements.txt
 ```
 
 Example (NumPy) BFS Board Generation:
+
 ```python
-from ic_routing_board_generation.board_generator.numpy_board_generation import bfs_board
+
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation import
+
+bfs_board
+
 board = bfs_board.BFSBoard(rows=5, cols=5, num_agents=3)
 print(board.return_solved_board())
 print(board.return_training_board())
