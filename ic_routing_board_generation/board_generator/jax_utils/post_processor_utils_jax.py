@@ -116,7 +116,12 @@ def extend_wires_jax(board_layout: Array, key: PRNGKey, randomness: float = 0.0,
         starts_targets_bool = (((board_layout // 3) != PATH) & (board_layout != 0))
         starts_targets_pos = jnp.argwhere(starts_targets_bool, size=num_extendables, fill_value=(-999, -999))
         print("starts_targets=", starts_targets_pos)
-        extendables_pos = jax.lax.select(two_sided, starts_targets_pos, targets_pos)
+        if two_sided:
+            extendables_pos = starts_targets_pos
+        else:
+            extendables_pos = targets_pos
+
+        #extendables_pos = jax.lax.select(two_sided, starts_targets_pos, targets_pos)
         print("extendables_pos=", extendables_pos)
         """
 
@@ -409,7 +414,7 @@ def cell_encoding_to_wire_num_jax(cell_encoding: Array) -> Array:
     """
     #output = jax.lax.select(cell_encoding == 0, -1, int((cell_encoding - 1) // 3))
     output = jax.lax.select(cell_encoding == 0, -1, (cell_encoding - 1) // 3)
-    return jax.lax.convert_element_type(output, np.int32)
+    return jax.lax.convert_element_type(output, jnp.int32)
 
 
 #@jax.jit
