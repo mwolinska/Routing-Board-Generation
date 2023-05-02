@@ -30,7 +30,7 @@ class ParallelRandomWalkGenerator(Generator):
     """
 
     def __init__(self, grid_size: int, num_agents: int) -> None:
-        """Instantiates a `ParallelRandomWalkGenerator`.
+        """Instantiates a `UniformRandomGenerator`.
 
         Args:
             grid_size: size of the square grid to generate.
@@ -38,7 +38,8 @@ class ParallelRandomWalkGenerator(Generator):
         """
         super().__init__(grid_size, num_agents)
         self.board_generator = ParallelRandomWalkBoard(self.grid_size, self.grid_size,
-                                                       self.num_agents)
+                                                    self.num_agents)
+
 
     def __call__(self, key: PRNGKey) -> State:
         """Generates a `Connector` state that contains the grid and the agents' layout.
@@ -69,6 +70,7 @@ class ParallelRandomWalkGenerator(Generator):
             target=jnp.stack(targets, axis=1),
             position=jnp.stack(starts, axis=1),
         )
+
 
         step_count = jnp.array(0, jnp.int32)
 

@@ -51,6 +51,11 @@ class ParallelRandomWalkBoard:
         self.rows = rows
         self.num_agents = num_agents
 
+    def __init__(self, rows: int, cols: int, num_agents: int):
+        self.cols = cols
+        self.rows = rows
+        self.num_agents = num_agents
+
     def generate_board(
         self, key: chex.PRNGKey
     ) -> Tuple[chex.Array, chex.Array, chex.Array]:
@@ -390,7 +395,6 @@ class ParallelRandomWalkBoard:
             grid,
             new_pos,
         )
-
         return new_agent, new_grid
 
     def _is_valid_position(
@@ -440,6 +444,7 @@ class ParallelRandomWalkBoard:
         solved_grid = solved_grid.at[heads].set(agent_position_values)
         solved_grid = solved_grid.at[targets].set(agent_target_values)
         return solved_grid
+
 
 
 if __name__ == "__main__":
