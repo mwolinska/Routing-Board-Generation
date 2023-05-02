@@ -150,7 +150,7 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     all_board_statistics = []
     for board_parameters in board_parameters_list:
         print(board_parameters)
-        if board_parameters.generator_type == BoardName.JAX_PARALLEL_RW: # or board_parameters.generator_type == BoardName.JAX_SEED_EXTENSION:
+        if board_parameters.generator_type == BoardName.JAX_PARALLEL_RW or board_parameters.generator_type == BoardName.JAX_SEED_EXTENSION:
             board_list = BoardDatasetGeneratorJAX(
                 board_name=board_parameters.generator_type.value,
                 grid_size=board_parameters.rows,
@@ -215,7 +215,7 @@ def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
         'avg_wire_bends': "Number of Bends per Wire" ,
         'avg_head_target_distance': "Manhattan Distance",
         'percent_filled': "Percent of Board Filled with Wires",
-        'count_detours': " Number of Detours",
+        'count_detours': "Number of Detours",
         'heatmap_score_diversity': "Heatmap Diversity Score",
     }
     for key in list_of_keys:

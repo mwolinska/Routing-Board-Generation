@@ -1,0 +1,2 @@
+- env.ic_board.generation_type=online_parallel_rw
+- env.training.num_epochs=200

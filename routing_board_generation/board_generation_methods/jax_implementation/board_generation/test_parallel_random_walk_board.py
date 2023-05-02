@@ -153,14 +153,14 @@ class TestParallelRandomWalk:
         ("function_input", "expected_value"),
         [
             (
-                (
-                    key,
                     (
-                        agents_reshaped_for_generator.start,
-                        agents_reshaped_for_generator.position,
-                        valid_end_grid2,
-                    ),
-                )
+                            key,
+                            (
+                                    agents_reshaped_for_generator.start,
+                                    agents_reshaped_for_generator.position,
+                                    valid_end_grid2,
+                            ),
+                    )
             ),
         ],
     )
@@ -194,12 +194,12 @@ class TestParallelRandomWalk:
         ("function_input", "expected_value"),
         [
             (
-                (key, valid_starting_grid, agents_starting),
-                (
-                    key_2,
-                    valid_starting_grid_after_1_step,
-                    agents_starting_move_1_step_up,
-                ),
+                    (key, valid_starting_grid, agents_starting),
+                    (
+                            key_2,
+                            valid_starting_grid_after_1_step,
+                            agents_starting_move_1_step_up,
+                    ),
             ),  # empty position
         ],
     )
@@ -379,8 +379,8 @@ class TestParallelRandomWalk:
         [
             ((0), jnp.array([-1, 5, -1, 1])),
             (
-                (6),
-                jnp.array([1, 11, 5, 7]),
+                    (6),
+                    jnp.array([1, 11, 5, 7]),
             ),  # adjacent cells in order up, down, left, right
         ],
     )
@@ -434,8 +434,8 @@ class TestParallelRandomWalk:
         ("function_input", "expected_value"),
         [
             (
-                (agents_starting, valid_starting_grid, jnp.array([1, 1, 1])),
-                (grids_after_1_agent_step, agents_starting_move_1_step_up),
+                    (agents_starting, valid_starting_grid, jnp.array([1, 1, 1])),
+                    (grids_after_1_agent_step, agents_starting_move_1_step_up),
             ),  # empty position
         ],
     )
@@ -458,8 +458,8 @@ class TestParallelRandomWalk:
         ("function_input", "expected_value"),
         [
             (
-                (valid_starting_grid, agents_starting, jnp.array([1, 2])),
-                True,
+                    (valid_starting_grid, agents_starting, jnp.array([1, 2])),
+                    True,
             ),  # empty position
             ((valid_starting_grid, agents_starting, jnp.array([1, 1])), True),
             ((valid_starting_grid, agents_starting, jnp.array([-1, 1])), False),

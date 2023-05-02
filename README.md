@@ -114,12 +114,12 @@ If a different configuration is desired this can e amended in the scripts direct
 To generate results, which summarise metrics based on solved boards run:
 
 ```shell
-python3 -m routing_board_generation/benchmarking/scripts/run_benchmark_on_generated_board MARTA
+python3 -m routing_board_generation.benchmarking.scripts.run_benchmark_on_generated_board
 ```
 
 To generate results, which summarise performance on a random agent run:
 ```shell
-python3 -m routing_board_generation/benchmarking/scripts/run_benchmark_with_agent MARTA
+python3 -m routing_board_generation.benchmarking.scripts.run_benchmark_with_agent
 ```
 
 #### 3. Framework to use these generators to train Jumanji's reinforcement learning agent
