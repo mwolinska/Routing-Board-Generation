@@ -35,7 +35,7 @@ The NumberLink and Wave Function Collapse implementations are based on existing 
 and [wave function collapse by ikarth](https://github.com/ikarth/wfc_2019f) that carry the AGPL and MIT licenses respectively.
 
 #### JAX
-- ParallelRandomWalk (Production ready - pull request pending in Jumanji from original project repo). Please note te bversion submitted is available
+- ParallelRandomWalk (Production ready - pull request pending in Jumanji from original project repo). Please note the version submitted is available
 on `feat-connector-board-generation` branch.
 - SeedExtension
 - SequentialRandomWalk
@@ -127,8 +127,7 @@ python3 -m routing_board_generation.benchmarking.scripts.run_benchmark_with_agen
 To launch a training simply run:
 ```bash
 cd agent_training
-python3 training_script.py
-# env.ic_board.generation_type=seq_parallel_rw env.ic_board.board_name=none can be appended as arguments for different board generation types
+python3 training_script.py # args from config can be appended such as env.ic_board.generation_type=seq_parallel_rw env.ic_board.board_name=none
 ```
 Configuration can be changed from within the configuration files:
 (see `agent_training/configs/env/connector.yaml` and `agent_training/configs/config.yaml` for more options).
