@@ -171,12 +171,11 @@ if __name__ == "__main__":
     # Connect the event handler to the current figure
     plt.gcf().canvas.mpl_connect('key_press_event', close_figure_on_key)
     plt.show()
-
-    # TODO: add argument for showing a trained agent on the board
     
     # Show a trained agent trying to solve the board
     # TODO: change file path once rebased
     if args.show == "training":
+        # TODO: check we have generated board of correct size / num_agents
         file = "examples/trained_agent_10x10_5_uniform/19-27-36/training_state_10x10_5_uniform"
         with open(file,"rb") as f:
             training_state = pickle.load(f)

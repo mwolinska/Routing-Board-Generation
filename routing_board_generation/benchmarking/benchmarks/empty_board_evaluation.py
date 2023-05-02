@@ -1,4 +1,5 @@
 import collections
+import pickle
 from typing import List, Dict
 
 import numpy as np
@@ -8,7 +9,7 @@ from routing_board_generation.benchmarking.utils.benchmark_data_model import \
 from routing_board_generation.benchmarking.utils.benchmark_utils import \
     generate_n_boards, load_pickle
 from routing_board_generation.benchmarking.utils.plotting_utils import \
-    plot_heatmap
+    plot_heatmap, plot_comparison_heatmap
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import \
     BFSBoardShortest
 from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import \
@@ -143,6 +144,7 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     board_parameters_list: List[BoardGenerationParameters],
     number_of_boards: int,
     plot_individually: bool = False,
+    plot: bool = False,
 ):
     scores_list = []
     board_names = []
@@ -174,25 +176,25 @@ def evaluate_generator_outputs_averaged_on_n_boards(
         board_statistics = {k: (np.mean(np.array(v)), np.std(np.array(v))) for k, v in dict(board_statistics).items()}
         board_statistics["generator_type"] = str(board_parameters.generator_type.value)
         all_board_statistics.append(board_statistics)
-    # with open("all_board_stats.pkl", "wb") as file:
-    #     pickle.dump(all_board_statistics, file)
-    # with open("heatmap_stats.pkl", "wb") as file:
-    #     pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+    with open("all_board_stats.pkl", "wb") as file:
+        pickle.dump(all_board_statistics, file)
+    with open("heatmap_stats.pkl", "wb") as file:
+        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
 
-    # if plot_individually or len(board_parameters_list) == 1:
-    #     for score in scores_list:
-    #         plot_heatmap(scores=score)
-    # else:
-    #     plot_comparison_heatmap(
-    #         scores_list, board_names, board_parameters_list[0].number_of_wires,
-    #         number_of_boards_averaged=number_of_boards,
-    #     )
-    # print(all_board_statistics)
-    # with open("all_board_stats.pkl", "wb") as file:
-    #     pickle.dump(all_board_statistics, file)
-    # with open("heatmap_stats.pkl", "wb") as file:
-    #     pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
-    # convert_dict_lit_to_plotting_format(all_board_statistics)
+    if plot_individually or len(board_parameters_list) == 1:
+        for score in scores_list:
+            plot_heatmap(scores=score)
+    else:
+        plot_comparison_heatmap(
+            scores_list, board_names, board_parameters_list[0].number_of_wires,
+            number_of_boards_averaged=number_of_boards,
+        )
+    print(all_board_statistics)
+    with open("all_board_stats.pkl", "wb") as file:
+        pickle.dump(all_board_statistics, file)
+    with open("heatmap_stats.pkl", "wb") as file:
+        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+    convert_dict_lit_to_plotting_format(all_board_statistics)
 
 def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
     data_per_key = []
