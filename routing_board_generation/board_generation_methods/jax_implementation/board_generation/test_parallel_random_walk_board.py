@@ -468,7 +468,7 @@ class TestParallelRandomWalk:
     def test_is_valid_position_rw(
         parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, Agent, chex.Array],
-        expected_value: chex.Array,
+          expected_value: chex.Array,
     ) -> None:
         grid, agent, new_position = function_input
         valid_position = parallel_random_walk._is_valid_position(

@@ -43,9 +43,7 @@ from jumanji.environments.routing.connector.utils import (
     get_position,
 )
 
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.types_addition import \
-    Agent
-
+from jumanji.environments.routing.connector.types import Agent
 
 class ParallelRandomWalkBoard:
     def __init__(self, rows: int, cols: int, num_agents: int):
