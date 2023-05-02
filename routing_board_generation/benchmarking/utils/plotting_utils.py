@@ -14,8 +14,7 @@ def plot_heatmap(scores: np.ndarray):
     cbar = ax.figure.colorbar(im, ax=ax)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
-    plt.rcParams['figure.figsize'] = [6, 4]  # in inches, e.g., [6, 4]
-    plt.show()
+    #plt.show()
 
 
 def plot_comparison_heatmap(
@@ -63,7 +62,7 @@ def plot_comparison_heatmap(
 
     cbar = ax.cax.colorbar(im)
     cbar = grid.cbar_axes[0].colorbar(im)
-    #plt.tight_layout()
+    plt.tight_layout()
     plt.rcParams['figure.figsize'] = [6, 4]  # in inches, e.g., [6, 4]
     time = datetime.now().strftime("%H_%M")
     plt.savefig(f"figs/heatmap_{time}.pdf")

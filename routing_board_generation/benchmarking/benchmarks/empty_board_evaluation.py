@@ -144,7 +144,6 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     board_parameters_list: List[BoardGenerationParameters],
     number_of_boards: int,
     plot_individually: bool = False,
-    plot: bool = False,
 ):
     scores_list = []
     board_names = []
@@ -205,7 +204,7 @@ def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
         'num_wires': " Number of Wires on Board",
         'avg_wire_length': "Average Wire Length",
         'avg_wire_bends': "Average Number of Bends per Wire" ,
-        'avg_head_target_distance': "Average Manahttan Distance from Head to Target",
+        'avg_head_target_distance': "Average Manhattan Distance from Head to Target",
         'percent_filled': "Percent of Board Filled with Wires",
         'count_detours': "Average Number of Detours",
         'heatmap_score_diversity': "Average Heatmap Diversity Score",
