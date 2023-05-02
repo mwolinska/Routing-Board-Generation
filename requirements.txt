@@ -10,6 +10,10 @@ optax==0.1.5
 pygame==2.4.0
 pytest==7.3.1
 
+# Visualising boards
+opencv-python
+opencv-python-headless
+
 # agent_training
 tqdm==4.65.0
 

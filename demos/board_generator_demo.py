@@ -101,24 +101,24 @@ def make_target_board(viewer, args, key):
     board_generator = BoardGenerator.get_board_generator(BoardName(args.board_type))
     initial_board = board_generator(args.board_size, args.board_size, args.num_agents)
     # Generate depending on board type
-    if args.board_type == "RandomWalk":
+    if args.board_type == "random_walk":
         training_board = initial_board.return_training_board()
-    elif args.board_type == "ParallelRandomWalk":
+    elif args.board_type == "offline_parallel_rw":
         training_board = initial_board.generate_board(key)
-    elif args.board_type == "BFSBase":
+    elif args.board_type == "bfs_base":
         training_board = initial_board.generate_boards(1)
     elif (
-        args.board_type == "BFSMin_Bends"
-        or args.board_type == "BFSFIFO"
-        or args.board_type == "BFSSHORT"
-        or args.board_type == "BFSLong"
+        args.board_type == "bfs_min_bend"
+        or args.board_type == "bfs_fifo"
+        or args.board_type == "bfs_short"
+        or args.board_type == "bfs_long"
     ):
         training_board = initial_board.return_training_board()
-    elif args.board_type == "L-Systems":
+    elif args.board_type == "lsystems_standard":
         training_board = initial_board.return_training_board()
-    elif args.board_type == "WFC":
+    elif args.board_type == "wfc":
         training_board = initial_board.return_training_board()
-    elif args.board_type == "NumberLink":
+    elif args.board_type == "numberlink":
         training_board = initial_board.return_training_board()
 
     def close_figure_on_key(event):
@@ -221,7 +221,7 @@ board_choices = [board.value for board in BoardName]
 
 parser.add_argument(
     "--board_type",
-    default="NumberLink",
+    default="random_walk",
     type=str,
     choices=BoardGenerator.board_generator_dict.keys(),
 )

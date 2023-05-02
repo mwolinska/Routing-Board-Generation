@@ -160,7 +160,7 @@ Somde demo scripts were also designed to visualise the package capabilities.
 In order to visualise different board generators, the following command can be used:
 
 ```
-python -m demos.board_generator_demo --board_type NumberLink --show stepping
+python -m demos.board_generator_demo --board_type numberlink --show stepping
 ```
 
 This will generate a Numberlink board of size 10x10 with 5 agents and show the training board. 
