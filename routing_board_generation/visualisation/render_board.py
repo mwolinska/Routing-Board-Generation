@@ -4,15 +4,20 @@ from typing import Optional, Union
 import numpy as np
 from numpy import asarray
 
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation import \
-    LSystemBoardGen
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import AbstractBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation import BFSBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation import NumberLinkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.board_generator_random_walk_rb import RandomWalkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.board_generator_wfc_oj import WFCBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor_2 import BoardProcessor, BFS_fill, LSystem_fill
-# from ic_routing_board_generation.board_generator.lsystem_board import LSystemBoardGen
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
+    BFSBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.lsystems import \
+    LSystemBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
+    NumberLinkBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
+    RandomWalkBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import \
+    WFCBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
+    AbstractBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import \
+    LSystem_fill, BFS_fill, BoardProcessor
 from routing_board_generation.visualisation.env_viewer import RoutingViewer
 
 
@@ -78,7 +83,7 @@ def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, ro
 
 def render_tests() -> None:
     """ Runs a series of tests on the board processors."""
-    generator_list = [RandomWalkBoard, BFSBoard, LSystemBoardGen, NumberLinkBoard, WFCBoard]
+    generator_list = [RandomWalkBoard, BFSBoard, LSystemBoard, NumberLinkBoard, WFCBoard]
     fill_methods = [None, BFS_fill, LSystem_fill, None, None]
     for index, generator in enumerate(generator_list):
         board = generator(10, 10, 10)

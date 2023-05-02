@@ -17,7 +17,7 @@ import jax.numpy as jnp
 import jax.random
 import pytest
 from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import (
-    ParallelRandomWalk,
+    ParallelRandomWalkBoard,
 )
 from jumanji.environments.routing.connector.types import Agent
 
@@ -144,9 +144,9 @@ key_1, key_2 = jax.random.split(key)
 
 class TestParallelRandomWalk:
     @pytest.fixture
-    def parallel_random_walk(self) -> ParallelRandomWalk:
+    def parallel_random_walk(self) -> ParallelRandomWalkBoard:
         """Creates a generator with grid size of 5 and 3 agents."""
-        return ParallelRandomWalk(rows=5, cols=5, num_agents=3)
+        return ParallelRandomWalkBoard(rows=5, cols=5, num_agents=3)
     
     @staticmethod
     @pytest.mark.parametrize(
@@ -165,7 +165,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_generate_board(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: chex.PRNGKey,
         expected_value: Tuple[chex.Array, chex.Array, chex.Array],
     ) -> None:
@@ -176,7 +176,7 @@ class TestParallelRandomWalk:
         assert (targets == expected_targets).all()
 
     def test_generate_board_for_various_keys(
-        self, parallel_random_walk: ParallelRandomWalk
+        self, parallel_random_walk: ParallelRandomWalkBoard
     ) -> None:
         boards_generated = []
         number_of_keys_to_test = 10
@@ -204,7 +204,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_step(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.PRNGKey, chex.Array, Agent],
         expected_value: Tuple[chex.PRNGKey, chex.Array, Agent],
     ) -> None:
@@ -216,13 +216,13 @@ class TestParallelRandomWalk:
         assert (new_key == end_key).all()
 
 
-    def test_initialise_agents(self, parallel_random_walk: ParallelRandomWalk) -> None:
+    def test_initialise_agents(self, parallel_random_walk: ParallelRandomWalkBoard) -> None:
         grid, agents = parallel_random_walk._initialise_agents(key, empty_grid)
         assert agents == agents_starting
         assert (grid == valid_starting_grid).all()
     
     def test_place_agent_heads_on_grid(
-        self, parallel_random_walk: ParallelRandomWalk
+        self, parallel_random_walk: ParallelRandomWalkBoard
     ) -> None:
         expected_output = jnp.array(
             [
@@ -265,7 +265,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_continue_stepping(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.PRNGKey, chex.Array, Agent],
         expected_value: bool,
     ) -> None:
@@ -282,7 +282,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_is_any_step_possible(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, Agent],
         expected_value: chex.Array,
     ) -> None:
@@ -303,7 +303,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_convert_flat_position_to_tuple(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: chex.Array,
         expected_value: chex.Array,
     ) -> None:
@@ -323,7 +323,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_convert_tuple_to_flat_position(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: chex.Array,
         expected_value: chex.Array,
     ) -> None:
@@ -344,7 +344,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_action_from_position(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, chex.Array],
         expected_value: chex.Array,
     ) -> None:
@@ -365,7 +365,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_action_from_tuple(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: chex.Array,
         expected_value: chex.Array,
     ) -> None:
@@ -385,7 +385,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_adjacent_cells(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: int,
         expected_value: chex.Array,
     ) -> None:
@@ -402,7 +402,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_available_cells(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, chex.Array],
         expected_value: chex.Array,
     ) -> None:
@@ -420,7 +420,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_is_cell_free(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, chex.Array],
         expected_value: bool,
     ) -> None:
@@ -440,7 +440,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_step_agent(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[Agent, chex.Array, int],
         expected_value: Tuple[chex.Array, Agent],
     ) -> None:
@@ -466,7 +466,7 @@ class TestParallelRandomWalk:
         ],
     )
     def test_is_valid_position_rw(
-        parallel_random_walk: ParallelRandomWalk,
+        parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, Agent, chex.Array],
         expected_value: chex.Array,
     ) -> None:

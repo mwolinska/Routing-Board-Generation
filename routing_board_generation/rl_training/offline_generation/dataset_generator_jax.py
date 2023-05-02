@@ -1,18 +1,16 @@
-import time
-
 import chex
 import jax
 from jax import numpy as jnp
-
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import \
-    RandomSeedBoard
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
-    ParallelRandomWalk
-from routing_board_generation.rl_training.online_generators.uniform_generator import \
-    Generator, UniformRandomGenerator
 from jumanji.environments.routing.connector import State
 from jumanji.environments.routing.connector.types import Agent
 from jumanji.environments.routing.connector.utils import get_position, get_target
+
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
+    ParallelRandomWalkBoard
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import \
+    SeedExtensionBoard
+from routing_board_generation.rl_training.online_generators.uniform_generator import \
+    Generator, UniformRandomGenerator
 
 
 class BoardDatasetGeneratorJAX(Generator):
@@ -28,7 +26,7 @@ class BoardDatasetGeneratorJAX(Generator):
         super().__init__(grid_size, num_agents)
         self.board_name = board_name
         if board_name == "offline_seed_extension":
-            self.board_generator = RandomSeedBoard(grid_size, grid_size, num_agents)
+            self.board_generator = SeedExtensionBoard(grid_size, grid_size, num_agents)
             self.board_generator_call = jax.jit(self.board_generator.generate_starts_ends)
             self.randomness = randomness
             self.two_sided = two_sided
@@ -42,7 +40,7 @@ class BoardDatasetGeneratorJAX(Generator):
             self.extension_iterations = extension_iterations
             self.extension_steps = extension_steps
         else:
-            self.board_generator = ParallelRandomWalk(grid_size, grid_size, num_agents)
+            self.board_generator = ParallelRandomWalkBoard(grid_size, grid_size, num_agents)
             self.board_generator_call = jax.jit(self.board_generator.generate_board)
 
         heads, targets, solved_boards = self.generate_n_boards(jax.random.PRNGKey(0), number_of_boards, generate_solved_boards)
@@ -127,3 +125,6 @@ class BoardDatasetGeneratorJAX(Generator):
         grid = grid.at[starts].set(agent_position_values)
         grid = grid.at[targets].set(agent_target_values)
         return grid
+
+if __name__ == '__main__':
+    test = BoardDatasetGeneratorJAX(10, 5, number_of_boards=10)

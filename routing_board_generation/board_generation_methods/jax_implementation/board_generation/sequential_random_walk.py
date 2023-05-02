@@ -15,8 +15,11 @@ from routing_board_generation.board_generation_methods.jax_implementation.data_m
 
 from jumanji.environments.routing.connector.constants import PATH, POSITION, TARGET
 
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
+    AbstractBoard
 
-class SequentialRandomWalk:
+
+class SequentialRandomWalkBoard(AbstractBoard):
     """Class for generating a board using a sequential random walk algorithm."""
 
     def __init__(self, rows: int, cols: int, num_agents: int = 3):
@@ -424,7 +427,7 @@ class SequentialRandomWalk:
 
 
 if __name__ == "__main__":
-    board_generator = SequentialRandomWalk(10, 10, 5)
+    board_generator = SequentialRandomWalkBoard(10, 10, 5)
     key = jax.random.PRNGKey(42)
     # jit generate
     board_generator_jit = jax.jit(board_generator.generate)

@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Iterable
 
+import jax.numpy as jnp
 import numpy as np
 from chex import Array
-import jax.numpy as jnp
 from matplotlib import pyplot as plt
 
 from routing_board_generation.interface.board_generator_interface import BoardName
@@ -29,21 +29,6 @@ class BenchmarkData:
     total_path_length: List[int]
     generator_type: Optional[BoardGenerationParameters] = None
 
-    def return_plotting_dict(self):
-        plotting_dict = {
-            "total_reward": {
-                "x_label": "",
-                "y_label": "",
-                "bar_chart_title": "",
-                "violin_plot_title": "",
-                "average_value": "",
-                "std": "",
-                "file_name": "",
-
-            }
-
-        }
-        return plotting_dict
     def average_reward_per_wire(self):
         return float(jnp.mean(jnp.array(self.episode_return), axis=0))
 
@@ -79,7 +64,6 @@ class BarChartData:
     stds: Optional[List[float]]
 
     def plot(self):
-        # plt.style.use('science.mplstyle')
         plt.style.use('tableau-colorblind10')
         plt.rcParams["font.family"] = "Times"
         plt.rcParams["font.size"] = 14
@@ -112,9 +96,3 @@ class BarChartData:
             plt.savefig(f"figs/{self.title}_{time}.pdf")
             plt.savefig(f"figs/{self.title}_{time}.png")
             plt.show()
-
-if __name__ == '__main__':
-    test = BenchmarkData
-    # print(test.plotting_dict)
-    for field in dataclasses.fields(BenchmarkData):
-        print(field.name)

@@ -51,7 +51,7 @@ def plot_compile_time():
     #            mode="expand", borderaxespad=0, ncol=2)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("figs/compile_time")
+    plt.savefig("figs/generator_compilation_time")
     plt.show()
 
 def plot_cache_time():
@@ -68,7 +68,7 @@ def plot_cache_time():
 
     n = len(single_board)
     r = np.arange(n)
-    width = 0.1
+    width = 0.25
 
     ax.bar(r, single_board, color='b',
             width=width, edgecolor='black',
@@ -84,7 +84,7 @@ def plot_cache_time():
         xlabel="Generator",
         ylabel="Generation time of single board, µs",
     )
-    ax2.set(ylabel="Generation time for batch of 100 boards, ms")
+    ax2.set(ylabel="Generation time 100 boards batch, ms")
     ax.set_xticks(r)
     ax.set_xticks(r + width / 2, ['UniformRandom', 'SequentialRandomWalk', 'ParallelRandomWalk', 'SeedExtension'])
 

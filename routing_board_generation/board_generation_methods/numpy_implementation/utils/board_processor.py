@@ -1,10 +1,14 @@
 import random
 import time
 from typing import List, Union, Dict, Tuple, Optional
+
 import numpy as np
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import BFSBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.lsystems import \
-    LSystemBoardGen
+from jumanji.environments.routing.connector.constants import PATH, EMPTY, POSITION, TARGET
+
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import \
+    JAXLSystemBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
+    BFSBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
     NumberLinkBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
@@ -13,14 +17,12 @@ from routing_board_generation.board_generation_methods.numpy_implementation.boar
     WFCBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
     AbstractBoard
-
 from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import \
     IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
     DuplicateHeadsTailsError, MissingHeadTailError, InvalidWireStructureError, \
     PathNotFoundError
 
 
-EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
 
 class BoardProcessor:
     def __init__(self, board: Union[np.ndarray, AbstractBoard]) -> None:
@@ -381,8 +383,7 @@ class BoardProcessor:
         return neighbours
 
     def swap_heads_targets(self) -> None:
-        """ Randomly swap the head and target of each wire.  Self.board_layout in modified in-place
-        """
+        """ Randomly swap the head and target of each wire.  Self.board_layout in modified in-place."""
         # Loop through all the paths on the board
         # Randomly swap the head and target of each wire (and reverse the direction of the wire)
         for path in self.paths:
@@ -397,8 +398,7 @@ class BoardProcessor:
                 path.reverse()
 
     def shuffle_wire_encodings(self):
-        """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place
-        """
+        """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
 
         # shuffle the indices of the wires and then assign them to the wires in order
         new_indices = list(range(len(self.paths)))
@@ -474,7 +474,7 @@ class BoardProcessor:
 
 def board_processor_tests(n: int, p: Optional[float] = 0) -> None:
     """ Runs a series of tests on the board processors."""
-    generator_list = [RandomWalkBoard, BFSBoard, LSystemBoardGen, NumberLinkBoard, WFCBoard]
+    generator_list = [RandomWalkBoard, BFSBoard, JAXLSystemBoard, NumberLinkBoard, WFCBoard]
     fill_methods = [None, BFS_fill, LSystem_fill, None, None]
     for index, generator in enumerate(generator_list):
         start_time = time.time()
@@ -506,7 +506,7 @@ def BFS_fill(board: BFSBoard) -> None:
     board.fill_clip_with_thresholds(clip_nums, clip_methods, verbose=False, threshold_dict=test_threshold_dict)
 
 
-def LSystem_fill(board: LSystemBoardGen) -> None:
+def LSystem_fill(board: JAXLSystemBoard) -> None:
     """ Fills the board with an LSystem algorithm."""
     board.fill(n_steps=100, pushpullnone_ratios=[2, 0.5, 1])
 
@@ -546,7 +546,7 @@ if __name__ == '__main__':
     # Shuffle wire encodings
     boardprocessor_.shuffle_wire_encodings()
     print('Shuffled Wire Encodings')
-    print(f'{boardprocessor_.get_board_layout()}') # TODO: Marta you need this line to process randys board before heatmap
+    print(f'{boardprocessor_.get_board_layout()}')
 
     # Remove a wire
     boardprocessor_.remove_wire(0)

@@ -33,3 +33,5 @@ venv/
 
 # IMPERIAL CHANGE REMOVE BEFORE MERGE
 *.pkl
+
+.coverage

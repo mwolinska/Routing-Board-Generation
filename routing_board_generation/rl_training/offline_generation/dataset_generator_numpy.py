@@ -3,18 +3,17 @@ from typing import Optional
 import chex
 import jax
 from jax import numpy as jnp
+from jumanji.environments.routing.connector import State
+from jumanji.environments.routing.connector.types import Agent
 
 from routing_board_generation.benchmarking.utils.benchmark_data_model import \
     BoardGenerationParameters
+from routing_board_generation.interface.board_generator_interface import \
+    BoardName
 from routing_board_generation.rl_training.offline_generation.generation_utils import \
     generate_n_boards
 from routing_board_generation.rl_training.online_generators.uniform_generator import \
     Generator
-
-from routing_board_generation.interface.board_generator_interface import \
-    BoardName
-from jumanji.environments.routing.connector import State
-from jumanji.environments.routing.connector.types import Agent
 
 
 class BoardDatasetGenerator(Generator):

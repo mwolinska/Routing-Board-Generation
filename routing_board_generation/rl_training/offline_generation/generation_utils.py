@@ -10,7 +10,6 @@ def generate_n_boards(
     board_parameters: BoardGenerationParameters,
     number_of_boards: int,
 ):
-    # TODO (Marta): add exception of all board_gen_parameters are not the same (with the exception of board_type
     board_list = []
     heads_list = []
     targets_list = []
@@ -34,28 +33,3 @@ def generate_n_boards(
         heads_list.append(heads)
         targets_list.append(targets)
     return board_list, heads_list, targets_list
-
-#
-# def generate_boards(self, number_of_boards: int) -> List[ndarray]:
-#     board_list = []
-#     heads_list = []
-#     targets_list = []
-#     for _ in range(number_of_boards):
-#         training_board = None
-#         none_counter = 0
-#         while training_board is None:
-#             self.reset_board()
-#             _, training_board, num_agents = self.fill_board(verbose=False)
-#
-#             heads, targets = get_heads_and_targets(training_board)
-#             # board = self.return_training_board()
-#             if num_agents != self.num_agents:
-#                 training_board = None
-#             none_counter += 1
-#             if none_counter == 100:
-#                 raise ValueError("Failed to generate board 100 times")
-#         board_list.append(training_board)
-#         heads_list.append(heads)
-#         targets_list.append(targets)
-#
-#     return board_list, heads_list, targets_list

@@ -10,26 +10,21 @@ import jax.numpy as jnp
 from jumanji.environments.routing.connector.types import Agent, State
 
 from routing_board_generation.board_generation_methods.jax_implementation.board_generation.sequential_random_walk import \
-    SequentialRandomWalk
+    SequentialRandomWalkBoard
 from routing_board_generation.rl_training.online_generators.uniform_generator import Generator
 
 
-class JaxRandomWalkGenerator(Generator):
-    """Randomly generates `Connector` grids that may or may not be solvable. This generator places
-    start and target positions uniformly at random on the grid.
-    """
-
+class SequentialRandomWalkGenerator(Generator):
     def __init__(self, grid_size: int, num_agents: int) -> None:
-        """Instantiates a `UniformRandomGenerator`.
+        """Instantiates a `SequentialRandomWalkGenerator`.
 
         Args:
             grid_size: size of the square grid to generate.
             num_agents: number of agents/paths on the grid.
         """
         super().__init__(grid_size, num_agents)
-        self.board_generator = SequentialRandomWalk(self.grid_size, self.grid_size,
-                                                    self.num_agents)
-
+        self.board_generator = SequentialRandomWalkBoard(self.grid_size, self.grid_size,
+                                                         self.num_agents)
 
     def __call__(self, key: PRNGKey) -> State:
         """Generates a `Connector` state that contains the grid and the agents' layout.

@@ -291,7 +291,6 @@ class Grid:
         board_flat = board_flat.at[wire.path[i -1]].set(3 * wire.wire_id + POSITION)
         board_flat = board_flat.at[wire.path[0]].set(3 * wire.wire_id + TARGET)
 
-
         # reshape the board
         board = board_flat.reshape(board.shape)
         return board

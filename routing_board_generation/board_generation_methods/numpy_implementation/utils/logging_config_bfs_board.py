@@ -1,6 +1,5 @@
 # A file that contains the logging configuration for the BFS board generator.
 # Path: ic_routing_board_generation/board_generator/logging_config_bfs_board.py
-import logging
 import logging.config
 
 # Debug - 10

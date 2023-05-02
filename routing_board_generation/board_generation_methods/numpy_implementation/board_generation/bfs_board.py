@@ -1,10 +1,13 @@
 import random
 from typing import List, Tuple, Union, Optional, Dict, Callable
+
 import numpy as np
 from numpy import ndarray
 
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import AbstractBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.grid import Grid
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
+    AbstractBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.grid import \
+    Grid
 from routing_board_generation.board_generation_methods.numpy_implementation.utils.utils import \
     get_heads_and_targets
 
@@ -349,8 +352,6 @@ class BFSBoard(AbstractBoard):
         while not found and attempts < self.max_attempts:
             if verbose:
                 print(f"Fitting wire {i + 1} - attempt {attempts + 1}")
-                # Create To Do
-                # TODO: Change print to logging
             attempts += 1
             # first pick random start and end
             start, end = self.pick_start_end()

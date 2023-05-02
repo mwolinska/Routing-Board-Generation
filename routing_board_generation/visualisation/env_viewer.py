@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+### This file mirrors the viewer file from a previous Jumanji release
 
 from typing import List, Optional, Tuple
 
@@ -109,7 +110,6 @@ class RoutingViewer:
             value: Color value.
         """
         color = self.palette[value if value < 1 else 1 + (value - 1) // 3]  # colour issue fixed: '1' used to be '2'.
-
 
         if value > 1 and (value - TARGET) % 3 == 0:                         # I am changing target and head to be of the new version 
             pygame.draw.ellipse(self.screen, color, rect, width=5)
