@@ -37,13 +37,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Used to save figures without displaying them
     matplotlib.use('Agg')
+    # create a figs folder if it doesn't exist
+    if not os.path.exists('figs'):
+        os.makedirs('figs')
     # Delete all figures in the figs folder if remove_figs is True
     if args.remove_figs:
         for file in os.listdir('figs'):
             os.remove(os.path.join('figs', file))
-    # create a figs file if it doesn't exist
-    if not os.path.exists('figs'):
-        os.makedirs('figs')
 
     grid_params = [(args.board_size, args.board_size, args.num_agents)]
     board_list = board_generation_params_from_grid_params(grid_params)
