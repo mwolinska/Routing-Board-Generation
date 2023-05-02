@@ -127,4 +127,4 @@ class BoardDatasetGeneratorJAX(Generator):
         return grid
 
 if __name__ == '__main__':
-    test = BoardDatasetGeneratorJAX(10, 5, number_of_boards=10)
+    test = BoardDatasetGeneratorJAX(10, 5, number_of_boards=10, board_name="offline_seed_extension")

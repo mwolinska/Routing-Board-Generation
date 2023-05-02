@@ -4,6 +4,8 @@ from routing_board_generation.board_generation_methods.jax_implementation.board_
     JAXLSystemBoard
 from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
     ParallelRandomWalkBoard
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import \
+    SeedExtensionBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
     BFSBoard
 from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import \
@@ -18,19 +20,19 @@ from routing_board_generation.board_generation_methods.numpy_implementation.boar
 
 class BoardName(str, Enum):
     """Enum of implemented board generators."""
-    RANDOM_WALK = "RandomWalk"
-    JAX_PARALLEL_RW = "ParallelRandomWalk"
-    BFS_BASE = "BFSBase"
-    BFS_MIN_BENDS = "BFSMin_Bends"
-    BFS_FIFO = "BFSFIFO"
-    BFS_SHORTEST = "BFSShort"
-    BFS_LONGEST = "BFSLong"
-    LSYSTEMS = "L-Systems"
-    WFC = "WFC"
-    NUMBERLINK = "NumberLink"
+    RANDOM_WALK = "random_walk"
+    BFS_BASE = "bfs_base"
+    BFS_MIN_BENDS = "bfs_min_bend"
+    BFS_FIFO = "bfs_fifo"
+    BFS_SHORTEST = "bfs_short"
+    BFS_LONGEST = "bfs_long"
+    LSYSTEMS = "lsystems_standard"
+    WFC = "wfc"
+    NUMBERLINK = "numberlink"
 
-    # JAX_SEED_EXTENSION = "JAX Seed Extension"
-    # JAX_UNIFORM = "JAX Uniform"
+    JAX_PARALLEL_RW = "offline_parallel_rw"
+    JAX_SEED_EXTENSION = "offline_seed_extension"
+    # JAX_UNIFORM = "jax_uniform"
 
 
 class BoardGenerator:
@@ -47,7 +49,7 @@ class BoardGenerator:
         BoardName.WFC: WFCBoard,
         BoardName.NUMBERLINK: NumberLinkBoard,
 
-        # BoardName.JAX_SEED_EXTENSION: RandomSeedBoard,
+        BoardName.JAX_SEED_EXTENSION: SeedExtensionBoard,
         # BoardName.JAX_UNIFORM: UniformRandomGenerator,
     }
 
