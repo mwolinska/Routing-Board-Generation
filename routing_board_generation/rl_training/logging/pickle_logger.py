@@ -1,3 +1,6 @@
+### This file contains the following methods adapted from implementations in Jumanji:
+# This follows logger implementations in jumanj, but was heavily adapted for this use case
+###
 import collections
 import logging
 from typing import Optional, Dict, Any

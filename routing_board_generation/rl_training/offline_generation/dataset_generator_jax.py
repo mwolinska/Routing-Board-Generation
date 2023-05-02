@@ -125,3 +125,6 @@ class BoardDatasetGeneratorJAX(Generator):
         grid = grid.at[starts].set(agent_position_values)
         grid = grid.at[targets].set(agent_target_values)
         return grid
+
+if __name__ == '__main__':
+    test = BoardDatasetGeneratorJAX(10, 5, number_of_boards=10)

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+### This file contains the following methods adapted from implementations in Jumanji:
+# This follows Stack class from maze utils in Jumanji adapted for this repo's use case
+###
+
 """Define a stack data structure which can be used with Jax.
 
 To be usable with Jax transformations, data structures must have fixed shape.

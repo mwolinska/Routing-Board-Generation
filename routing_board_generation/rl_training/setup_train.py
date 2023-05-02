@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+### This file mirrors file XXX within the Jumanji package.
+### The _make_raw_env and setup_logger functions were adapted to allow usage with this repository
+
 from typing import Tuple, Optional
 
 import chex

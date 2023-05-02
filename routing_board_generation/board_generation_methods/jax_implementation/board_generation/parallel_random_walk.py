@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+### This file contains the following methods adapted from implementations in Jumanji:
+# _step, _step_agent, _step_agents were adapted from teh Connector class
+###
+
 from typing import Tuple, Any
 
 import chex
@@ -29,7 +33,7 @@ from jumanji.environments.routing.connector.constants import (
     TARGET,
     EMPTY,
 )
-from jumanji.environments.routing.connector.types import Agent
+
 from jumanji.environments.routing.connector.utils import (
     move_position,
     move_agent,
@@ -38,6 +42,9 @@ from jumanji.environments.routing.connector.utils import (
     get_target,
     get_position,
 )
+
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.types_addition import \
+    Agent
 
 
 class ParallelRandomWalkBoard:
