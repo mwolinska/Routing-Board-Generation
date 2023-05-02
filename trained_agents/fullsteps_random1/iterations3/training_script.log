@@ -1,0 +1,48 @@
+[2023-04-25 21:35:28,039][root][INFO] - agent: a2c
+seed: 0
+logger:
+  type: neptune
+  save_checkpoint: true
+  name: ${agent}_${env.name}
+env:
+  name: connector
+  registered_version: Connector-v0
+  ic_board:
+    generation_type: offline_seed_extension
+    board_name: none
+    grid_size: 10
+    num_agents: 5
+  seed_extension:
+    randomness: 1
+    two_sided: true
+    extension_iterations: 3
+    extension_steps: 1.0e+23
+  network:
+    transformer_num_blocks: 4
+    transformer_num_heads: 8
+    transformer_key_size: 16
+    transformer_mlp_units:
+    - 512
+    conv_n_channels: 32
+  training:
+    num_epochs: 50
+    num_learner_steps_per_epoch: 100
+    n_steps: 20
+    total_batch_size: 128
+  evaluation:
+    eval_total_batch_size: 5000
+    greedy_eval_total_batch_size: 5000
+  a2c:
+    normalize_advantage: false
+    discount_factor: 0.99
+    bootstrapping_factor: 0.95
+    l_pg: 1.0
+    l_td: 1.0
+    l_en: 0.01
+    learning_rate: 0.0002
+
+[2023-04-25 21:35:28,040][root][INFO] - {'devices': [StreamExecutorGpuDevice(id=0, process_index=0, slice_index=0)]}
+[2023-04-25 21:36:22,536][root][INFO] - Starting logger.
+[2023-04-25 22:28:32,024][root][INFO] - Saving checkpoint...
+[2023-04-25 22:28:32,301][root][INFO] - Checkpoint saved at 'training_state'.
+[2023-04-25 22:28:32,302][root][INFO] - Closing logger...
