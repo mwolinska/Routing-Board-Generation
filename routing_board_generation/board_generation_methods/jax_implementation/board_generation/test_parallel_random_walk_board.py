@@ -23,6 +23,15 @@ from jumanji.environments.routing.connector.types import Agent
 
 import chex
 
+def agent_equality(agent_1: Agent, agent_2: Agent) -> chex.Array:
+    if not isinstance(agent_2, Agent):
+        return NotImplemented
+    same_ids = (agent_2.id == agent_1.id).all()
+    same_starts = (agent_2.start == agent_1.start).all()
+    same_targets = (agent_2.target == agent_1.target).all()
+    same_position = (agent_2.position == agent_1.position).all()
+    return same_ids & same_starts & same_targets & same_position
+
 
 ### grids for testing
 empty_grid = jnp.zeros((5, 5))
@@ -211,14 +220,14 @@ class TestParallelRandomWalk:
         end_key, end_grid, end_agents = expected_value
 
         new_key, new_grid, new_agents = parallel_random_walk._step(function_input)
-        assert new_agents == end_agents
+        assert agent_equality(new_agents, end_agents)
         assert (new_grid == end_grid).all()
         assert (new_key == end_key).all()
 
 
     def test_initialise_agents(self, parallel_random_walk: ParallelRandomWalkBoard) -> None:
         grid, agents = parallel_random_walk._initialise_agents(key, empty_grid)
-        assert agents == agents_starting
+        assert agent_equality(agents, agents_starting)
         assert (grid == valid_starting_grid).all()
     
     def test_place_agent_heads_on_grid(
@@ -449,7 +458,7 @@ class TestParallelRandomWalk:
         new_agents, new_grids = jax.vmap(
             parallel_random_walk._step_agent, in_axes=(0, None, 0)
         )(agent, grid, action)
-        assert new_agents == expected_agents
+        assert agent_equality(new_agents, expected_agents)
         assert (new_grids == expected_grids).all()
 
 
@@ -468,7 +477,7 @@ class TestParallelRandomWalk:
     def test_is_valid_position_rw(
         parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, Agent, chex.Array],
-        expected_value: chex.Array,
+          expected_value: chex.Array,
     ) -> None:
         grid, agent, new_position = function_input
         valid_position = parallel_random_walk._is_valid_position(
