@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from routing_board_generation.benchmarking.benchmarks.empty_board_evaluation import \
     evaluate_generator_outputs_averaged_on_n_boards
 from routing_board_generation.benchmarking.utils.benchmark_utils import \
@@ -21,4 +23,5 @@ if __name__ == '__main__':
     #     # BoardGenerationParameters(rows=10, columns=10, number_of_wires=5,
     #     #                           generator_type=BoardName.WFC),
     # ]
-    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=3, plot_individually=False, plot=True)
+    # plt.rcParams['figure.figsize'] = [6, 4]  # in inches, e.g., [6, 4]
+    evaluate_generator_outputs_averaged_on_n_boards(board_list, number_of_boards=6, plot_individually=False, plot=True)

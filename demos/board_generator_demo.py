@@ -176,6 +176,10 @@ if __name__ == "__main__":
     # TODO: change file path once rebased
     if args.show == "training":
         # TODO: check we have generated board of correct size / num_agents
+        if args.num_agents != 5:
+            raise NotImplementedError("Only have an agent trained for 5 wires.")
+        if args.board_size != 10:
+            raise NotImplementedError("Only have an agent trained for 10x10 boards.")
         file = "examples/trained_agent_10x10_5_uniform/19-27-36/training_state_10x10_5_uniform"
         with open(file,"rb") as f:
             training_state = pickle.load(f)
@@ -193,7 +197,7 @@ if __name__ == "__main__":
         #print(params.num_agents)
 
 
-        step_fn = env.step  # Speed up env.step
+        step_fn = env.step
         GRID_SIZE = 10
 
         states = []
@@ -208,13 +212,8 @@ if __name__ == "__main__":
         while not timestep.last():
             key, action_key = jax.random.split(key)
             observation = jax.tree_util.tree_map(lambda x: x[None], timestep.observation)
-            # Two implementations for calling the policy, about equivalent speed
             action, _ = policy(observation, action_key)
-            #action, _ = jax.jit(policy)(observation, action_key)
-            # Three implementations for updating the state/timestep.  The third is much faster.
-            #state, timestep = jax.jit(env.step)(state, action.squeeze(axis=0)) # original jit = 0.32, 52sec/10
-            state, timestep = env.step(state, action.squeeze(axis=0)) # no jit = 0.13, 26sec/10
-            #state, timestep = step_fn(state, action.squeeze(axis=0)) # jit function = 0.003 5 sec/10, 49sec/100d
+            state, timestep = env.step(state, action.squeeze(axis=0))
             states.append(state.grid)
         
         # Render the animation
