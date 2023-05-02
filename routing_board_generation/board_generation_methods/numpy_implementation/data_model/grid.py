@@ -6,7 +6,9 @@ import numpy as np
 
 
 class Grid:
-    def __init__(self, rows: int, cols: int, grid_layout: Optional[np.ndarray] = None) -> None:
+    def __init__(
+        self, rows: int, cols: int, grid_layout: Optional[np.ndarray] = None
+    ) -> None:
         """
         Constructor for the Grid class.
         Args:
@@ -25,7 +27,9 @@ class Grid:
         self.path = []
         self.visited = np.full((rows, cols), False)
 
-    def bfs_maze(self, start: Tuple[int, int], end: Tuple[int, int]) -> Tuple[bool, List[Tuple[int, int]], int]:
+    def bfs_maze(
+        self, start: Tuple[int, int], end: Tuple[int, int]
+    ) -> Tuple[bool, List[Tuple[int, int]], int]:
         """
         Function to find the shortest path between two points in a grid using BFS.
         Args:
@@ -68,8 +72,12 @@ class Grid:
                 new_col = curr_pos[1] + col[i]
 
                 # Check if the new position is valid and not visited only valid positions have value 0
-                if (0 <= new_row < self.layout.shape[0]) and (0 <= new_col < self.layout.shape[1]) and (
-                        self.layout[new_row, new_col] == 0) and (new_row, new_col) not in visited:
+                if (
+                    (0 <= new_row < self.layout.shape[0])
+                    and (0 <= new_col < self.layout.shape[1])
+                    and (self.layout[new_row, new_col] == 0)
+                    and (new_row, new_col) not in visited
+                ):
                     # Add the new position to the queue and mark it as visited
                     queue.append((new_row, new_col))
                     visited[(new_row, new_col)] = curr_pos
@@ -85,8 +93,13 @@ class Grid:
         #             steps[(new_row, new_col)] = steps[curr_pos] + 1
         # return False, [], 0
 
-    def fill_grid(self, path: List[Tuple[int, int]], str_num: int = None, fill_num: int = None,
-                  end_num: int = None) -> None:
+    def fill_grid(
+        self,
+        path: List[Tuple[int, int]],
+        str_num: int = None,
+        fill_num: int = None,
+        end_num: int = None,
+    ) -> None:
         """
         Function to fill the grid with the path.
         Args:
@@ -101,8 +114,12 @@ class Grid:
             str_num = end_num = fill_num = 1
         for i, pt in enumerate(path):
             if self.layout[pt[0]][pt[1]] != 0 and self.layout[pt[0]][pt[1]] != 1:
-                print("Replacing {} with {}".format(self.layout[pt[0]][pt[1]], fill_num))
-                raise ValueError("ERROR: Path already exists at position: {}".format(pt))
+                print(
+                    "Replacing {} with {}".format(self.layout[pt[0]][pt[1]], fill_num)
+                )
+                raise ValueError(
+                    "ERROR: Path already exists at position: {}".format(pt)
+                )
 
             if i == 0:
                 self.layout[pt[0]][pt[1]] = str_num

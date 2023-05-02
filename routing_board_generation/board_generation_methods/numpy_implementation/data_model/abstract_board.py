@@ -7,12 +7,13 @@ class AbstractBoard(ABC):
     def __init__(self, rows: int, cols: int, num_agents: int):
         self._rows = rows
         self._cols = cols
-        self._num_agents = num_agents # upper limit
+        self._num_agents = num_agents  # upper limit
         self._wires_on_board = 0
 
-    #@abstractmethod
+    # @abstractmethod
     def _is_num_agents_hit(self):
         return self.num_agents == self._wires_on_board
+
     @property
     def rows(self):
         return self._rows

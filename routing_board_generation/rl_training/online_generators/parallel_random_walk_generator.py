@@ -16,12 +16,14 @@ import jax
 import jax.numpy as jnp
 from chex import PRNGKey
 from jumanji.environments.routing.connector.types import Agent, State
-from jumanji.environments.routing.connector.utils import get_target, \
-    get_position
+from jumanji.environments.routing.connector.utils import get_target, get_position
 
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
-    ParallelRandomWalkBoard
-from routing_board_generation.rl_training.online_generators.uniform_generator import Generator
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import (
+    ParallelRandomWalkBoard,
+)
+from routing_board_generation.rl_training.online_generators.uniform_generator import (
+    Generator,
+)
 
 
 class ParallelRandomWalkGenerator(Generator):
@@ -37,9 +39,9 @@ class ParallelRandomWalkGenerator(Generator):
             num_agents: number of agents/paths on the grid.
         """
         super().__init__(grid_size, num_agents)
-        self.board_generator = ParallelRandomWalkBoard(self.grid_size, self.grid_size,
-                                                    self.num_agents)
-
+        self.board_generator = ParallelRandomWalkBoard(
+            self.grid_size, self.grid_size, self.num_agents
+        )
 
     def __call__(self, key: PRNGKey) -> State:
         """Generates a `Connector` state that contains the grid and the agents' layout.
@@ -53,8 +55,7 @@ class ParallelRandomWalkGenerator(Generator):
         starts, targets, solved_grid = self.board_generator.generate_board(key)
         starts = tuple(starts)
         targets = tuple(targets)
-        agent_position_values = jax.vmap(get_position)(
-            jnp.arange(self.num_agents))
+        agent_position_values = jax.vmap(get_position)(jnp.arange(self.num_agents))
         agent_target_values = jax.vmap(get_target)(jnp.arange(self.num_agents))
 
         # Transpose the agent_position_values to match the shape of the grid.
@@ -70,7 +71,6 @@ class ParallelRandomWalkGenerator(Generator):
             target=jnp.stack(targets, axis=1),
             position=jnp.stack(starts, axis=1),
         )
-
 
         step_count = jnp.array(0, jnp.int32)
 

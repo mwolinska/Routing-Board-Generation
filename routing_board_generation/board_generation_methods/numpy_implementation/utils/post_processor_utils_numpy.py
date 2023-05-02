@@ -2,25 +2,37 @@ import random
 from typing import List
 import numpy as np
 from copy import deepcopy
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.board_generator_data_model import Position
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.board_generator_data_model import (
+    Position,
+)
 
 # EMPTY, PATH, POSITION, TARGET = 0, 1, 2, 3  # Ideally should be imported from Jumanji
-from jumanji.environments.routing.connector.constants import EMPTY, PATH, POSITION, TARGET
+from jumanji.environments.routing.connector.constants import (
+    EMPTY,
+    PATH,
+    POSITION,
+    TARGET,
+)
 
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import \
-    IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
-    InvalidWireStructureError, MissingHeadTailError, DuplicateHeadsTailsError
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import (
+    IncorrectBoardSizeError,
+    NumAgentsOutOfRangeError,
+    EncodingOutOfRangeError,
+    InvalidWireStructureError,
+    MissingHeadTailError,
+    DuplicateHeadsTailsError,
+)
 
 STARTING_POSITION = POSITION  # Resolve ambiguity of POSITION constant
 
 
 def get_wires_on_board(board_layout) -> int:
-    """ Returns the number of wires on the board by counting the number of unique wire encodings."""
+    """Returns the number of wires on the board by counting the number of unique wire encodings."""
     return len(np.unique(board_layout[board_layout % 3 == PATH]))
 
 
 def is_valid_board(board) -> bool:
-    """ Return a boolean indicating if the board is valid.  Raise an exception if not. """
+    """Return a boolean indicating if the board is valid.  Raise an exception if not."""
     is_valid = True
     if not verify_board_size(board):
         raise IncorrectBoardSizeError
@@ -43,9 +55,9 @@ def verify_board_size(board) -> bool:
 def verify_encodings_range(board) -> bool:
     # Verify that all the encodings on the board within the range of 0 to 3 * board._wires_on_board.
     wires_only = np.setdiff1d(board.board_layout, np.ndarray([EMPTY]))
-    print(f'Max: {np.max(wires_only)}, Min: {np.min(wires_only)}')
-    print(f'Wires on board: {board.wires_on_board}')
-    print(f'Wires only: {wires_only}')
+    print(f"Max: {np.max(wires_only)}, Min: {np.min(wires_only)}")
+    print(f"Wires on board: {board.wires_on_board}")
+    print(f"Wires only: {wires_only}")
     if board.wires_on_board == 0:
         # if no wires, we should have nothing left of the board
         return len(wires_only) == 0
@@ -54,7 +66,7 @@ def verify_encodings_range(board) -> bool:
     if np.max(board.board_layout) > 3 * board.wires_on_board:
         print(np.max(board.board_layout))
         print(3 * board.board.wires_on_board)
-        print('Epic Fail')
+        print("Epic Fail")
         return False
     return True
 
@@ -76,14 +88,14 @@ def verify_number_heads_tails(board_layout) -> bool:
 
 
 def verify_wire_validity(board_layout: np.ndarray) -> bool:
-    """ Verify that each wire has a valid shape,
-        ie, each head/target is connected to one wire cell, and each wire cell is connected to two.
+    """Verify that each wire has a valid shape,
+    ie, each head/target is connected to one wire cell, and each wire cell is connected to two.
 
-        Args:
-            board_layout (np.ndarray): 2D array with wires encoded
+    Args:
+        board_layout (np.ndarray): 2D array with wires encoded
 
-        Returns:
-            (bool): True if the wires are continuous and don't double-back, False otherwise.
+    Returns:
+        (bool): True if the wires are continuous and don't double-back, False otherwise.
     """
     rows, cols = board_layout.shape[0], board_layout.shape[1]
     for row in range(rows):
@@ -96,28 +108,32 @@ def verify_wire_validity(board_layout: np.ndarray) -> bool:
                     # Wiring path cells should have two neighbors of the same wire
                     if num_wire_neighbors(cell_label, row, col, board_layout) != 2:
                         print(
-                            f"({row},{col}) == {cell_label}, {num_wire_neighbors(cell_label, row, col, board_layout)} neighbors")
+                            f"({row},{col}) == {cell_label}, {num_wire_neighbors(cell_label, row, col, board_layout)} neighbors"
+                        )
                         return False
                 else:
                     # Head and target cells should only have one neighbor of the same wire.
                     if num_wire_neighbors(cell_label, row, col, board_layout) != 1:
                         print(
-                            f"HT({row},{col}) == {cell_label}, {num_wire_neighbors(cell_label, row, col, board_layout)} neighbors")
+                            f"HT({row},{col}) == {cell_label}, {num_wire_neighbors(cell_label, row, col, board_layout)} neighbors"
+                        )
                         return False
     return True
 
 
-def num_wire_neighbors(cell_label: int, row: int, col: int, board_layout: np.ndarray) -> int:
-    """ Return the number of adjacent cells belonging to the same wire.
+def num_wire_neighbors(
+    cell_label: int, row: int, col: int, board_layout: np.ndarray
+) -> int:
+    """Return the number of adjacent cells belonging to the same wire.
 
-        Args:
-            cell_label (int) : value of the cell to investigate
-            row (int)
-            col (int) : (row,col) = 2D position of the cell to investigate
-            board_layout (np.ndarray): 2D array with wires encoded
+    Args:
+        cell_label (int) : value of the cell to investigate
+        row (int)
+        col (int) : (row,col) = 2D position of the cell to investigate
+        board_layout (np.ndarray): 2D array with wires encoded
 
-        Returns:
-            (int) : The number of adjacent cells belonging to the same wire.
+    Returns:
+        (int) : The number of adjacent cells belonging to the same wire.
     """
     rows, cols = board_layout.shape
     neighbors = 0
@@ -140,8 +156,7 @@ def num_wire_neighbors(cell_label: int, row: int, col: int, board_layout: np.nda
 
 
 def swap_heads_targets(self):
-    """ Randomly swap the head and target of each wire.  Self.board_layout in modified in-place
-    """
+    """Randomly swap the head and target of each wire.  Self.board_layout in modified in-place"""
     # Loop through all the paths on the board
     # Randomly swap the head and target of each wire (and reverse the direction of the wire)
     for path in self.paths:
@@ -157,7 +172,7 @@ def swap_heads_targets(self):
 
 
 def shuffle_wire_encodings(self):
-    """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
+    """Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
     # shuffle the indices of the wires and then assign them to the wires in order
     new_indices = list(range(len(self.paths)))
     random.shuffle(new_indices)
@@ -179,14 +194,14 @@ def shuffle_wire_encodings(self):
 
 
 def position_to_wire_num(position: Position, board_layout: np.ndarray) -> int:
-    """ Returns the wire number of the given cell position
+    """Returns the wire number of the given cell position
 
-        Args:
-            position (Position): 2D tuple of the [row, col] position
-            board_layout (np.ndarray): 2D layout of the board with wires encoded
+    Args:
+        position (Position): 2D tuple of the [row, col] position
+        board_layout (np.ndarray): 2D layout of the board with wires encoded
 
-        Returns:
-            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+    Returns:
+        (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
     """
     row, col = position.x, position.y
     rows, cols = board_layout.shape[0], board_layout.shape[1]
@@ -198,13 +213,13 @@ def position_to_wire_num(position: Position, board_layout: np.ndarray) -> int:
 
 
 def cell_label_to_wire_num(cell_label: int) -> int:
-    """ Returns the wire number of the given cell value
+    """Returns the wire number of the given cell value
 
-        Args:
-            cell_label (int) : the value of the cell in self.layout
+    Args:
+        cell_label (int) : the value of the cell in self.layout
 
-        Returns:
-            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+    Returns:
+        (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
     """
     if cell_label == 0:
         return -1
@@ -249,16 +264,16 @@ def position_to_cell_type(position: Position, board_layout: np.ndarray) -> int:
 
 
 def extend_wires(board_layout: np.ndarray, random_dir: bool = False) -> np.ndarray:
-    """ Extend the heads and targets of each wire as far as they can go, preference given to current direction.
-        The implementation is done in-place on self.board_layout
+    """Extend the heads and targets of each wire as far as they can go, preference given to current direction.
+    The implementation is done in-place on self.board_layout
 
-        Args:
-            board_layout (np.ndarray): 2D layout of the encoded board (before wire extension)
-            random_dir (bool): False (default) continues the previous direction as much as possible,
-                                True would let the wires extend in a random walk fashion.
+    Args:
+        board_layout (np.ndarray): 2D layout of the encoded board (before wire extension)
+        random_dir (bool): False (default) continues the previous direction as much as possible,
+                            True would let the wires extend in a random walk fashion.
 
-        Returns:
-            (np.ndarray): 2D layout of the encoded board (after wire extension)
+    Returns:
+        (np.ndarray): 2D layout of the encoded board (after wire extension)
     """
     rows = len(board_layout)
     cols = len(board_layout[0])
@@ -279,27 +294,35 @@ def extend_wires(board_layout: np.ndarray, random_dir: bool = False) -> np.ndarr
                 current_pos = Position(row, col)
                 poss_extension_list = get_open_adjacent_cells(current_pos, board_layout)
                 # Convert tuples to Position class
-                poss_extension_list = [Position(cell[0], cell[1]) for cell in poss_extension_list]
+                poss_extension_list = [
+                    Position(cell[0], cell[1]) for cell in poss_extension_list
+                ]
                 # For each possible cell, throw it out if it already touches part of the same wire.
                 current_wire_num = position_to_wire_num(current_pos, board_layout)
-                for cell in deepcopy(poss_extension_list):  # Use a copy so we can modify the list in the loop
+                for cell in deepcopy(
+                    poss_extension_list
+                ):  # Use a copy so we can modify the list in the loop
                     if num_wire_adjacencies(cell, current_wire_num, board_layout) > 1:
                         poss_extension_list.remove(cell)
                 # If there is no room to extend, move on.
                 if len(poss_extension_list) == 0:
                     continue
                 # First find the neighboring cell that is part of the same wire, prioritize extending away from it.
-                neighbors_list = get_neighbors_same_wire(Position(row, col), board_layout)
+                neighbors_list = get_neighbors_same_wire(
+                    Position(row, col), board_layout
+                )
 
                 if len(neighbors_list) == 0:
                     print(board_layout)
-                    print(Position(row,col))
+                    print(Position(row, col))
                     print(current_wire_num)
 
                 # There should only be one neighbour to choose from for a head or starting_position cell
                 neighbor = neighbors_list[0]
                 # Try to extend away from previous neighbor
-                priority_neighbor = Position(row + (row - neighbor.x), col + (col - neighbor.y))
+                priority_neighbor = Position(
+                    row + (row - neighbor.x), col + (col - neighbor.y)
+                )
 
                 # Prioritize extending away from the previous neighbor if possible.
                 if (priority_neighbor in poss_extension_list) and not random_dir:
@@ -307,7 +330,9 @@ def extend_wires(board_layout: np.ndarray, random_dir: bool = False) -> np.ndarr
                 else:
                     extension_pos = random.choice(poss_extension_list)
                 # Extend head/target into new cell
-                board_layout[extension_pos.x, extension_pos.y] = board_layout[current_pos.x, current_pos.y]
+                board_layout[extension_pos.x, extension_pos.y] = board_layout[
+                    current_pos.x, current_pos.y
+                ]
                 cell_type = position_to_cell_type(current_pos, board_layout)
                 # Convert old head/target cell to a wire
                 board_layout[current_pos.x, current_pos.y] += PATH - cell_type
@@ -316,14 +341,14 @@ def extend_wires(board_layout: np.ndarray, random_dir: bool = False) -> np.ndarr
 
 # This method is used by the extend_wires method
 def get_neighbors_same_wire(input_pos: Position, board_layout: np.ndarray) -> List:
-    """ Returns a list of adjacent cells belonging to the same wire.
+    """Returns a list of adjacent cells belonging to the same wire.
 
-        Args:
-            input_pos (Position): 2D position in self.layout
-            board_layout (np.ndarray): 2D layout of board with wires encoded
+    Args:
+        input_pos (Position): 2D position in self.layout
+        board_layout (np.ndarray): 2D layout of board with wires encoded
 
-        Returns:
-            (List) : a list of cells (2D positions) adjacent to the queried cell which belong to the same wire
+    Returns:
+        (List) : a list of cells (2D positions) adjacent to the queried cell which belong to the same wire
     """
     output_list = []
     wire_num = position_to_wire_num(input_pos, board_layout)
@@ -343,16 +368,18 @@ def get_neighbors_same_wire(input_pos: Position, board_layout: np.ndarray) -> Li
 
 
 # This method is used by the extend_wires method
-def num_wire_adjacencies(cell: Position, wire_num: int, board_layout: np.ndarray) -> int:
-    """ Returns the number of cells adjacent to the input which belong to the wire specified by wire_num.
+def num_wire_adjacencies(
+    cell: Position, wire_num: int, board_layout: np.ndarray
+) -> int:
+    """Returns the number of cells adjacent to the input which belong to the wire specified by wire_num.
 
-        Args:
-            cell (tuple): 2D position in self.board_layout
-            wire_num (int): Count adjacent contacts with this specified wire.
-            board_layout (np.ndarray): 2D array of board with wires encoded
+    Args:
+        cell (tuple): 2D position in self.board_layout
+        wire_num (int): Count adjacent contacts with this specified wire.
+        board_layout (np.ndarray): 2D array of board with wires encoded
 
-        Returns:
-            (int) : The number of adjacent cells belonging to the specified wire
+    Returns:
+        (int) : The number of adjacent cells belonging to the specified wire
     """
     num_adjacencies = 0
     if position_to_wire_num(Position(cell.x - 1, cell.y), board_layout) == wire_num:
@@ -368,14 +395,14 @@ def num_wire_adjacencies(cell: Position, wire_num: int, board_layout: np.ndarray
 
 # This method is used by the extend_wires method
 def get_open_adjacent_cells(input_pos: Position, board_layout: np.ndarray) -> List:
-    """ Returns a list of open cells adjacent to the input cell.
+    """Returns a list of open cells adjacent to the input cell.
 
-        Args:
-            input_pos (Position): The input cell to search adjacent to.
-            board_layout (np.ndarray): 2D layout of the board with wires encoded
+    Args:
+        input_pos (Position): The input cell to search adjacent to.
+        board_layout (np.ndarray): 2D layout of the board with wires encoded
 
-        Returns:
-            List: List of 2D integer tuples, up to four available cells adjacent to the input cell.
+    Returns:
+        List: List of 2D integer tuples, up to four available cells adjacent to the input cell.
     """
     rows, cols = board_layout.shape[0], board_layout.shape[1]
     adjacent_list = []
@@ -400,13 +427,13 @@ def get_open_adjacent_cells(input_pos: Position, board_layout: np.ndarray) -> Li
 
 
 def training_board_from_solved_board(board_layout: np.ndarray) -> np.ndarray:
-    """ Zero out and PATH cells to convert from a solved board to a training board.
+    """Zero out and PATH cells to convert from a solved board to a training board.
 
-        Args:
-            board_layout (np.ndarray): 2D layout of the encoded solved board
+    Args:
+        board_layout (np.ndarray): 2D layout of the encoded solved board
 
-        Returns:
-            (nd.nparray): 2D layout of the encoded training board
+    Returns:
+        (nd.nparray): 2D layout of the encoded training board
     """
     rows, cols = board_layout.shape
     for row in range(rows):
@@ -418,15 +445,15 @@ def training_board_from_solved_board(board_layout: np.ndarray) -> np.ndarray:
 
 
 def count_detours(board_layout: np.ndarray, count_current_wire: bool = False) -> int:
-    """ Returns the number of wires that have to detour around a head or target cell.
+    """Returns the number of wires that have to detour around a head or target cell.
 
-        Args:
-            board_layout (np.ndarray): 2D layout of the board with wires encoded
-            count_current_wire (bool): Should we count wires that wrap around their own heads/targets?
-                                            (default = False)
+    Args:
+        board_layout (np.ndarray): 2D layout of the board with wires encoded
+        count_current_wire (bool): Should we count wires that wrap around their own heads/targets?
+                                        (default = False)
 
-        Returns:
-            (int) : The number of wires that have to detour around a head or target cell.
+    Returns:
+        (int) : The number of wires that have to detour around a head or target cell.
     """
     rows, cols = board_layout.shape
     num_detours = 0
@@ -438,24 +465,36 @@ def count_detours(board_layout: np.ndarray, count_current_wire: bool = False) ->
             current_wire = position_to_wire_num(Position(x, y), board_layout)
             #
             above = board_layout[:x, y]
-            above = [cell_label_to_wire_num(cell_label) for cell_label in above if cell_label != 0]
+            above = [
+                cell_label_to_wire_num(cell_label)
+                for cell_label in above
+                if cell_label != 0
+            ]
             if not count_current_wire:
                 above = [wire_num for wire_num in above if wire_num != current_wire]
-            below = board_layout[x + 1:, y]
-            below = [cell_label_to_wire_num(cell_label) for cell_label in below if cell_label != 0]
+            below = board_layout[x + 1 :, y]
+            below = [
+                cell_label_to_wire_num(cell_label)
+                for cell_label in below
+                if cell_label != 0
+            ]
             if not count_current_wire:
                 below = [wire_num for wire_num in below if wire_num != current_wire]
-            common = (set(above) & set(below))
+            common = set(above) & set(below)
             num_detours += len(common)
             #
             left = board_layout[x, :y].tolist()
-            left = [cell_label_to_wire_num(cell_label) for cell_label in left if cell_label != 0]
+            left = [
+                cell_label_to_wire_num(cell_label)
+                for cell_label in left
+                if cell_label != 0
+            ]
             if not count_current_wire:
                 left = [wire_num for wire_num in left if wire_num != current_wire]
-            right = board_layout[x, y+1:].tolist()
+            right = board_layout[x, y + 1 :].tolist()
             right = [cell_label_to_wire_num(cell) for cell in right if cell != 0]
             if not count_current_wire:
                 right = [wire_num for wire_num in right if wire_num != current_wire]
-            common = (set(right) & set(left))
+            common = set(right) & set(left)
             num_detours += len(common)
     return num_detours

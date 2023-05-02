@@ -3,12 +3,14 @@ import jax
 from jax import numpy as jnp
 from jumanji.environments.routing.connector import State
 from jumanji.environments.routing.connector.types import Agent
-from jumanji.environments.routing.connector.utils import get_position, \
-    get_target
+from jumanji.environments.routing.connector.utils import get_position, get_target
 
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import \
-    SeedExtensionBoard
-from routing_board_generation.rl_training.online_generators.uniform_generator import Generator
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import (
+    SeedExtensionBoard,
+)
+from routing_board_generation.rl_training.online_generators.uniform_generator import (
+    Generator,
+)
 
 
 class SeedExtensionGenerator(Generator):
@@ -33,8 +35,7 @@ class SeedExtensionGenerator(Generator):
 
         grid = jnp.zeros((self.grid_size, self.grid_size), dtype=jnp.int32)
         starts, targets = self.board_generator_call(key)
-        agent_position_values = jax.vmap(get_position)(
-            jnp.arange(self.num_agents))
+        agent_position_values = jax.vmap(get_position)(jnp.arange(self.num_agents))
         agent_target_values = jax.vmap(get_target)(jnp.arange(self.num_agents))
 
         # Transpose the agent_position_values to match the shape of the grid.
@@ -48,7 +49,6 @@ class SeedExtensionGenerator(Generator):
             id=jnp.arange(self.num_agents),
             start=jnp.stack(starts, axis=1),
             target=jnp.stack(targets, axis=1),
-
             position=jnp.stack(starts, axis=1),
         )
 

@@ -4,27 +4,42 @@ from typing import Optional, Union
 import numpy as np
 from numpy import asarray
 
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
-    BFSBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.lsystems import \
-    LSystemBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
-    NumberLinkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
-    RandomWalkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import \
-    WFCBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
-    AbstractBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import \
-    LSystem_fill, BFS_fill, BoardProcessor
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import (
+    BFSBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.lsystems import (
+    LSystemBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import (
+    NumberLinkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import (
+    RandomWalkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import (
+    WFCBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import (
+    AbstractBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import (
+    LSystem_fill,
+    BFS_fill,
+    BoardProcessor,
+)
 from routing_board_generation.visualisation.env_viewer import RoutingViewer
 
 
-def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, rows: int, columns: int,
-                    viewer_width: Optional[int] = 500,
-                    viewer_height: Optional[int] = 500, save_img: Optional[str] = None):
-    """ Render a board from a board object or a numpy array. If a board object is passed, both the solved board and
+def render_my_array(
+    array: Union[AbstractBoard, np.ndarray],
+    num_agents: int,
+    rows: int,
+    columns: int,
+    viewer_width: Optional[int] = 500,
+    viewer_height: Optional[int] = 500,
+    save_img: Optional[str] = None,
+):
+    """Render a board from a board object or a numpy array. If a board object is passed, both the solved board and
     training board will be rendered.
     Args:
         array: The board to render
@@ -43,27 +58,42 @@ def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, ro
         solved_array = array.return_solved_board()
         training_array = array.return_training_board()
         renders = [solved_array, training_array]
-        prefixes = ['solved', 'training']
+        prefixes = ["solved", "training"]
     else:
         renders = [array]
-        prefixes = ['']
+        prefixes = [""]
 
     for i, render in enumerate(renders):
         prefix = prefixes[i]
-        viewer = RoutingViewer(num_agents=num_agents, grid_rows=rows, grid_cols=columns, viewer_width=viewer_width,
-                               viewer_height=viewer_height)
+        viewer = RoutingViewer(
+            num_agents=num_agents,
+            grid_rows=rows,
+            grid_cols=columns,
+            viewer_width=viewer_width,
+            viewer_height=viewer_height,
+        )
         save_img_ = save_img
 
         if save_img_ is None:
-            save_img_ = 'board_' + str(rows) + 'x' + str(columns) + 'x' + str(num_agents) + '.png'
+            save_img_ = (
+                "board_"
+                + str(rows)
+                + "x"
+                + str(columns)
+                + "x"
+                + str(num_agents)
+                + ".png"
+            )
         else:
             # Remove the folder name and add it to the prefix
-            if '/' in save_img_:  # If there is a folder in the name, only take the file name and the folders to the prefix
-                prefix = save_img_[:save_img_.rfind('/')] + '/' + prefix
-                save_img_ = save_img_[save_img_.rfind('/') + 1:]
+            if (
+                "/" in save_img_
+            ):  # If there is a folder in the name, only take the file name and the folders to the prefix
+                prefix = save_img_[: save_img_.rfind("/")] + "/" + prefix
+                save_img_ = save_img_[save_img_.rfind("/") + 1 :]
 
-        if prefix != '' and len(prefix) > 1:
-            save_img_ = prefix + '_' + save_img_
+        if prefix != "" and len(prefix) > 1:
+            save_img_ = prefix + "_" + save_img_
         else:
             save_img_ = prefix + save_img_
         # If save exists in location, append a number to the end or increments the number
@@ -72,18 +102,28 @@ def render_my_array(array: Union[AbstractBoard, np.ndarray], num_agents: int, ro
             num = 1
             while os.path.exists(save_img_):
                 # Look for _{num}.png in the name
-                if '_' + str(num) + '.png' in save_img_:  # If the number is already in the name, increment it
+                if (
+                    "_" + str(num) + ".png" in save_img_
+                ):  # If the number is already in the name, increment it
                     num += 1
-                    save_img_ = save_img_.replace('_' + str(num - 1) + '.png', '_' + str(num) + '.png')
+                    save_img_ = save_img_.replace(
+                        "_" + str(num - 1) + ".png", "_" + str(num) + ".png"
+                    )
                 else:  # If the number is not in the name, add it
-                    save_img_ = save_img_.replace('.png', '_' + str(num) + '.png')
+                    save_img_ = save_img_.replace(".png", "_" + str(num) + ".png")
 
         viewer.render(asarray(render), save_img=save_img_)
 
 
 def render_tests() -> None:
-    """ Runs a series of tests on the board processors."""
-    generator_list = [RandomWalkBoard, BFSBoard, LSystemBoard, NumberLinkBoard, WFCBoard]
+    """Runs a series of tests on the board processors."""
+    generator_list = [
+        RandomWalkBoard,
+        BFSBoard,
+        LSystemBoard,
+        NumberLinkBoard,
+        WFCBoard,
+    ]
     fill_methods = [None, BFS_fill, LSystem_fill, None, None]
     for index, generator in enumerate(generator_list):
         board = generator(10, 10, 10)
@@ -92,16 +132,27 @@ def render_tests() -> None:
         print(board.return_solved_board())
 
         # Render a solved board
-        render_my_array(board.return_solved_board(), 10, 10, 10, save_img=f'{generator.__name__}_solved_board.png')
+        render_my_array(
+            board.return_solved_board(),
+            10,
+            10,
+            10,
+            save_img=f"{generator.__name__}_solved_board.png",
+        )
 
         boardprocessor = BoardProcessor(board)
         print(boardprocessor.get_board_layout())
         # render the processed board
-        render_my_array(boardprocessor.get_board_layout(), 10, 10, 10,
-                        save_img=f'{generator.__name__}_processed_board.png')
+        render_my_array(
+            boardprocessor.get_board_layout(),
+            10,
+            10,
+            10,
+            save_img=f"{generator.__name__}_processed_board.png",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ### Example Usage
 
     ## 1. Render a numpy array
@@ -132,7 +183,7 @@ if __name__ == '__main__':
     print(board2.return_solved_board())
 
     # Render the solved board and save it as board_2.png
-    render_my_array(board2, 10, 8, 5, 500, 500, 'test_board.png')
+    render_my_array(board2, 10, 8, 5, 500, 500, "test_board.png")
 
     # board_2 = np.array([[24, 23, 23, 23, 23, 23, 23, 23],
     #                     [15, 14, 14, 14, 14, 14, 0, 23],

@@ -1,9 +1,10 @@
-from routing_board_generation.benchmarking.utils.benchmark_data_model import \
-    BoardGenerationParameters
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.utils import \
-    get_heads_and_targets
-from routing_board_generation.interface.board_generator_interface import \
-    BoardGenerator
+from routing_board_generation.benchmarking.utils.benchmark_data_model import (
+    BoardGenerationParameters,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.utils import (
+    get_heads_and_targets,
+)
+from routing_board_generation.interface.board_generator_interface import BoardGenerator
 
 
 def generate_n_boards(
@@ -19,7 +20,8 @@ def generate_n_boards(
         none_counter = 0
         while board is None:
             board_generator = board_class(
-                rows=board_parameters.rows, cols=board_parameters.columns,
+                rows=board_parameters.rows,
+                cols=board_parameters.columns,
                 num_agents=board_parameters.number_of_wires,
             )
             board = board_generator.return_training_board()
