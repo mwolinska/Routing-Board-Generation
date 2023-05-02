@@ -197,7 +197,6 @@ def position_to_wire_num(position: Position, board_layout: np.ndarray) -> int:
         return -1
 
 
-@staticmethod
 def cell_label_to_wire_num(cell_label: int) -> int:
     """ Returns the wire number of the given cell value
 

@@ -1,7 +1,10 @@
 from routing_board_generation.benchmarking.benchmarks.empty_board_evaluation import \
     evaluate_generator_outputs_averaged_on_n_boards
+from routing_board_generation.benchmarking.utils.benchmark_data_model import \
+    BoardGenerationParameters
 from routing_board_generation.benchmarking.utils.benchmark_utils import \
     board_generation_params_from_grid_params
+from routing_board_generation.interface.board_generator_interface import BoardName
 
 if __name__ == '__main__':
     # Option 1: run for all generators
