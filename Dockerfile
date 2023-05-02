@@ -29,7 +29,7 @@ RUN pip install -r /workdir/requirements/requirements.txt
 RUN pip install -r /workdir/requirements/requirements-train.txt
 
 COPY jumanji /workdir/jumanji
-COPY ic_routing_board_generation /workdir/ic_routing_board_generation
+COPY routing_board_generation /workdir/ic_routing_board_generation
 COPY agent_training/training_script.py /workdir/training_script.py
 
 ## set poetry to not create a venv since docker image provides a suitable venv

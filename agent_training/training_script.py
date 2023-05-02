@@ -30,13 +30,13 @@ from jumanji.training.loggers import TerminalLogger
 import sys
 sys.path.append("../")
 
-from ic_routing_board_generation.ic_rl_training.ic_setup_train import (
+from routing_board_generation.rl_training.setup_train import (
     setup_agent,
     setup_env,
     setup_evaluators,
     setup_logger,
     setup_training_state, )
-from ic_routing_board_generation.ic_rl_training.logging.pickle_logger import \
+from routing_board_generation.rl_training.logging.pickle_logger import \
     PickleLogger
 
 
