@@ -25,9 +25,14 @@ def get_heads_and_targets(board_layout: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
             targets.append(tuple(target))
 
     # Convert heads and targets tuples to integers
-    heads = [convert_tuple_to_integer_position(head, board_layout.shape[0]) for head in heads]
-    targets = [convert_tuple_to_integer_position(target, board_layout.shape[0]) for target in targets]
-    
+    heads = [
+        convert_tuple_to_integer_position(head, board_layout.shape[0]) for head in heads
+    ]
+    targets = [
+        convert_tuple_to_integer_position(target, board_layout.shape[0])
+        for target in targets
+    ]
+
     # convert heads and targets to horizontally stacked jax arrays and transpose
 
     # heads = jnp.array(heads).T
@@ -35,25 +40,29 @@ def get_heads_and_targets(board_layout: np.ndarray) -> Tuple[jnp.ndarray, jnp.nd
 
     return heads, targets
 
+
 def convert_tuple_to_integer_position(position: Tuple[int, int], grid_size: int) -> int:
-    """Converts a tuple position to an integer position
-    """
+    """Converts a tuple position to an integer position"""
     return position[0] * grid_size + position[1]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Sample usage
     # Create the numpy array
-    board = np.array([[22, 20, 20, 15, 2, 2, 3, 0, 0, 0],
-                      [13, 0, 20, 14, 2, 30, 29, 29, 29, 29],
-                      [11, 0, 20, 14, 2, 2, 4, 28, 27, 29]
-                         , [11, 0, 20, 14, 14, 14, 14, 9, 8, 29]
-                         , [11, 0, 20, 20, 21, 0, 16, 0, 8, 29]
-                         , [11, 7, 5, 5, 5, 5, 5, 5, 8, 29]
-                         , [11, 11, 11, 11, 11, 12, 0, 6, 8, 29]
-                         , [0, 18, 19, 0, 0, 8, 8, 8, 8, 29]
-                         , [0, 0, 0, 0, 0, 10, 25, 0, 0, 29]
-                         , [0, 0, 0, 0, 24, 23, 23, 0, 0, 31]])
+    board = np.array(
+        [
+            [22, 20, 20, 15, 2, 2, 3, 0, 0, 0],
+            [13, 0, 20, 14, 2, 30, 29, 29, 29, 29],
+            [11, 0, 20, 14, 2, 2, 4, 28, 27, 29],
+            [11, 0, 20, 14, 14, 14, 14, 9, 8, 29],
+            [11, 0, 20, 20, 21, 0, 16, 0, 8, 29],
+            [11, 7, 5, 5, 5, 5, 5, 5, 8, 29],
+            [11, 11, 11, 11, 11, 12, 0, 6, 8, 29],
+            [0, 18, 19, 0, 0, 8, 8, 8, 8, 29],
+            [0, 0, 0, 0, 0, 10, 25, 0, 0, 29],
+            [0, 0, 0, 0, 24, 23, 23, 0, 0, 31],
+        ]
+    )
 
     # take one away from each non-zero value in the array so it fits the new encoding
     for i in range(board.shape[0]):

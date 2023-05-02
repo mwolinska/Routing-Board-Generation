@@ -22,7 +22,6 @@ import chex
 import jax.numpy as jnp
 
 
-
 """Define a stack data structure which can be used with Jax.
 
 To be usable with Jax transformations, data structures must have fixed shape.
@@ -64,6 +63,7 @@ be inserted. All rows up to this index are elements of the stack, all rows after
 
 """
 
+
 class LSystemsAgent(NamedTuple):
     """Define a stack usable with Jax transformations.
 
@@ -74,13 +74,14 @@ class LSystemsAgent(NamedTuple):
         number of elements the stack can contain.
     - head_insertion_index: the index of the row at which to insert the next element in data.
                             Should be 0 for an empty stack.
-    - tail_insertion_index: the index of the row at which to insert the next element in data. 
+    - tail_insertion_index: the index of the row at which to insert the next element in data.
                             Should be max_size-1 (data.shape[0] - 1) for an empty stack.
     """
 
     data: jnp.array
     head_insertion_index: int
     tail_insertion_index: int
+
 
 def create_stack(max_size: int, num_features: int) -> LSystemsAgent:
     """Create an empty stack.
@@ -92,7 +93,10 @@ def create_stack(max_size: int, num_features: int) -> LSystemsAgent:
     Returns:
         stack: the created stack.
     """
-    return LSystemsAgent(jnp.zeros((max_size, num_features), dtype=int) - 1, 0, max_size - 1)
+    return LSystemsAgent(
+        jnp.zeros((max_size, num_features), dtype=int) - 1, 0, max_size - 1
+    )
+
 
 def stack_push_head(stack: LSystemsAgent, element: chex.Array) -> LSystemsAgent:
     """Push an element on top of the stack.
@@ -107,8 +111,9 @@ def stack_push_head(stack: LSystemsAgent, element: chex.Array) -> LSystemsAgent:
     return LSystemsAgent(
         stack.data.at[stack.head_insertion_index].set(element),
         (stack.head_insertion_index + 1) % stack.data.shape[0],
-        stack.tail_insertion_index
-        )
+        stack.tail_insertion_index,
+    )
+
 
 def stack_push_tail(stack: LSystemsAgent, element: chex.Array) -> LSystemsAgent:
     """Push an element on top of the stack.
@@ -126,6 +131,7 @@ def stack_push_tail(stack: LSystemsAgent, element: chex.Array) -> LSystemsAgent:
         (stack.tail_insertion_index - 1) % stack.data.shape[0],
     )
 
+
 def stack_pop_head(stack: LSystemsAgent) -> Tuple[LSystemsAgent, chex.Array]:
     """Pop the last element from the stack.
 
@@ -139,11 +145,12 @@ def stack_pop_head(stack: LSystemsAgent) -> Tuple[LSystemsAgent, chex.Array]:
     last_element_idx = (stack.head_insertion_index - 1) % stack.data.shape[0]
     element = stack.data[last_element_idx]
     stack = LSystemsAgent(
-        stack.data.at[last_element_idx].set(jnp.zeros_like(element)-1),
+        stack.data.at[last_element_idx].set(jnp.zeros_like(element) - 1),
         last_element_idx,
         stack.tail_insertion_index,
     )
     return stack
+
 
 def stack_pop_tail(stack: LSystemsAgent) -> Tuple[LSystemsAgent, chex.Array]:
     """Pop the last element from the stack.
@@ -158,11 +165,12 @@ def stack_pop_tail(stack: LSystemsAgent) -> Tuple[LSystemsAgent, chex.Array]:
     last_element_idx = (stack.tail_insertion_index + 1) % stack.data.shape[0]
     element = stack.data[last_element_idx]
     stack = LSystemsAgent(
-        stack.data.at[last_element_idx].set(jnp.zeros_like(element)-1),
+        stack.data.at[last_element_idx].set(jnp.zeros_like(element) - 1),
         stack.head_insertion_index,
         last_element_idx,
     )
     return stack
+
 
 def empty_stack(stack: LSystemsAgent) -> bool:
     """Check if a stack is empty.
@@ -173,4 +181,7 @@ def empty_stack(stack: LSystemsAgent) -> bool:
     Returns:
         Boolean stating whether the stack is empty.
     """
-    return stack.head_insertion_index == 0 and stack.tail_insertion_index == stack.data.shape[0]-1
+    return (
+        stack.head_insertion_index == 0
+        and stack.tail_insertion_index == stack.data.shape[0] - 1
+    )

@@ -45,6 +45,7 @@ from jumanji.environments.routing.connector.utils import (
 
 from jumanji.environments.routing.connector.types import Agent
 
+
 class ParallelRandomWalkBoard:
     def __init__(self, rows: int, cols: int, num_agents: int):
         self.cols = cols
@@ -444,7 +445,6 @@ class ParallelRandomWalkBoard:
         solved_grid = solved_grid.at[heads].set(agent_position_values)
         solved_grid = solved_grid.at[targets].set(agent_target_values)
         return solved_grid
-
 
 
 if __name__ == "__main__":

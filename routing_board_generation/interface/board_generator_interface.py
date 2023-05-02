@@ -1,25 +1,37 @@
 from enum import Enum
 
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import \
-    JAXLSystemBoard
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import \
-    ParallelRandomWalkBoard
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import \
-    SeedExtensionBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
-    BFSBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import \
-    BFSBoardMinBends, BFSBoardFifo, BFSBoardShortest, BFSBoardLongest
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
-    NumberLinkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
-    RandomWalkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import \
-    WFCBoard
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import (
+    JAXLSystemBoard,
+)
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.parallel_random_walk import (
+    ParallelRandomWalkBoard,
+)
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.seed_extension import (
+    SeedExtensionBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import (
+    BFSBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import (
+    BFSBoardMinBends,
+    BFSBoardFifo,
+    BFSBoardShortest,
+    BFSBoardLongest,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import (
+    NumberLinkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import (
+    RandomWalkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import (
+    WFCBoard,
+)
 
 
 class BoardName(str, Enum):
     """Enum of implemented board generators."""
+
     RANDOM_WALK = "random_walk"
     BFS_BASE = "bfs_base"
     BFS_MIN_BENDS = "bfs_min_bend"
@@ -37,6 +49,7 @@ class BoardName(str, Enum):
 
 class BoardGenerator:
     """Maps BoardGeneratorType to class of generator."""
+
     board_generator_dict = {
         BoardName.RANDOM_WALK: RandomWalkBoard,
         BoardName.JAX_PARALLEL_RW: ParallelRandomWalkBoard,
@@ -48,7 +61,6 @@ class BoardGenerator:
         BoardName.LSYSTEMS: JAXLSystemBoard,
         BoardName.WFC: WFCBoard,
         BoardName.NUMBERLINK: NumberLinkBoard,
-
         BoardName.JAX_SEED_EXTENSION: SeedExtensionBoard,
         # BoardName.JAX_UNIFORM: UniformRandomGenerator,
     }

@@ -23,22 +23,26 @@ import optax
 from omegaconf import DictConfig
 
 
-from routing_board_generation.rl_training.logging.pickle_logger import \
-    PickleLogger
-from routing_board_generation.rl_training.offline_generation.dataset_generator_numpy import \
-    BoardDatasetGenerator
-from routing_board_generation.rl_training.offline_generation.dataset_generator_jax import \
-    BoardDatasetGeneratorJAX
-from routing_board_generation.rl_training.online_generators.parallel_random_walk_generator import \
-    ParallelRandomWalkGenerator
-from routing_board_generation.rl_training.online_generators.random_seed_generator import \
-    SeedExtensionGenerator
-from routing_board_generation.rl_training.online_generators.sequential_random_walk_generator import \
-    SequentialRandomWalkGenerator
-from routing_board_generation.rl_training.online_generators.uniform_generator import \
-    UniformRandomGenerator
-from routing_board_generation.interface.board_generator_interface import \
-    BoardName
+from routing_board_generation.rl_training.logging.pickle_logger import PickleLogger
+from routing_board_generation.rl_training.offline_generation.dataset_generator_numpy import (
+    BoardDatasetGenerator,
+)
+from routing_board_generation.rl_training.offline_generation.dataset_generator_jax import (
+    BoardDatasetGeneratorJAX,
+)
+from routing_board_generation.rl_training.online_generators.parallel_random_walk_generator import (
+    ParallelRandomWalkGenerator,
+)
+from routing_board_generation.rl_training.online_generators.random_seed_generator import (
+    SeedExtensionGenerator,
+)
+from routing_board_generation.rl_training.online_generators.sequential_random_walk_generator import (
+    SequentialRandomWalkGenerator,
+)
+from routing_board_generation.rl_training.online_generators.uniform_generator import (
+    UniformRandomGenerator,
+)
+from routing_board_generation.interface.board_generator_interface import BoardName
 from jumanji.env import Environment
 from jumanji.environments import (
     CVRP,
@@ -100,8 +104,10 @@ def setup_logger(cfg: DictConfig) -> Logger:
     return logger
 
 
-def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> Environment:
-    
+def _make_raw_env(
+    cfg: DictConfig, ic_generator: Optional[BoardName] = None
+) -> Environment:
+
     # env: Environment = jumanji.make(cfg.env.registered_version)
     if cfg.env.ic_board.generation_type == "offline":
         generator = BoardDatasetGenerator(
@@ -109,7 +115,10 @@ def _make_raw_env(cfg: DictConfig, ic_generator: Optional[BoardName] = None) -> 
             num_agents=cfg.env.ic_board.num_agents,
             board_generator=cfg.env.ic_board.board_name,
         )
-    elif cfg.env.ic_board.generation_type == "offline_seed_extension" or cfg.env.ic_board.generation_type == "offline_parallel_rw":
+    elif (
+        cfg.env.ic_board.generation_type == "offline_seed_extension"
+        or cfg.env.ic_board.generation_type == "offline_parallel_rw"
+    ):
         generator = BoardDatasetGeneratorJAX(
             grid_size=cfg.env.ic_board.grid_size,
             num_agents=cfg.env.ic_board.num_agents,

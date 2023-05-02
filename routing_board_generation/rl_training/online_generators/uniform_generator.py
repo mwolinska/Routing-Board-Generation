@@ -76,7 +76,7 @@ class UniformRandomGenerator(Generator):
         key, pos_key = jax.random.split(key)
         starts_flat, targets_flat = jax.random.choice(
             key=pos_key,
-            a=jnp.arange(self.grid_size**2),
+            a=jnp.arange(self.grid_size ** 2),
             shape=(2, self.num_agents),  # Start and target positions for all agents
             replace=False,  # Start and target positions cannot overlap
         )

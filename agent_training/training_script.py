@@ -28,6 +28,7 @@ from jumanji.training.loggers import TerminalLogger
 
 
 import sys
+
 sys.path.append("../")
 
 from routing_board_generation.rl_training.setup_train import (
@@ -35,9 +36,9 @@ from routing_board_generation.rl_training.setup_train import (
     setup_env,
     setup_evaluators,
     setup_logger,
-    setup_training_state, )
-from routing_board_generation.rl_training.logging.pickle_logger import \
-    PickleLogger
+    setup_training_state,
+)
+from routing_board_generation.rl_training.logging.pickle_logger import PickleLogger
 
 
 from jumanji.training.timer import Timer

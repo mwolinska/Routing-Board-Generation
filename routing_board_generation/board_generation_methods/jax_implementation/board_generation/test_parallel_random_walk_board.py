@@ -23,6 +23,7 @@ from jumanji.environments.routing.connector.types import Agent
 
 import chex
 
+
 def agent_equality(agent_1: Agent, agent_2: Agent) -> chex.Array:
     if not isinstance(agent_2, Agent):
         return NotImplemented
@@ -156,20 +157,20 @@ class TestParallelRandomWalk:
     def parallel_random_walk(self) -> ParallelRandomWalkBoard:
         """Creates a generator with grid size of 5 and 3 agents."""
         return ParallelRandomWalkBoard(rows=5, cols=5, num_agents=3)
-    
+
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
         [
             (
+                (
+                    key,
                     (
-                            key,
-                            (
-                                    agents_reshaped_for_generator.start,
-                                    agents_reshaped_for_generator.position,
-                                    valid_end_grid2,
-                            ),
-                    )
+                        agents_reshaped_for_generator.start,
+                        agents_reshaped_for_generator.position,
+                        valid_end_grid2,
+                    ),
+                )
             ),
         ],
     )
@@ -203,12 +204,12 @@ class TestParallelRandomWalk:
         ("function_input", "expected_value"),
         [
             (
-                    (key, valid_starting_grid, agents_starting),
-                    (
-                            key_2,
-                            valid_starting_grid_after_1_step,
-                            agents_starting_move_1_step_up,
-                    ),
+                (key, valid_starting_grid, agents_starting),
+                (
+                    key_2,
+                    valid_starting_grid_after_1_step,
+                    agents_starting_move_1_step_up,
+                ),
             ),  # empty position
         ],
     )
@@ -224,12 +225,13 @@ class TestParallelRandomWalk:
         assert (new_grid == end_grid).all()
         assert (new_key == end_key).all()
 
-
-    def test_initialise_agents(self, parallel_random_walk: ParallelRandomWalkBoard) -> None:
+    def test_initialise_agents(
+        self, parallel_random_walk: ParallelRandomWalkBoard
+    ) -> None:
         grid, agents = parallel_random_walk._initialise_agents(key, empty_grid)
         assert agent_equality(agents, agents_starting)
         assert (grid == valid_starting_grid).all()
-    
+
     def test_place_agent_heads_on_grid(
         self, parallel_random_walk: ParallelRandomWalkBoard
     ) -> None:
@@ -264,7 +266,6 @@ class TestParallelRandomWalk:
         )(empty_grid, agents_starting)
         assert (grid_per_agent == expected_output).all()
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
@@ -280,7 +281,6 @@ class TestParallelRandomWalk:
     ) -> None:
         continue_stepping = parallel_random_walk._continue_stepping(function_input)
         assert continue_stepping == expected_value
-
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -301,7 +301,6 @@ class TestParallelRandomWalk:
         )
         assert (dones == expected_value).all()
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
@@ -320,7 +319,6 @@ class TestParallelRandomWalk:
             function_input
         )
         assert (position_tuple == expected_value).all()
-
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -341,7 +339,6 @@ class TestParallelRandomWalk:
         )
         assert (position_tuple == expected_value).all()
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
@@ -360,7 +357,6 @@ class TestParallelRandomWalk:
         position_1, position_2 = function_input
         action = parallel_random_walk._action_from_positions(position_1, position_2)
         assert action == expected_value
-
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -381,15 +377,14 @@ class TestParallelRandomWalk:
         action = parallel_random_walk._action_from_tuple(function_input)
         assert action == expected_value
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
         [
             ((0), jnp.array([-1, 5, -1, 1])),
             (
-                    (6),
-                    jnp.array([1, 11, 5, 7]),
+                (6),
+                jnp.array([1, 11, 5, 7]),
             ),  # adjacent cells in order up, down, left, right
         ],
     )
@@ -437,14 +432,13 @@ class TestParallelRandomWalk:
         grid, is_cell_free = parallel_random_walk._is_cell_free(grid_1, cell)
         assert is_cell_free == expected_value
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
         [
             (
-                    (agents_starting, valid_starting_grid, jnp.array([1, 1, 1])),
-                    (grids_after_1_agent_step, agents_starting_move_1_step_up),
+                (agents_starting, valid_starting_grid, jnp.array([1, 1, 1])),
+                (grids_after_1_agent_step, agents_starting_move_1_step_up),
             ),  # empty position
         ],
     )
@@ -461,14 +455,13 @@ class TestParallelRandomWalk:
         assert agent_equality(new_agents, expected_agents)
         assert (new_grids == expected_grids).all()
 
-
     @staticmethod
     @pytest.mark.parametrize(
         ("function_input", "expected_value"),
         [
             (
-                    (valid_starting_grid, agents_starting, jnp.array([1, 2])),
-                    True,
+                (valid_starting_grid, agents_starting, jnp.array([1, 2])),
+                True,
             ),  # empty position
             ((valid_starting_grid, agents_starting, jnp.array([1, 1])), True),
             ((valid_starting_grid, agents_starting, jnp.array([-1, 1])), False),
@@ -477,7 +470,7 @@ class TestParallelRandomWalk:
     def test_is_valid_position_rw(
         parallel_random_walk: ParallelRandomWalkBoard,
         function_input: Tuple[chex.Array, Agent, chex.Array],
-          expected_value: chex.Array,
+        expected_value: chex.Array,
     ) -> None:
         grid, agent, new_position = function_input
         valid_position = parallel_random_walk._is_valid_position(

@@ -3,25 +3,40 @@ import time
 from typing import List, Union, Dict, Tuple, Optional
 
 import numpy as np
-from jumanji.environments.routing.connector.constants import PATH, EMPTY, POSITION, TARGET
+from jumanji.environments.routing.connector.constants import (
+    PATH,
+    EMPTY,
+    POSITION,
+    TARGET,
+)
 
-from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import \
-    JAXLSystemBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import \
-    BFSBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import \
-    NumberLinkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import \
-    RandomWalkBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import \
-    WFCBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
-    AbstractBoard
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import \
-    IncorrectBoardSizeError, NumAgentsOutOfRangeError, EncodingOutOfRangeError, \
-    DuplicateHeadsTailsError, MissingHeadTailError, InvalidWireStructureError, \
-    PathNotFoundError
-
+from routing_board_generation.board_generation_methods.jax_implementation.board_generation.lsystems import (
+    JAXLSystemBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board import (
+    BFSBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.numberlink import (
+    NumberLinkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.random_walk import (
+    RandomWalkBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.wave_function_collapse import (
+    WFCBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import (
+    AbstractBoard,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.exceptions import (
+    IncorrectBoardSizeError,
+    NumAgentsOutOfRangeError,
+    EncodingOutOfRangeError,
+    DuplicateHeadsTailsError,
+    MissingHeadTailError,
+    InvalidWireStructureError,
+    PathNotFoundError,
+)
 
 
 class BoardProcessor:
@@ -44,7 +59,9 @@ class BoardProcessor:
         # Given a board, we want to extract the positions of the heads, targets and paths
         # We also want to check that the board is valid, i.e. that it has the correct number of wires, heads and tails
 
-    def get_heads_and_targets(self) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
+    def get_heads_and_targets(
+        self,
+    ) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
         """Returns the heads and targets of the board layout
         heads are encoded as 2,5,8,11,...
         targets are encoded as 3,6,9,12,...
@@ -66,7 +83,9 @@ class BoardProcessor:
                     target = np.argwhere(board_layout == i + 1)[0]
                     targets.append(tuple(target))
                 except IndexError:
-                    print(f"IndexError: i = {i}, max_val = {max_val}, board_layout = {board_layout}")
+                    print(
+                        f"IndexError: i = {i}, max_val = {max_val}, board_layout = {board_layout}"
+                    )
         return heads, targets
 
     def get_wires_on_board(self) -> int:
@@ -84,7 +103,9 @@ class BoardProcessor:
         """Gets the paths from all heads to all targets via BFS using only valid moves and cells with wire encodings."""
         paths = []
         for i in range(len(self.heads)):
-            paths.append(self.get_path_from_head_and_target(self.heads[i], self.targets[i]))
+            paths.append(
+                self.get_path_from_head_and_target(self.heads[i], self.targets[i])
+            )
         return paths
 
     def get_path_from_head_and_target(self, head, target) -> List[Tuple[int, int]]:
@@ -140,7 +161,9 @@ class BoardProcessor:
             raise PathNotFoundError
         return path
 
-    def remove_extraneous_path_cells(self, path: List[Tuple[int, int]], path_encoding: int) -> None:
+    def remove_extraneous_path_cells(
+        self, path: List[Tuple[int, int]], path_encoding: int
+    ) -> None:
         """Removes extraneous path cells from the board layout."""
         # Change any cell with the same wire_encoding but not in the path to an empty cell
         path_set = set(path)
@@ -182,10 +205,17 @@ class BoardProcessor:
                 neighbours.append(neighbour)
         return neighbours
 
-    def is_valid_cell(self, cell: Tuple[int, int], valid_cells: List[Tuple[int, int]]) -> bool:
+    def is_valid_cell(
+        self, cell: Tuple[int, int], valid_cells: List[Tuple[int, int]]
+    ) -> bool:
         """Checks if a cell is valid."""
         # Check if the cell is within the bounds of the board
-        if cell[0] < 0 or cell[0] >= self.board_layout.shape[0] or cell[1] < 0 or cell[1] >= self.board_layout.shape[1]:
+        if (
+            cell[0] < 0
+            or cell[0] >= self.board_layout.shape[0]
+            or cell[1] < 0
+            or cell[1] >= self.board_layout.shape[1]
+        ):
             return False
         # Check if the cell has a valid encoding
         if self.board_layout[cell] not in valid_cells:
@@ -210,14 +240,18 @@ class BoardProcessor:
         return bends
 
     @staticmethod
-    def is_bend(prev_pos: Tuple[int, int], pos: Tuple[int, int], next_pos: Tuple[int, int]) -> bool:
+    def is_bend(
+        prev_pos: Tuple[int, int], pos: Tuple[int, int], next_pos: Tuple[int, int]
+    ) -> bool:
         """Checks if a position is a bend"""
         prev_row, prev_col = prev_pos
         next_row, next_col = next_pos
         # Get the row and column of the current position
         row, col = pos
         # Check if the current position is a bend
-        if (row == prev_row and row == next_row) or (col == prev_col and col == next_col):
+        if (row == prev_row and row == next_row) or (
+            col == prev_col and col == next_col
+        ):
             return False
         return True
 
@@ -237,17 +271,25 @@ class BoardProcessor:
         return distances
 
     @staticmethod
-    def get_distance_between_cells(cell1: Tuple[int, int], cell2: Tuple[int, int]) -> float:
+    def get_distance_between_cells(
+        cell1: Tuple[int, int], cell2: Tuple[int, int]
+    ) -> float:
         """Returns the L1 distance between two cells"""
         return abs(cell1[0] - cell2[0]) + abs(cell1[1] - cell2[1])
 
     def remove_wire(self, wire_index: int) -> None:
         """Removes a wire from the board"""
         if wire_index >= len(self.heads):
-            raise ValueError(f"Wire index out of range. Only {len(self.heads)} wires on the board.")
+            raise ValueError(
+                f"Wire index out of range. Only {len(self.heads)} wires on the board."
+            )
         else:
             # Get the head, target and path of the wire
-            head, target, path = self.heads[wire_index], self.targets[wire_index], self.paths[wire_index]
+            head, target, path = (
+                self.heads[wire_index],
+                self.targets[wire_index],
+                self.paths[wire_index],
+            )
             # Remove the wire from the board
             for pos in path:
                 self.board_layout[pos[0]][pos[1]] = 0
@@ -256,8 +298,9 @@ class BoardProcessor:
             self.targets.pop(wire_index)
             self.paths.pop(wire_index)
 
-            assert len(self.heads) == len(self.targets) == len(
-                self.paths), "Heads, targets and paths not of equal length"
+            assert (
+                len(self.heads) == len(self.targets) == len(self.paths)
+            ), "Heads, targets and paths not of equal length"
             assert head not in self.heads, "Head not removed"
             assert target not in self.targets, "target not removed"
             assert path not in self.paths, "Path not removed"
@@ -276,18 +319,26 @@ class BoardProcessor:
         avg_wire_length = sum(wire_lengths) / num_wires
         wire_bends = [self.count_path_bends(path) for path in self.paths]
         avg_wire_bends = sum(wire_bends) / num_wires
-        avg_head_target_distance = sum(self.distance_between_heads_and_targets()) / num_wires
+        avg_head_target_distance = (
+            sum(self.distance_between_heads_and_targets()) / num_wires
+        )
         proportion_filled = self.proportion_filled()
 
         # Return summary dict
-        summary = dict(num_wires=num_wires, wire_lengths=wire_lengths, avg_wire_length=avg_wire_length,
-                       wire_bends=wire_bends, avg_wire_bends=avg_wire_bends,
-                       avg_head_target_distance=avg_head_target_distance, percent_filled=proportion_filled)
+        summary = dict(
+            num_wires=num_wires,
+            wire_lengths=wire_lengths,
+            avg_wire_length=avg_wire_length,
+            wire_bends=wire_bends,
+            avg_wire_bends=avg_wire_bends,
+            avg_head_target_distance=avg_head_target_distance,
+            percent_filled=proportion_filled,
+        )
 
         return summary
 
     def is_valid_board(self) -> bool:
-        """ Return a boolean indicating if the board is valid.  Raise an exception if not. """
+        """Return a boolean indicating if the board is valid.  Raise an exception if not."""
         is_valid = True
         if not self.verify_board_size():
             raise IncorrectBoardSizeError
@@ -343,26 +394,28 @@ class BoardProcessor:
                         # Wiring path cells should have two neighbours of the same wire
                         if self.num_wire_neighbours(cell_label, row, col) != 2:
                             print(
-                                f"({row},{col}) == {cell_label}, {self.num_wire_neighbours(cell_label, row, col)} neighbours")
+                                f"({row},{col}) == {cell_label}, {self.num_wire_neighbours(cell_label, row, col)} neighbours"
+                            )
                             return False
                     else:
                         # Head and target cells should only have one neighbour of the same wire.
                         if self.num_wire_neighbours(cell_label, row, col) != 1:
                             print(
-                                f"HT({row},{col}) == {cell_label}, {self.num_wire_neighbours(cell_label, row, col)} neighbours")
+                                f"HT({row},{col}) == {cell_label}, {self.num_wire_neighbours(cell_label, row, col)} neighbours"
+                            )
                             return False
         return True
 
     def num_wire_neighbours(self, cell_label: int, row: int, col: int) -> int:
-        """ Return the number of adjacent cells belonging to the same wire.
+        """Return the number of adjacent cells belonging to the same wire.
 
-            Args:
-                cell_label (int) : value of the cell to investigate
-                row (int)
-                col (int) : (row,col) = 2D position of the cell to investigate
+        Args:
+            cell_label (int) : value of the cell to investigate
+            row (int)
+            col (int) : (row,col) = 2D position of the cell to investigate
 
-                Returns:
-                (int) : The number of adjacent cells belonging to the same wire.
+            Returns:
+            (int) : The number of adjacent cells belonging to the same wire.
         """
         neighbours = 0
         wire_num = self.cell_label_to_wire_num(cell_label)
@@ -372,18 +425,22 @@ class BoardProcessor:
             if min_val <= self.board_layout[row - 1, col] <= max_val:  # same wire above
                 neighbours += 1
         if col > 0:
-            if min_val <= self.board_layout[row, col - 1] <= max_val:  # same wire to the left
+            if (
+                min_val <= self.board_layout[row, col - 1] <= max_val
+            ):  # same wire to the left
                 neighbours += 1
         if row < self.rows - 1:
             if min_val <= self.board_layout[row + 1, col] <= max_val:  # same wire below
                 neighbours += 1
         if col < self.cols - 1:
-            if min_val <= self.board_layout[row, col + 1] <= max_val:  # same wire to the right
+            if (
+                min_val <= self.board_layout[row, col + 1] <= max_val
+            ):  # same wire to the right
                 neighbours += 1
         return neighbours
 
     def swap_heads_targets(self) -> None:
-        """ Randomly swap the head and target of each wire.  Self.board_layout in modified in-place."""
+        """Randomly swap the head and target of each wire.  Self.board_layout in modified in-place."""
         # Loop through all the paths on the board
         # Randomly swap the head and target of each wire (and reverse the direction of the wire)
         for path in self.paths:
@@ -398,7 +455,7 @@ class BoardProcessor:
                 path.reverse()
 
     def shuffle_wire_encodings(self):
-        """ Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
+        """Randomly shuffle the encodings of all wires.  Self.board_layout in modified in-place."""
 
         # shuffle the indices of the wires and then assign them to the wires in order
         new_indices = list(range(len(self.paths)))
@@ -420,14 +477,14 @@ class BoardProcessor:
                     self.board_layout[pos[0], pos[1]] = int(3 * index + PATH)
 
     def position_to_wire_num(self, row: int, col: int) -> int:
-        """ Returns the wire number of the given cell position
+        """Returns the wire number of the given cell position
 
-            Args:
-                row (int): row of the cell
-                col (int): column of the cell
+        Args:
+            row (int): row of the cell
+            col (int): column of the cell
 
-            Returns:
-                (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+        Returns:
+            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
         """
         if row < 0 or row >= self.rows or col < 0 or col >= self.cols:
             return -1
@@ -437,13 +494,13 @@ class BoardProcessor:
 
     @staticmethod
     def cell_label_to_wire_num(cell_label: int) -> int:
-        """ Returns the wire number of the given cell value
+        """Returns the wire number of the given cell value
 
-            Args:
-                cell_label (int) : the value of the cell in self.layout
+        Args:
+            cell_label (int) : the value of the cell in self.layout
 
-            Returns:
-                (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+        Returns:
+            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
         """
         if cell_label == 0:
             return -1
@@ -473,14 +530,20 @@ class BoardProcessor:
 
 
 def board_processor_tests(n: int, p: Optional[float] = 0) -> None:
-    """ Runs a series of tests on the board processors."""
-    generator_list = [RandomWalkBoard, BFSBoard, JAXLSystemBoard, NumberLinkBoard, WFCBoard]
+    """Runs a series of tests on the board processors."""
+    generator_list = [
+        RandomWalkBoard,
+        BFSBoard,
+        JAXLSystemBoard,
+        NumberLinkBoard,
+        WFCBoard,
+    ]
     fill_methods = [None, BFS_fill, LSystem_fill, None, None]
     for index, generator in enumerate(generator_list):
         start_time = time.time()
         summary = {}
         print(generator.__name__)
-        print('Summary of results:')
+        print("Summary of results:")
         for i in range(n):
             board = generator(10, 10, 5)
             if fill_methods[index]:
@@ -490,28 +553,30 @@ def board_processor_tests(n: int, p: Optional[float] = 0) -> None:
             boardprocessor = BoardProcessor(board)
             summary[i] = boardprocessor.get_board_statistics()
 
-        print(f'Time taken: {time.time() - start_time} for {n} boards')
+        print(f"Time taken: {time.time() - start_time} for {n} boards")
         for key, value in summary[0].items():
             if type(value) != list:
-                print(f'{key}: {np.mean([summary[i][key] for i in range(n)])}')
+                print(f"{key}: {np.mean([summary[i][key] for i in range(n)])}")
 
-        print('-----------------------')
+        print("-----------------------")
 
 
 def BFS_fill(board: BFSBoard) -> None:
-    """ Fills the board with a BFS algorithm."""
-    test_threshold_dict = {'min_bends': 2, 'min_length': 3}
+    """Fills the board with a BFS algorithm."""
+    test_threshold_dict = {"min_bends": 2, "min_length": 3}
     clip_nums = [2, 2] * 10
-    clip_methods = ['shortest', 'min_bends'] * 10
-    board.fill_clip_with_thresholds(clip_nums, clip_methods, verbose=False, threshold_dict=test_threshold_dict)
+    clip_methods = ["shortest", "min_bends"] * 10
+    board.fill_clip_with_thresholds(
+        clip_nums, clip_methods, verbose=False, threshold_dict=test_threshold_dict
+    )
 
 
 def LSystem_fill(board: JAXLSystemBoard) -> None:
-    """ Fills the board with an LSystem algorithm."""
+    """Fills the board with an LSystem algorithm."""
     board.fill(n_steps=100, pushpullnone_ratios=[2, 0.5, 1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Fill and process 1000 boards
     board_processor_tests(1000)
 
@@ -519,10 +584,19 @@ if __name__ == '__main__':
 
     # Create a board from a numpy array
     board = np.array(
-        [[11, 10, 7, 7, 7, 7, 0, 0, 0, 0], [10, 10, 7, 7, 8, 7, 0, 0, 9, 0], [10, 10, 12, 7, 7, 7, 7, 7, 7, 14],
-         [13, 13, 13, 13, 0, 13, 13, 7, 7, 13], [13, 13, 13, 13, 13, 13, 13, 13, 13, 13],
-         [13, 15, 4, 6, 4, 4, 4, 13, 13, 0], [0, 0, 4, 4, 4, 0, 4, 0, 0, 0], [1, 1, 3, 1, 1, 1, 4, 5, 0, 0],
-         [1, 1, 1, 1, 1, 1, 1, 1, 2, 0], [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]])
+        [
+            [11, 10, 7, 7, 7, 7, 0, 0, 0, 0],
+            [10, 10, 7, 7, 8, 7, 0, 0, 9, 0],
+            [10, 10, 12, 7, 7, 7, 7, 7, 7, 14],
+            [13, 13, 13, 13, 0, 13, 13, 7, 7, 13],
+            [13, 13, 13, 13, 13, 13, 13, 13, 13, 13],
+            [13, 15, 4, 6, 4, 4, 4, 13, 13, 0],
+            [0, 0, 4, 4, 4, 0, 4, 0, 0, 0],
+            [1, 1, 3, 1, 1, 1, 4, 5, 0, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 2, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+        ]
+    )
 
     boardprocessor = BoardProcessor(board)
 
@@ -540,18 +614,18 @@ if __name__ == '__main__':
     # Create a RandomWalkBoard
     # board_ = RandomWalkBoard(10, 10, 5)
     board_ = NumberLinkBoard(10, 10, 5)
-    print(f'{board_.return_solved_board()}')
+    print(f"{board_.return_solved_board()}")
     boardprocessor_ = BoardProcessor(board_)
 
     # Shuffle wire encodings
     boardprocessor_.shuffle_wire_encodings()
-    print('Shuffled Wire Encodings')
-    print(f'{boardprocessor_.get_board_layout()}')
+    print("Shuffled Wire Encodings")
+    print(f"{boardprocessor_.get_board_layout()}")
 
     # Remove a wire
     boardprocessor_.remove_wire(0)
-    print('Removed Wire')
-    print(f'{boardprocessor_.get_board_layout()}')
+    print("Removed Wire")
+    print(f"{boardprocessor_.get_board_layout()}")
 
     # Get Board Statistics
     summary_dict_ = boardprocessor.get_board_statistics()

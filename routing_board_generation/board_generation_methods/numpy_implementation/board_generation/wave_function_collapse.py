@@ -26,9 +26,12 @@
 import numpy as np
 from copy import deepcopy
 
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import AbstractBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import (
+    AbstractBoard,
+)
 
-class AbstractTile():
+
+class AbstractTile:
     """
     Used to represent any possible 1x1 tile.
 
@@ -44,40 +47,39 @@ class AbstractTile():
         Return all possible tiles, labelled by their connections
         """
         all_tiles = [
-                        frozenset(),
-                        frozenset({'top', 'bottom'}),
-                        frozenset({'left', 'right'}),
-                        frozenset({'top', 'left'}),
-                        frozenset({'top', 'right'}),
-                        frozenset({'bottom', 'right'}),
-                        frozenset({'bottom', 'left'}),
-                        frozenset({'top'}),
-                        frozenset({'right'}),
-                        frozenset({'bottom'}),
-                        frozenset({'left'})
-                    ]
+            frozenset(),
+            frozenset({"top", "bottom"}),
+            frozenset({"left", "right"}),
+            frozenset({"top", "left"}),
+            frozenset({"top", "right"}),
+            frozenset({"bottom", "right"}),
+            frozenset({"bottom", "left"}),
+            frozenset({"top"}),
+            frozenset({"right"}),
+            frozenset({"bottom"}),
+            frozenset({"left"}),
+        ]
         return all_tiles
-    
+
     @property
     def get_all_directions(self):
         """
         Return all possible directions to connect to the tile
         """
-        return ['top', 'bottom', 'left', 'right'] 
+        return ["top", "bottom", "left", "right"]
 
     def get_reverse_direction(self, direction):
         """
         Return the opposite direction
         """
         reverse_directions = {
-            'top': 'bottom',
-            'bottom': 'top',
-            'left': 'right',
-            'right': 'left'
+            "top": "bottom",
+            "bottom": "top",
+            "left": "right",
+            "right": "left",
         }
         return reverse_directions[direction]
-    
-             
+
     def add_neighbours_exclusions(self):
         """
         For a given tile, add the neighbours and exclusions.
@@ -95,7 +97,10 @@ class AbstractTile():
                     # Add the other tile to the neighbours
                     self.neighbours[direction].add(candidate)
                 # Also ok if neither tile trying to connect to the other
-                elif direction not in self.connections and reverse_direction not in candidate:
+                elif (
+                    direction not in self.connections
+                    and reverse_direction not in candidate
+                ):
                     self.neighbours[direction].add(candidate)
                 # Otherwise, add the other tile to the exclusions
                 else:
@@ -110,27 +115,18 @@ class Tile(AbstractTile):
         self.connections = connections
         self.idx = self.get_all_tiles.index(connections)
         # Specify the pieces that can connect to this tile
-        self.neighbours = {
-            'top':    set(),
-            'bottom': set(),
-            'left':   set(),
-            'right':  set()
-        }
+        self.neighbours = {"top": set(), "bottom": set(), "left": set(), "right": set()}
         # Specify the pieces that cannot connect to this tile
-        self.exclusions = {
-            'top':    set(),
-            'bottom': set(),
-            'left':   set(),
-            'right':  set()
-        }
+        self.exclusions = {"top": set(), "bottom": set(), "left": set(), "right": set()}
         # Add the neighbours and exclusions
         self.add_neighbours_exclusions()
 
 
-class WFCUtils():
+class WFCUtils:
     """
     Utility functions for the WFC algorithm
     """
+
     def __init__(self):
         self.abstract_tile = AbstractTile()
 
@@ -148,7 +144,6 @@ class WFCUtils():
         elif np.sum(side1[1:] == side2[:-1]) >= threshold:
             return True
 
-
     def all_valid_choices(self, i, j, rows, cols, num_tiles):
         """
         Used to initialise the choices dictionary.
@@ -157,15 +152,14 @@ class WFCUtils():
         choices = np.arange(num_tiles).tolist()
         # TODO: Remove some boundary tiles from the choices
         if i == 0:
-            choices = [x for x in choices if x not in [1,3,4,7]]
+            choices = [x for x in choices if x not in [1, 3, 4, 7]]
         if i == rows - 1:
-            choices = [x for x in choices if x not in [1,5,6,9]]
+            choices = [x for x in choices if x not in [1, 5, 6, 9]]
         if j == 0:
-            choices = [x for x in choices if x not in [2,3,6,10]]
+            choices = [x for x in choices if x not in [2, 3, 6, 10]]
         if j == cols - 1:
-            choices = [x for x in choices if x not in [2,4,5,8]]
+            choices = [x for x in choices if x not in [2, 4, 5, 8]]
         return choices
-
 
     def reduce_prob(self, choices, tiles, row, col, rows, cols, TILE_IDX_LIST):
         """
@@ -184,7 +178,12 @@ class WFCUtils():
         # Changed this to be a function of the tile
         valid_choices = self.all_valid_choices(row, col, rows, cols, len(TILE_IDX_LIST))
         # Check the top, bottom, left, right neighbors
-        for i, j, direction in [[row-1, col, 'bottom'], [row+1, col, 'top'], [row, col-1, 'right'], [row, col+1, 'left']]:
+        for i, j, direction in [
+            [row - 1, col, "bottom"],
+            [row + 1, col, "top"],
+            [row, col - 1, "right"],
+            [row, col + 1, "left"],
+        ]:
             exclusion_idx_list = []
             if 0 <= i < rows and 0 <= j < cols:
                 # Look at every choice for the neighbor
@@ -208,7 +207,6 @@ class WFCUtils():
         else:
             choices[(row, col)] = valid_choices
             return choices
-
 
     def get_min_entropy_coord(self, entropy_board, observed):
         """
@@ -246,32 +244,30 @@ class WFCUtils():
         else:
             return -1, -1
 
-
     def update_entropy(self, choices, rows, cols):
         """
         Update the entropy board
         """
-        entropy_board = np.zeros(shape = (rows, cols))
+        entropy_board = np.zeros(shape=(rows, cols))
         for row in range(rows):
             for col in range(cols):
                 entropy_board[row, col] = len(choices[(row, col)])
         return entropy_board
 
-
-    def step(self, info, row_col = None):
+    def step(self, info, row_col=None):
         """
         Perform one step of the WFC algorithm
         """
-        entropy_board   = info['entropy_board']
-        tile_idx_list   = info['tile_idx_list']
-        observed        = info['observed']
-        choices         = info['choices']
-        history         = info['history']
-        canvas          = info['canvas']
-        tiles           = info['tiles']
-        rows            = info['rows']
-        cols            = info['cols']
-        weights         = info['weights']
+        entropy_board = info["entropy_board"]
+        tile_idx_list = info["tile_idx_list"]
+        observed = info["observed"]
+        choices = info["choices"]
+        history = info["history"]
+        canvas = info["canvas"]
+        tiles = info["tiles"]
+        rows = info["rows"]
+        cols = info["cols"]
+        weights = info["weights"]
         if row_col:
             row, col = row_col
         else:
@@ -280,34 +276,35 @@ class WFCUtils():
         # custom weights for each tile
         relevant_weights = [weights[tile_idx] for tile_idx in choices[(row, col)]]
         relevant_weights = np.array(relevant_weights) / np.sum(relevant_weights)
-        state = np.random.choice(choices[(row,  col)], p = relevant_weights)
-        history.append((row, col, state, choices[(row,  col)]))
+        state = np.random.choice(choices[(row, col)], p=relevant_weights)
+        history.append((row, col, state, choices[(row, col)]))
         choices_temp = deepcopy(choices)
         choices_temp[(row, col)] = [state]
         retract = False
-        
+
         # compute new probability for 4 immediate neighbors
-        for i, j in [[row-1, col], [row+1, col], [row, col-1], [row, col+1]]:
+        for i, j in [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]]:
             if 0 <= i < rows and 0 <= j < cols:
                 if not observed[i, j]:
-                    attempt = self.reduce_prob(choices_temp, tiles, i, j, rows, cols, tile_idx_list)
+                    attempt = self.reduce_prob(
+                        choices_temp, tiles, i, j, rows, cols, tile_idx_list
+                    )
                     if attempt:
                         choices_temp = attempt
                     else:
                         retract = True
                         break
-        
-        canvas[row,  col] = state
-        observed[row, col] = True
-        info['entropy_board']   = entropy_board
-        info['observed']        = observed
-        info['choices']         = choices_temp
-        info['history']         = history
-        info['canvas']          = canvas
-        info['tiles']           = tiles
-        
-        return info, retract
 
+        canvas[row, col] = state
+        observed[row, col] = True
+        info["entropy_board"] = entropy_board
+        info["observed"] = observed
+        info["choices"] = choices_temp
+        info["history"] = history
+        info["canvas"] = canvas
+        info["tiles"] = tiles
+
+        return info, retract
 
 
 class WFCBoard(AbstractBoard):
@@ -325,13 +322,13 @@ class WFCBoard(AbstractBoard):
         # Generate the tile set. This includes how tiles can connect to each other
         self.abstract_tile = AbstractTile()
         self.weights = self.generate_weights(self.x, self.y, num_agents)
-        #self
+        # self
         self.utils = WFCUtils()
         self.num_agents = num_agents
 
         # Generate the boards
         _, self.wired_board, self.unwired_board = self.wfc()
-    
+
     def generate_weights(self, x, y, num_agents):
         """
         Currently just hard-coding a set of weights for the tiles.
@@ -342,16 +339,22 @@ class WFCBoard(AbstractBoard):
             weights (list): A list of weights for each tile
         """
         weights = [
-        6, # empty
-        7, 7, # wire
-        1, 1, 1, 1, # turn
-        0.5, 0.5, 0.5, 0.5 # start / end
+            6,  # empty
+            7,
+            7,  # wire
+            1,
+            1,
+            1,
+            1,  # turn
+            0.5,
+            0.5,
+            0.5,
+            0.5,  # start / end
         ]
         return weights
 
-    
     def wire_separator(self, final_canvas):
-        """ 
+        """
         Given a solved board, separate the wires into individual wires.
 
         Pseudo code:
@@ -360,7 +363,7 @@ class WFCBoard(AbstractBoard):
             1.2. Follow the wire until it ends
             1.3. Add the wire to the output board
             1.4. Remove the wire from the input board
-        
+
         Args:
             final_canvas (np.array): The solved board with wires not separated
 
@@ -370,7 +373,7 @@ class WFCBoard(AbstractBoard):
         """
         canvas = deepcopy(final_canvas)
         # Initialise the output board
-        output_board = np.zeros(shape = (self.y, self.x), dtype = int)
+        output_board = np.zeros(shape=(self.y, self.x), dtype=int)
         # Initialise the wire counter
         wire_counter = 0
         # Loop through the board, looking for wires
@@ -395,7 +398,7 @@ class WFCBoard(AbstractBoard):
             wire_counter += 1
 
         return output_board, wire_counter
-    
+
     def follow_wire(self, start, canvas):
         """
         From a given start, follow the wire until it ends.
@@ -411,17 +414,24 @@ class WFCBoard(AbstractBoard):
         # Initialise the current position
         current_position = start
         # Initialise the current direction
-        current_direction = tuple(self.abstract_tile.get_all_tiles[canvas[tuple(start)]])[0]
+        current_direction = tuple(
+            self.abstract_tile.get_all_tiles[canvas[tuple(start)]]
+        )[0]
         # Loop until the wire ends
         while True:
             directions = {
-                'top':    (-1, 0),
-                'bottom': (1, 0),
-                'left':   (0, -1),
-                'right':  (0, 1)
+                "top": (-1, 0),
+                "bottom": (1, 0),
+                "left": (0, -1),
+                "right": (0, 1),
             }
             # Find the next position
-            next_position = tuple([current_position[i] + directions[current_direction][i] for i in range(2)])
+            next_position = tuple(
+                [
+                    current_position[i] + directions[current_direction][i]
+                    for i in range(2)
+                ]
+            )
             # Check if the next position is an end point
             if 7 <= canvas[next_position] <= 10:
                 # Add the end point to the wire
@@ -433,19 +443,21 @@ class WFCBoard(AbstractBoard):
             # Update the current position
             current_position = next_position
             # Update the current direction
-            possible_directions = set(deepcopy(self.abstract_tile.get_all_tiles[canvas[next_position]]))
-            if current_direction == 'top':
-                possible_directions.remove('bottom')
-            elif current_direction == 'bottom':
-                possible_directions.remove('top')
-            elif current_direction == 'left':
-                possible_directions.remove('right')
-            elif current_direction == 'right':
-                possible_directions.remove('left')
+            possible_directions = set(
+                deepcopy(self.abstract_tile.get_all_tiles[canvas[next_position]])
+            )
+            if current_direction == "top":
+                possible_directions.remove("bottom")
+            elif current_direction == "bottom":
+                possible_directions.remove("top")
+            elif current_direction == "left":
+                possible_directions.remove("right")
+            elif current_direction == "right":
+                possible_directions.remove("left")
             current_direction = list(possible_directions)[0]
-        
+
         return wire
-    
+
     def remove_wires(self, wired_output, wire_counter):
         """
         Given a solved board with wires, remove excess wires.
@@ -463,9 +475,8 @@ class WFCBoard(AbstractBoard):
             for j in range(self.y):
                 if output[i, j] > upper_limit:
                     output[i, j] = 0
-        
-        return output
 
+        return output
 
     def update_weights(self):
         """
@@ -484,7 +495,6 @@ class WFCBoard(AbstractBoard):
                 self.weights[i] *= 1.2
         return
 
-
     def wfc(self):
         """
         Main function that implements the WFC algorithm to create boards.
@@ -502,9 +512,9 @@ class WFCBoard(AbstractBoard):
         history = []
         retract = False
         num_tiles = len(tiles)
-        observed = np.zeros(shape = (rows, cols))
-        canvas = np.zeros(shape = (rows, cols), dtype = int) - 1
-        entropy_board = np.zeros(shape = (rows, cols)) + num_tiles
+        observed = np.zeros(shape=(rows, cols))
+        canvas = np.zeros(shape=(rows, cols), dtype=int) - 1
+        entropy_board = np.zeros(shape=(rows, cols)) + num_tiles
         weights = self.weights
         choices = {}
         for i in range(rows):
@@ -512,45 +522,45 @@ class WFCBoard(AbstractBoard):
                 choices[(i, j)] = utils.all_valid_choices(i, j, rows, cols, num_tiles)
 
         info = dict(
-            entropy_board = entropy_board,
-            observed = observed,
-            choices = choices,
-            history = history,
-            canvas = canvas,
-            tiles = tiles,
-            rows = rows,
-            cols = cols,
-            tile_idx_list = tile_idx_list,
-            weights = weights,
+            entropy_board=entropy_board,
+            observed=observed,
+            choices=choices,
+            history=history,
+            canvas=canvas,
+            tiles=tiles,
+            rows=rows,
+            cols=cols,
+            tile_idx_list=tile_idx_list,
+            weights=weights,
         )
 
         info_history = []
         info_history_full = []
 
-        while not np.all(info['observed'] == True):
+        while not np.all(info["observed"] == True):
             info_history.append(deepcopy(info))
             info, retract = utils.step(info)
             info_history_full.append(deepcopy(info))
-            
+
             while retract:
                 # undo one step
-                last_step = info['history'].pop()
+                last_step = info["history"].pop()
                 last_row, last_col, last_choice, valid_choices = last_step
                 valid_choices.remove(last_choice)
                 if len(valid_choices) > 0:
-                    info['choices'][(last_row, last_col)] = valid_choices
+                    info["choices"][(last_row, last_col)] = valid_choices
                 else:
                     info = info_history.pop()
                 info, retract = utils.step(info, (last_row, last_col))
                 info_history_full.append(deepcopy(info))
-                
+
             entropy_board = utils.update_entropy(choices, rows, cols)
         info_history.append(deepcopy(info))
-        canvas = info['canvas']
+        canvas = info["canvas"]
         # Need to separate the individual wires
         wired_output, wire_counter = self.wire_separator(canvas)
-        unwired_output = np.zeros(shape = (rows, cols))
-        # Remove wires to get the number of wires, 
+        unwired_output = np.zeros(shape=(rows, cols))
+        # Remove wires to get the number of wires,
         # change weights and repeat if we have too few wires
         if wire_counter < self.num_agents:
             # Change the weights
@@ -566,9 +576,8 @@ class WFCBoard(AbstractBoard):
                 if wired_output[i, j] % 3 == 1:
                     unwired_output[i, j] = 0
                 else:
-                    unwired_output[i, j] = wired_output[i,j]
+                    unwired_output[i, j] = wired_output[i, j]
         return info, wired_output, unwired_output
-    
 
     def return_training_board(self) -> np.ndarray:
         """
@@ -577,7 +586,7 @@ class WFCBoard(AbstractBoard):
         # Change data type to int
         self.unwired_board = self.unwired_board.astype(int)
         return self.unwired_board
-    
+
     def return_solved_board(self) -> np.ndarray:
         """
         Returns the board as a numpy array, with wires.
@@ -585,9 +594,6 @@ class WFCBoard(AbstractBoard):
         # Change data type to int
         self.wired_board = self.wired_board.astype(int)
         return self.wired_board
-        
-
-
 
 
 if __name__ == "__main__":

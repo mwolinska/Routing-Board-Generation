@@ -4,19 +4,28 @@ from typing import List, Dict
 
 import numpy as np
 
-from routing_board_generation.benchmarking.utils.benchmark_data_model import \
-    BoardGenerationParameters, BarChartData
-from routing_board_generation.benchmarking.utils.benchmark_utils import \
-    generate_n_boards, load_pickle
-from routing_board_generation.benchmarking.utils.plotting_utils import \
-    plot_heatmap, plot_comparison_heatmap
-from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import \
-    BFSBoardShortest
-from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import \
-    BoardProcessor
+from routing_board_generation.benchmarking.utils.benchmark_data_model import (
+    BoardGenerationParameters,
+    BarChartData,
+)
+from routing_board_generation.benchmarking.utils.benchmark_utils import (
+    generate_n_boards,
+    load_pickle,
+)
+from routing_board_generation.benchmarking.utils.plotting_utils import (
+    plot_heatmap,
+    plot_comparison_heatmap,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.board_generation.bfs_board_variations import (
+    BFSBoardShortest,
+)
+from routing_board_generation.board_generation_methods.numpy_implementation.utils.board_processor import (
+    BoardProcessor,
+)
 from routing_board_generation.interface.board_generator_interface import BoardName
-from routing_board_generation.rl_training.offline_generation.dataset_generator_jax import \
-    BoardDatasetGeneratorJAX
+from routing_board_generation.rl_training.offline_generation.dataset_generator_jax import (
+    BoardDatasetGeneratorJAX,
+)
 
 
 class EvaluateEmptyBoard:
@@ -29,14 +38,16 @@ class EvaluateEmptyBoard:
         self.scored_board = self.score_from_neighbours()
         self.board_statistics = self._get_board_statistics()
 
-
     def assess_board(self):
         is_zero_mask = self.filled_board == 0
         divisible_by_three_mask = self.filled_board % 3 == 0
 
         empty_slots_mask = np.array(is_zero_mask, dtype=int) * self.empty_slot_score
         heads = np.array(self.filled_board % 3 == 2, dtype=int) * self.end_score
-        targets = np.array(divisible_by_three_mask * ~is_zero_mask, dtype=int) * self.end_score
+        targets = (
+            np.array(divisible_by_three_mask * ~is_zero_mask, dtype=int)
+            * self.end_score
+        )
         routes = np.array(self.filled_board % 3 == 1, dtype=int) * self.wire_score
 
         return np.sum([empty_slots_mask, heads, targets, routes], axis=0)
@@ -57,14 +68,18 @@ class EvaluateEmptyBoard:
         scores = []
         for row in range(1, len(padded_array) - 1):
             for column in range(1, len(padded_array[0]) - 1):
-                wires_in_window = np.unique(training_board_filtered[row - 1: row + 2, column - 1: column + 2])
+                wires_in_window = np.unique(
+                    training_board_filtered[row - 1 : row + 2, column - 1 : column + 2]
+                )
                 wires_in_window = len(wires_in_window[wires_in_window != 0])
                 diversity = wires_in_window
-                window = padded_array[row - 1: row + 2, column - 1: column + 2]
+                window = padded_array[row - 1 : row + 2, column - 1 : column + 2]
                 score = np.sum(window * filter * diversity)
                 scores.append(score)
 
-        scored_array = np.array(scores).reshape((len(self.filled_board), len(self.filled_board[0])))
+        scored_array = np.array(scores).reshape(
+            (len(self.filled_board), len(self.filled_board[0]))
+        )
 
         return scored_array
 
@@ -81,11 +96,11 @@ class EvaluateEmptyBoard:
     def count_detours(self, count_current_wire: bool = False) -> int:
         """Return the number of wires that have to detour around a head or target cell.
 
-            Args:
-                count_current_wire (bool): Should we count wires that wrap around their own heads/targets? (default = False)
+        Args:
+            count_current_wire (bool): Should we count wires that wrap around their own heads/targets? (default = False)
 
-            Returns:
-                (int) : The number of wires that have to detour around a head or target cell.
+        Returns:
+            (int) : The number of wires that have to detour around a head or target cell.
         """
         num_detours = 0
         for x in range(len(self.filled_board)):
@@ -98,38 +113,38 @@ class EvaluateEmptyBoard:
                 above = [self.get_wire_num(cell) for cell in above if cell != 0]
                 if not count_current_wire:
                     above = [wire_num for wire_num in above if wire_num != current_wire]
-                below = self.filled_board[x + 1:, y]
+                below = self.filled_board[x + 1 :, y]
                 below = [self.get_wire_num(cell) for cell in below if cell != 0]
                 if not count_current_wire:
                     below = [wire_num for wire_num in below if wire_num != current_wire]
-                common = (set(above) & set(below))
+                common = set(above) & set(below)
                 num_detours += len(common)
                 left = self.filled_board[x, :y].tolist()
                 left = [self.get_wire_num(cell) for cell in left if cell != 0]
                 if not count_current_wire:
                     left = [wire_num for wire_num in left if wire_num != current_wire]
 
-                right = self.filled_board[x, y + 1:].tolist()
+                right = self.filled_board[x, y + 1 :].tolist()
                 right = [self.get_wire_num(cell) for cell in right if cell != 0]
                 if not count_current_wire:
                     right = [wire_num for wire_num in right if wire_num != current_wire]
-                common = (set(right) & set(left))
+                common = set(right) & set(left)
                 num_detours += len(common)
         return num_detours
 
     def get_wire_num(self, cell_label: int) -> (int):
-        """ Returns the wire number of the given cell value
+        """Returns the wire number of the given cell value
 
-            Args:
-                cell_label (int) : the value of the cell in self.layout
+        Args:
+            cell_label (int) : the value of the cell in self.layout
 
-            Returns:
-                (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
+        Returns:
+            (int) : The wire number that the cell belongs to. Returns -1 if not part of a wire.
         """
         if cell_label < 2:
             return -1
         else:
-            return ((cell_label-2) // 3)
+            return (cell_label - 2) // 3
 
     def _get_board_statistics(self):
         board_stats = self.board_processor.get_board_statistics()
@@ -150,7 +165,10 @@ def evaluate_generator_outputs_averaged_on_n_boards(
     all_board_statistics = []
     for board_parameters in board_parameters_list:
         print(board_parameters)
-        if board_parameters.generator_type == BoardName.JAX_PARALLEL_RW or board_parameters.generator_type == BoardName.JAX_SEED_EXTENSION:
+        if (
+            board_parameters.generator_type == BoardName.JAX_PARALLEL_RW
+            or board_parameters.generator_type == BoardName.JAX_SEED_EXTENSION
+        ):
             board_list = BoardDatasetGeneratorJAX(
                 board_name=board_parameters.generator_type.value,
                 grid_size=board_parameters.rows,
@@ -168,32 +186,44 @@ def evaluate_generator_outputs_averaged_on_n_boards(
             scored_board = board_evaluator.scored_board
             sum_all_boards += scored_board
             new_board_statistics = board_evaluator.board_statistics
-            board_statistics = _update_dictionary(board_statistics, new_board_statistics)
+            board_statistics = _update_dictionary(
+                board_statistics, new_board_statistics
+            )
 
         scores_list.append(sum_all_boards / number_of_boards)
         board_names.append(str(board_parameters.generator_type.value))
-        board_statistics = {k: (np.mean(np.array(v)), np.std(np.array(v))) for k, v in dict(board_statistics).items()}
+        board_statistics = {
+            k: (np.mean(np.array(v)), np.std(np.array(v)))
+            for k, v in dict(board_statistics).items()
+        }
         board_statistics["generator_type"] = str(board_parameters.generator_type.value)
         all_board_statistics.append(board_statistics)
     with open("all_board_stats.pkl", "wb") as file:
         pickle.dump(all_board_statistics, file)
     with open("heatmap_stats.pkl", "wb") as file:
-        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+        pickle.dump(
+            [scores_list, board_names, board_parameters_list[0].number_of_wires], file
+        )
 
     if plot_individually or len(board_parameters_list) == 1:
         for score in scores_list:
             plot_heatmap(scores=score)
     else:
         plot_comparison_heatmap(
-            scores_list, board_names, board_parameters_list[0].number_of_wires,
+            scores_list,
+            board_names,
+            board_parameters_list[0].number_of_wires,
             number_of_boards_averaged=number_of_boards,
         )
     print(all_board_statistics)
     with open("all_board_stats.pkl", "wb") as file:
         pickle.dump(all_board_statistics, file)
     with open("heatmap_stats.pkl", "wb") as file:
-        pickle.dump([scores_list, board_names, board_parameters_list[0].number_of_wires], file)
+        pickle.dump(
+            [scores_list, board_names, board_parameters_list[0].number_of_wires], file
+        )
     convert_dict_lit_to_plotting_format(all_board_statistics)
+
 
 def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
     data_per_key = []
@@ -201,22 +231,22 @@ def convert_dict_lit_to_plotting_format(list_of_dict: List[Dict[str, float]]):
     list_of_board_names = [x["generator_type"] for x in list_of_dict]
 
     titles = {
-        'num_wires': " Number of Wires on Board",
-        'avg_wire_length': "Average Wire Length",
-        'avg_wire_bends': "Average Number of Bends per Wire" ,
-        'avg_head_target_distance': "Average Manhattan Distance from Head to Target",
-        'percent_filled': "Percent of Board Filled with Wires",
-        'count_detours': "Average Number of Detours",
-        'heatmap_score_diversity': "Average Heatmap Diversity Score",
+        "num_wires": " Number of Wires on Board",
+        "avg_wire_length": "Average Wire Length",
+        "avg_wire_bends": "Average Number of Bends per Wire",
+        "avg_head_target_distance": "Average Manhattan Distance from Head to Target",
+        "percent_filled": "Percent of Board Filled with Wires",
+        "count_detours": "Average Number of Detours",
+        "heatmap_score_diversity": "Average Heatmap Diversity Score",
     }
     y_labels = {
-        'num_wires': "Number of Wires",
-        'avg_wire_length': "Wire Length",
-        'avg_wire_bends': "Number of Bends per Wire" ,
-        'avg_head_target_distance': "Manhattan Distance",
-        'percent_filled': "Percent of Board Filled with Wires",
-        'count_detours': "Number of Detours",
-        'heatmap_score_diversity': "Heatmap Diversity Score",
+        "num_wires": "Number of Wires",
+        "avg_wire_length": "Wire Length",
+        "avg_wire_bends": "Number of Bends per Wire",
+        "avg_head_target_distance": "Manhattan Distance",
+        "percent_filled": "Percent of Board Filled with Wires",
+        "count_detours": "Number of Detours",
+        "heatmap_score_diversity": "Heatmap Diversity Score",
     }
     for key in list_of_keys:
         if key == "generator_type":
