@@ -72,7 +72,7 @@ class RoutingViewer:
             self.palette.append((r, g, b))
 
     def render(self, grid: Array, save_img: Optional[str] = None) -> Array:
-        """ Render the grid of the environment.
+        """Render the grid of the environment.
 
         Args:
             grid: the grid representing the Routing instance to render.
@@ -87,10 +87,10 @@ class RoutingViewer:
         for row in range(rows):
             for col in range(cols):
                 rect = (
-                    self.xoff + col * self.grid_unit, # x coordinate
-                    self.yoff + row * self.grid_unit, # y coordinate
-                    self.grid_unit, # x grid unit size
-                    self.grid_unit, # y grid unit size
+                    self.xoff + col * self.grid_unit,  # x coordinate
+                    self.yoff + row * self.grid_unit,  # y coordinate
+                    self.grid_unit,  # x grid unit size
+                    self.grid_unit,  # y grid unit size
                 )
                 value = grid[row, col]
                 self._draw_shape(rect, value)
@@ -109,9 +109,13 @@ class RoutingViewer:
             rect: Rectangle to draw shape in.
             value: Color value.
         """
-        color = self.palette[value if value < 1 else 1 + (value - 1) // 3]  # colour issue fixed: '1' used to be '2'.
+        color = self.palette[
+            value if value < 1 else 1 + (value - 1) // 3
+        ]  # colour issue fixed: '1' used to be '2'.
 
-        if value > 1 and (value - TARGET) % 3 == 0:                         # I am changing target and head to be of the new version 
+        if (
+            value > 1 and (value - TARGET) % 3 == 0
+        ):  # I am changing target and head to be of the new version
             pygame.draw.ellipse(self.screen, color, rect, width=5)
         else:
             pygame.draw.rect(self.screen, color, rect)

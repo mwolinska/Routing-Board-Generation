@@ -15,8 +15,9 @@ from routing_board_generation.board_generation_methods.jax_implementation.data_m
 
 from jumanji.environments.routing.connector.constants import PATH, POSITION, TARGET
 
-from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import \
-    AbstractBoard
+from routing_board_generation.board_generation_methods.numpy_implementation.data_model.abstract_board import (
+    AbstractBoard,
+)
 
 
 class SequentialRandomWalkBoard(AbstractBoard):
@@ -63,14 +64,18 @@ class SequentialRandomWalkBoard(AbstractBoard):
 
             # Create a 2D coordinate from the flat array.
             coordinate = jnp.divmod(coordinate_flat, self._rows)
-            new_wire = create_wire_for_sequential_rw(grid_size, coordinate, (-1, -1), wire_id)
+            new_wire = create_wire_for_sequential_rw(
+                grid_size, coordinate, (-1, -1), wire_id
+            )
             new_wire = stack_push(new_wire, coordinate)
             grid = grid.at[coordinate[0], coordinate[1]].set(3 * wire_id + POSITION)
 
             return new_wire, grid
 
         # Use jax.lax.cond to only run the inner function if there is empty space
-        dummy_wire = create_wire_for_sequential_rw(grid_size, (-1, -1), (-1, -1), wire_id)
+        dummy_wire = create_wire_for_sequential_rw(
+            grid_size, (-1, -1), (-1, -1), wire_id
+        )
         new_wire, grid = jax.lax.cond(
             can_start, inner_create_wire, lambda _: (dummy_wire, grid), key
         )

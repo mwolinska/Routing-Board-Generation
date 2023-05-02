@@ -53,6 +53,7 @@ class BenchmarkData:
     def std_steps_till_board_terminates(self):
         return float(jnp.std(jnp.array(self.episode_length), axis=0))
 
+
 @dataclass
 class BarChartData:
     x_axis_label: str
@@ -64,10 +65,10 @@ class BarChartData:
     stds: Optional[List[float]]
 
     def plot(self):
-        plt.style.use('tableau-colorblind10')
+        plt.style.use("tableau-colorblind10")
         plt.rcParams["font.family"] = "Times"
         plt.rcParams["font.size"] = 14
-        plt.rcParams['figure.dpi'] = 900
+        plt.rcParams["figure.dpi"] = 900
         plt.rcParams["figure.figsize"] = (7, 4.5)
 
         fig, ax = plt.subplots()
@@ -80,14 +81,19 @@ class BarChartData:
         data = np.array(self.y_data)
 
         ax.set_xticks(self.x_labels)
-        ax.set_xticklabels(self.x_labels, rotation=30, ha='right')
+        ax.set_xticklabels(self.x_labels, rotation=30, ha="right")
         inds = np.arange(0, len(data))
-        ax.scatter(inds, data, marker='o', color='k', s=30, zorder=3)
+        ax.scatter(inds, data, marker="o", color="k", s=30, zorder=3)
         if self.stds is not None:
             stds = np.array(self.stds)
-            ax.vlines(inds, data - (stds / 2), data + (stds / 2), color='blue',
-                      linestyle='-',
-            lw = 3)
+            ax.vlines(
+                inds,
+                data - (stds / 2),
+                data + (stds / 2),
+                color="blue",
+                linestyle="-",
+                lw=3,
+            )
         plt.tight_layout()
         if self.output_filename is not None:
             fig.savefig(str(self.directory_string) + str(self.output_filename))

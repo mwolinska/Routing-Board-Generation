@@ -73,17 +73,16 @@ class Wire(NamedTuple):
     - insertion_index: the index of the row at which to insert the next element in data. Should be
         0 for an empty stack.
     """
+
     path: chex.Array
     insertion_index: int
     wire_id: int
     start: Tuple[int, int]
     end: Tuple[int, int]
 
+
 def create_wire(
-    max_size: int,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
-    wire_id: int
+    max_size: int, start: Tuple[int, int], end: Tuple[int, int], wire_id: int
 ) -> Wire:
     """Create an empty stack.
 
@@ -94,14 +93,17 @@ def create_wire(
     Returns:
         stack: the created stack of size grid size x 2 - i.e. rows and columns
     """
-    return Wire(jnp.full((max_size), fill_value=-1, dtype=int), 0, wire_id=wire_id, start=start, end=end)
+    return Wire(
+        jnp.full((max_size), fill_value=-1, dtype=int),
+        0,
+        wire_id=wire_id,
+        start=start,
+        end=end,
+    )
 
 
 def create_wire_for_sequential_rw(
-    max_size: int,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
-    wire_id: int
+    max_size: int, start: Tuple[int, int], end: Tuple[int, int], wire_id: int
 ) -> Wire:
     """Create an empty stack.
 
@@ -112,7 +114,13 @@ def create_wire_for_sequential_rw(
     Returns:
         stack: the created stack of size grid size x 2 - i.e. rows and columns
     """
-    return Wire(jnp.full((max_size, 2), fill_value=-1, dtype=int), 0, wire_id=wire_id, start=start, end=end)
+    return Wire(
+        jnp.full((max_size, 2), fill_value=-1, dtype=int),
+        0,
+        wire_id=wire_id,
+        start=start,
+        end=end,
+    )
 
 
 def stack_push(stack: Wire, element: chex.Array) -> Wire:
@@ -125,10 +133,13 @@ def stack_push(stack: Wire, element: chex.Array) -> Wire:
     Returns:
         stack: the stack containing the new element.
     """
-    return Wire(start=stack.start, end = stack.end,
-                wire_id=stack.wire_id,
-                path=stack.path.at[stack.insertion_index].set(element),
-                insertion_index=stack.insertion_index + 1)
+    return Wire(
+        start=stack.start,
+        end=stack.end,
+        wire_id=stack.wire_id,
+        path=stack.path.at[stack.insertion_index].set(element),
+        insertion_index=stack.insertion_index + 1,
+    )
 
 
 def stack_pop(stack: Wire) -> Tuple[Wire, chex.Array]:
@@ -142,14 +153,18 @@ def stack_pop(stack: Wire) -> Tuple[Wire, chex.Array]:
         element: the last element from the stack.
     """
     element = stack.path[stack.insertion_index]
-    return Wire(
-        stack.path[:stack.insertion_index],
-        insertion_index=stack.insertion_index - 1,
-        wire_id=stack.wire_id,
-        start=stack.start,
-        end=stack.end
-    ), element
+    return (
+        Wire(
+            stack.path[: stack.insertion_index],
+            insertion_index=stack.insertion_index - 1,
+            wire_id=stack.wire_id,
+            start=stack.start,
+            end=stack.end,
+        ),
+        element,
+    )
     return stack, element
+
 
 def stack_reverse(stack: Wire) -> Wire:
     """Reverse the items in the stack before the insertion index.
@@ -161,14 +176,20 @@ def stack_reverse(stack: Wire) -> Wire:
         stack: the reversed stack.
     """
     return Wire(
-        jnp.concatenate([jnp.flip(stack.path[:stack.insertion_index], axis=0), stack.path[stack.insertion_index:]]),
+        jnp.concatenate(
+            [
+                jnp.flip(stack.path[: stack.insertion_index], axis=0),
+                stack.path[stack.insertion_index :],
+            ]
+        ),
         insertion_index=stack.insertion_index,
         wire_id=stack.wire_id,
         start=stack.start,
-        end=stack.end
+        end=stack.end,
     )
 
-def stack_clip(stack:Wire) -> Wire:
+
+def stack_clip(stack: Wire) -> Wire:
     """Clip the stack.
 
     Args:
@@ -178,12 +199,13 @@ def stack_clip(stack:Wire) -> Wire:
         stack: the clipped stack.
     """
     return Wire(
-        stack.path[:stack.insertion_index+1],
+        stack.path[: stack.insertion_index + 1],
         insertion_index=stack.insertion_index,
         wire_id=stack.wire_id,
         start=stack.start,
-        end=stack.end
+        end=stack.end,
     )
+
 
 def empty_stack(stack: Wire) -> bool:
     """Check if a stack is empty.

@@ -24,10 +24,13 @@ class PickleLogger(Logger):
         self.episode_counter = 0
 
     def _format_values(self, data: Dict[str, Any]) -> Dict[float, float]:
-        return {key: float(value) for key,value in sorted(data.items())}
+        return {key: float(value) for key, value in sorted(data.items())}
 
     def return_eval_dict(self):
-        return {key: (value / self.episode_counter) for key, value in self.eval_log_greedy.items()}
+        return {
+            key: (value / self.episode_counter)
+            for key, value in self.eval_log_greedy.items()
+        }
 
     def write(
         self,
@@ -42,7 +45,9 @@ class PickleLogger(Logger):
         if label == "train":
             self.training_log = self._update_dictionary(self.training_log, data)
         elif label == "eval_stochastic":
-            self.eval_log_stochastic = self._update_dictionary(self.eval_log_stochastic, data)
+            self.eval_log_stochastic = self._update_dictionary(
+                self.eval_log_stochastic, data
+            )
         elif label == "eval_greedy":
             self.eval_log_greedy = self._update_dictionary(self.eval_log_greedy, data)
 
