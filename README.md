@@ -161,3 +161,31 @@ Timing JAX generators can be done using `package_valuation/profiling_generators.
 #### Adding Your Own Generator in Numpy
 To add your own generator in NumPy you should inherit from `AbstractBoard`, then add your generator to the interface in 
 `routing_board_generation/interface/board_generator_interface.py`.
+
+
+### Demo
+
+#### Board Generation
+
+In order to visualise different board generators, the following command can be used:
+
+    ```
+    python -m demos.board_generator_demo --board_type NumberLink --show stepping
+    ```
+
+This will generate a Numberlink board of size 10x10 with 5 agents and show the training board. The board type can be changed to any of the available board generators. The board size and number of agents can also be changed through the `--board_size` and `--num_agents` flags.
+
+The `--show` flag can be used to show either just a board, or a board alongside a trained agent interacting with the board. If the trained agent is used, the default board_size must be set to 10, and num_agents must be set to 5.
+
+To step through the agent's solution, press the space bar.
+
+#### Benchmarking
+
+In order to run the benchmark demo, the following command can be used:
+
+    ```
+    python -m demos.benchmark_demo --board_size 10 --num_agents 5 --number_of_boards 10
+    ```
+
+This will generate 10 boards of size 10x10 with 5 agents for each board generator, and compute all the available benchmarks for each class of board generator.
+The benchmarks can be found in the figs folder. By default this is cleared at the start of every run of the script.

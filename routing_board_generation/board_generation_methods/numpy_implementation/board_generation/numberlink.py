@@ -1,13 +1,8 @@
 """
-Note: This is a slightly modified version of the gen folder from:
-https://github.com/thomasahle/numberlink
+Portions of this code are based on, or adapted from, the work of Thomas Ahle.
+The original code can be found at https://github.com/thomasahle/numberlink
 
-TODO: Properly reference!!
-"""
-
-
-"""
-Copying stuff from gen.py
+The accompanying license is provided in full in the NUMBERLINK_LICENSE file.
 """
 
 from copy import deepcopy
@@ -568,7 +563,6 @@ class NumberLinkBoard(AbstractBoard):
         current_pos = start
         # Initialise the start direction:
         # This involves checking the neighbours of the start
-        # TODO: check these correspond to up / down / left / right
         if np_board[(current_pos[0] + 0, min(current_pos[1] + 1, self.h - 1))] in '-┐┘':
             current_dir = (0,1)
         elif np_board[(current_pos[0] + 0, max(current_pos[1] + -1, 0))] in '-┌└':

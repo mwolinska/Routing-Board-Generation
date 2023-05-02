@@ -67,4 +67,3 @@ def plot_comparison_heatmap(
     plt.savefig(f"figs/heatmap_{time}.pdf")
     plt.savefig(f"figs/heatmap_{time}.png")
     plt.show()
-    # TODO: sort out saving figures
